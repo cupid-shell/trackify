@@ -13,14 +13,14 @@ const RecentTransactions = () => {
     if (transactions.length === 0) return;
 
     // Create CSV headers
-    const headers = ['Date', 'Type', 'Category', 'Amount (BDT)', 'Note'];
+    const headers = ['Date', 'Type', 'Category', 'Payment Method', 'Amount (BDT)', 'Note'];
     
     // Map transactions to CSV rows
     const csvRows = sortedTx.map(tx => {
       const formattedDate = format(new Date(tx.date), 'yyyy-MM-dd');
       // Escape notes with quotes in case they contain commas
       const escapedNote = tx.note ? `"${tx.note.replace(/"/g, '""')}"` : '';
-      return [formattedDate, tx.type, tx.category, tx.amount, escapedNote].join(',');
+      return [formattedDate, tx.type, tx.category, tx.payment_method || 'Cash', tx.amount, escapedNote].join(',');
     });
 
     // Combine headers and rows
@@ -93,6 +93,14 @@ const RecentTransactions = () => {
                 <div>
                   <h4 style={{ fontWeight: 600 }}>{tx.category}</h4>
                   <div className="flex gap-2 items-center" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                    <span style={{ 
+                      backgroundColor: 'rgba(255,255,255,0.1)', 
+                      padding: '2px 6px', 
+                      borderRadius: '4px',
+                      fontSize: '0.7rem'
+                    }}>
+                      {tx.payment_method || 'Cash'}
+                    </span>
                     <span>{format(new Date(tx.date), 'MMM dd, yyyy')}</span>
                     {tx.note && (
                       <>

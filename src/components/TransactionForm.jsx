@@ -9,9 +9,11 @@ const TransactionForm = () => {
   const [category, setCategory] = useState('Seat Rent');
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
 
   const expenseCategories = ['Seat Rent', 'Utility Bill', 'Gas Bill (Cylinder)', 'Personal Expenses', 'Food & Dining', 'Transport', 'Other / Miscellaneous'];
   const incomeCategories = ['Allowance', 'Bonus', 'Other'];
+  const paymentMethods = ['Cash', 'bKash', 'Bank'];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -22,7 +24,8 @@ const TransactionForm = () => {
       amount: parseFloat(amount),
       category,
       note,
-      date
+      date,
+      payment_method: paymentMethod
     });
 
     setAmount('');
@@ -92,6 +95,15 @@ const TransactionForm = () => {
             onChange={(e) => setDate(e.target.value)}
             required
           />
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Payment Method</label>
+          <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+            {paymentMethods.map(method => (
+              <option key={method} value={method}>{method}</option>
+            ))}
+          </select>
         </div>
 
         <div>

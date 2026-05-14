@@ -73,7 +73,8 @@ export const AppProvider = ({ children }) => {
           amount: transaction.amount,
           category: transaction.category,
           date: transaction.date,
-          note: transaction.note
+          note: transaction.note,
+          payment_method: transaction.payment_method || 'Cash'
         }
       ])
       .select()
