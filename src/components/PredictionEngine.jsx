@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Sparkles, AlertTriangle, CheckCircle } from 'lucide-react';
 
 const PredictionEngine = () => {
-  const { totalIncome, totalExpenses, savingsGoal, balance } = useAppContext();
+  const { totalIncome, totalExpenses, savingsGoal, currentMonthTransactions } = useAppContext();
 
   const prediction = useMemo(() => {
     const today = new Date();
@@ -11,8 +11,22 @@ const PredictionEngine = () => {
     const totalDaysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     const daysRemaining = totalDaysInMonth - currentDay;
 
+    // Separate variable vs fixed expenses
+    const variableCategories = ['Personal Expenses', 'Food & Dining', 'Transport'];
+    
+    let variableExpensesSum = 0;
+    
+    currentMonthTransactions.forEach(tx => {
+      if (tx.type === 'expense' && variableCategories.includes(tx.category)) {
+        variableExpensesSum += Number(tx.amount);
+      }
+    });
+
     // Avoid division by zero
-    const dailyBurnRate = currentDay > 0 ? totalExpenses / currentDay : 0;
+    const dailyBurnRate = currentDay > 0 ? variableExpensesSum / currentDay : 0;
+    
+    // Total projected is: what we've spent so far + (variable daily burn * days left)
+    // We assume fixed/one-time expenses don't repeat daily
     const projectedExpenses = totalExpenses + (dailyBurnRate * daysRemaining);
     const projectedBalance = totalIncome - projectedExpenses;
     
@@ -24,7 +38,7 @@ const PredictionEngine = () => {
       isOnTrack,
       daysRemaining
     };
-  }, [totalExpenses, totalIncome, savingsGoal]);
+  }, [totalExpenses, totalIncome, savingsGoal, currentMonthTransactions]);
 
   return (
     <div className="glass-card flex-col gap-4" style={{ 
