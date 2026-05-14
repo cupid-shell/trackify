@@ -111,13 +111,14 @@ export const AppProvider = ({ children }) => {
     setSavingsGoal(amount);
   };
 
-  // Derived state
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+  // Derived state for selected month/year filtering
+  const currentRealDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentRealDate.getMonth());
+  const [selectedYear, setSelectedYear] = useState(currentRealDate.getFullYear());
 
   const currentMonthTransactions = transactions.filter(tx => {
     const txDate = new Date(tx.date);
-    return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
+    return txDate.getMonth() === selectedMonth && txDate.getFullYear() === selectedYear;
   });
 
   const totalAllowances = currentMonthTransactions
@@ -142,6 +143,10 @@ export const AppProvider = ({ children }) => {
     deleteTransaction,
     updateSavingsGoal,
     currentMonthTransactions,
+    selectedMonth,
+    setSelectedMonth,
+    selectedYear,
+    setSelectedYear,
     totalIncome,
     totalExpenses,
     balance

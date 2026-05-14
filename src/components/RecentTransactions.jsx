@@ -4,13 +4,13 @@ import { format } from 'date-fns';
 import { Trash2, TrendingDown, TrendingUp, Download } from 'lucide-react';
 
 const RecentTransactions = () => {
-  const { transactions, deleteTransaction } = useAppContext();
+  const { currentMonthTransactions, deleteTransaction } = useAppContext();
 
   // Sort by newest first
-  const sortedTx = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedTx = [...currentMonthTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const handleExportCSV = () => {
-    if (transactions.length === 0) return;
+    if (currentMonthTransactions.length === 0) return;
 
     // Create CSV headers
     const headers = ['Date', 'Type', 'Category', 'Payment Method', 'Amount (BDT)', 'Note'];
@@ -41,8 +41,8 @@ const RecentTransactions = () => {
   return (
     <div className="glass-card flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h2 style={{ fontSize: '1.25rem' }}>Recent Transactions</h2>
-        {transactions.length > 0 && (
+        <h2 style={{ fontSize: '1.25rem' }}>Monthly Transactions</h2>
+        {currentMonthTransactions.length > 0 && (
           <button 
             onClick={handleExportCSV}
             style={{
@@ -66,11 +66,11 @@ const RecentTransactions = () => {
       
       {sortedTx.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
-          <p>No transactions yet. Add your first expense or income!</p>
+          <p>No transactions found for this month.</p>
         </div>
       ) : (
         <div className="flex-col gap-4">
-          {sortedTx.slice(0, 10).map((tx) => (
+          {sortedTx.map((tx) => (
             <div 
               key={tx.id} 
               className="flex items-center justify-between"

@@ -9,40 +9,66 @@ import ExpenseChart from './components/ExpenseChart';
 import PredictionEngine from './components/PredictionEngine';
 import Login from './components/Login';
 
+import MonthSelector from './components/MonthSelector';
+
 const Dashboard = () => (
   <>
     <Header />
     <main className="container">
-      <div style={{ marginBottom: '2rem' }}>
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Dashboard</h2>
         <p>Track your daily, monthly, and yearly expenses. Build your savings.</p>
       </div>
+
+      <MonthSelector />
       
       <OverviewCards />
 
+      <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <TransactionForm />
+      </div>
+    </main>
+  </>
+);
+
+const HistoryPage = () => (
+  <>
+    <Header />
+    <main className="container">
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Expense Log</h2>
+        <p>View your complete transaction history.</p>
+      </div>
+      
+      <MonthSelector />
+      
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <RecentTransactions />
+      </div>
+    </main>
+  </>
+);
+
+const AnalyticsPage = () => (
+  <>
+    <Header />
+    <main className="container">
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Analytics & Prediction</h2>
+        <p>Analyze your spending and track your savings goals.</p>
+      </div>
+      
+      <MonthSelector />
+
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 2fr',
+        gridTemplateColumns: '1fr',
         gap: '1.5rem',
-        alignItems: 'start'
+        maxWidth: '800px',
+        margin: '0 auto'
       }}>
-        <style>{`
-          @media (max-width: 768px) {
-            div[style*="gridTemplateColumns: '1fr 2fr'"] {
-              grid-template-columns: 1fr !important;
-            }
-          }
-        `}</style>
-        
-        <div className="flex-col gap-6">
-          <PredictionEngine />
-          <TransactionForm />
-        </div>
-        
-        <div className="flex-col gap-6">
-          <ExpenseChart />
-          <RecentTransactions />
-        </div>
+        <PredictionEngine />
+        <ExpenseChart />
       </div>
     </main>
   </>
@@ -70,12 +96,20 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={
-          <LoginRoute />
-        } />
+        <Route path="/login" element={<LoginRoute />} />
         <Route path="/" element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/history" element={
+          <ProtectedRoute>
+            <HistoryPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/analytics" element={
+          <ProtectedRoute>
+            <AnalyticsPage />
           </ProtectedRoute>
         } />
       </Routes>
