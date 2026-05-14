@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { format } from 'date-fns';
-import { Trash2, TrendingDown, TrendingUp } from 'lucide-react';
+import { Trash2, TrendingDown, TrendingUp, Download } from 'lucide-react';
 
 const RecentTransactions = () => {
   const { transactions, deleteTransaction } = useAppContext();
@@ -9,9 +9,60 @@ const RecentTransactions = () => {
   // Sort by newest first
   const sortedTx = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
 
+  const handleExportCSV = () => {
+    if (transactions.length === 0) return;
+
+    // Create CSV headers
+    const headers = ['Date', 'Type', 'Category', 'Amount (BDT)', 'Note'];
+    
+    // Map transactions to CSV rows
+    const csvRows = sortedTx.map(tx => {
+      const formattedDate = format(new Date(tx.date), 'yyyy-MM-dd');
+      // Escape notes with quotes in case they contain commas
+      const escapedNote = tx.note ? `"${tx.note.replace(/"/g, '""')}"` : '';
+      return [formattedDate, tx.type, tx.category, tx.amount, escapedNote].join(',');
+    });
+
+    // Combine headers and rows
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    
+    // Create Blob and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `trackify_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="glass-card flex-col gap-6">
-      <h2 style={{ fontSize: '1.25rem' }}>Recent Transactions</h2>
+      <div className="flex items-center justify-between">
+        <h2 style={{ fontSize: '1.25rem' }}>Recent Transactions</h2>
+        {transactions.length > 0 && (
+          <button 
+            onClick={handleExportCSV}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 0.75rem',
+              backgroundColor: 'var(--bg-input)',
+              color: 'var(--text-main)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              border: '1px solid var(--border-color)'
+            }}
+          >
+            <Download size={16} />
+            Export Excel
+          </button>
+        )}
+      </div>
       
       {sortedTx.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
