@@ -1,7 +1,15 @@
 import React from 'react';
-import { Wallet, Settings } from 'lucide-react';
+import { Wallet, Settings, LogOut } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
+import { supabase } from '../supabaseClient';
 
 const Header = () => {
+  const { session } = useAppContext();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
     <header style={{
       borderBottom: '1px solid var(--border-color)',
@@ -25,14 +33,26 @@ const Header = () => {
           </div>
           <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Trackify</h1>
         </div>
-        <button style={{
-          padding: '0.5rem',
-          borderRadius: 'var(--radius-full)',
-          backgroundColor: 'var(--bg-input)',
-          color: 'var(--text-muted)'
-        }}>
-          <Settings size={20} />
-        </button>
+        
+        {session && (
+          <div className="flex items-center gap-4">
+            <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              {session.user.email}
+            </span>
+            <button 
+              onClick={handleLogout}
+              style={{
+                padding: '0.5rem',
+                borderRadius: 'var(--radius-full)',
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--text-muted)'
+              }}
+              title="Sign Out"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

@@ -6,11 +6,11 @@ const TransactionForm = () => {
   const { addTransaction } = useAppContext();
   const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Food');
+  const [category, setCategory] = useState('Seat Rent');
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const expenseCategories = ['Food', 'Transport', 'Utilities', 'Entertainment', 'Shopping', 'Other'];
+  const expenseCategories = ['Seat Rent', 'Utility Bill', 'Gas Bill (Cylinder)', 'Personal Expenses', 'Food & Dining', 'Transport', 'Other / Miscellaneous'];
   const incomeCategories = ['Allowance', 'Bonus', 'Other'];
 
   const handleSubmit = (e) => {
@@ -50,7 +50,7 @@ const TransactionForm = () => {
       <div className="flex gap-4">
         <button 
           style={btnStyle('expense')} 
-          onClick={() => { setType('expense'); setCategory('Food'); }}
+          onClick={() => { setType('expense'); setCategory('Seat Rent'); }}
         >
           Expense
         </button>

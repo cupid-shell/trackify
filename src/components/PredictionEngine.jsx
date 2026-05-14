@@ -69,8 +69,8 @@ const PredictionEngine = () => {
         )}
         <p style={{ fontSize: '0.875rem', color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)' }}>
           {prediction.isOnTrack 
-            ? `Great job! You are on track to meet your savings goal of ৳${savingsGoal}.` 
-            : `Warning: At your current spending rate, you will miss your ৳${savingsGoal} savings goal. Try to reduce daily spending.`}
+            ? `Great job! You are on track to save at least ৳${savingsGoal} this month.` 
+            : `Warning: At your current spending rate, you will miss your minimum ৳${savingsGoal} savings goal. Try to reduce daily spending.`}
         </p>
       </div>
     </div>
