@@ -81,25 +81,28 @@ const RecentTransactions = () => {
         )}
       </div>
 
-      <div className="flex gap-2" style={{ marginBottom: '0.5rem' }}>
-        <input 
-          type="text" 
-          placeholder="Search by category, note, or amount..." 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            flex: 1,
-            padding: '0.75rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            backgroundColor: 'var(--bg-input)',
-            color: 'var(--text-main)'
-          }}
-        />
+      <div className="flex gap-4" style={{ marginBottom: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 200px' }}>
+          <input 
+            type="text" 
+            placeholder="Search by category, note, or amount..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.75rem 1rem',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-color)',
+              backgroundColor: 'var(--bg-input)',
+              color: 'var(--text-main)'
+            }}
+          />
+        </div>
         <select 
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
           style={{
+            flex: '0 0 auto',
             padding: '0.75rem 1rem',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-color)',
