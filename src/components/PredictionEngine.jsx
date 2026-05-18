@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Sparkles, AlertTriangle, CheckCircle } from 'lucide-react';
 
 const PredictionEngine = () => {
-  const { totalIncome, totalExpenses, savingsGoal, currentMonthTransactions } = useAppContext();
+  const { totalIncome, totalExpenses, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear } = useAppContext();
 
   const prediction = useMemo(() => {
     const today = new Date();
