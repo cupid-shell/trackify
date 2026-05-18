@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Save, Plus, Trash2 } from 'lucide-react';
+import { Save, Plus, Trash2, Edit2, X, Check } from 'lucide-react';
 import Header from './Header';
 
 const SettingsPage = () => {
-  const { userSettings, updateSettings } = useAppContext();
+  const { userSettings, updateSettings, renameCategory } = useAppContext();
   
   const [baseIncome, setBaseIncome] = useState(userSettings.base_income);
   const [savingsGoal, setSavingsGoal] = useState(userSettings.savings_goal);
@@ -13,6 +13,12 @@ const SettingsPage = () => {
   const [categoryBudgets, setCategoryBudgets] = useState(userSettings.category_budgets || {});
   const [newExpenseCat, setNewExpenseCat] = useState('');
   const [newIncomeCat, setNewIncomeCat] = useState('');
+  
+  const [editingExpenseCat, setEditingExpenseCat] = useState(null);
+  const [editExpenseCatName, setEditExpenseCatName] = useState('');
+  
+  const [editingIncomeCat, setEditingIncomeCat] = useState(null);
+  const [editIncomeCatName, setEditIncomeCatName] = useState('');
   
   const [saving, setSaving] = useState(false);
 
@@ -72,6 +78,20 @@ const SettingsPage = () => {
     setIncomeCategories(incomeCategories.filter(c => c !== cat));
   };
 
+  const handleRenameExpense = async (oldName) => {
+    if (editExpenseCatName.trim() && editExpenseCatName.trim() !== oldName) {
+      await renameCategory(oldName, editExpenseCatName.trim(), 'expense');
+    }
+    setEditingExpenseCat(null);
+  };
+
+  const handleRenameIncome = async (oldName) => {
+    if (editIncomeCatName.trim() && editIncomeCatName.trim() !== oldName) {
+      await renameCategory(oldName, editIncomeCatName.trim(), 'income');
+    }
+    setEditingIncomeCat(null);
+  };
+
   return (
     <>
       <Header />
@@ -115,8 +135,26 @@ const SettingsPage = () => {
                   maxWidth: '100%',
                   flexShrink: 0
                 }}>
-                  <span style={{ fontSize: '0.875rem', wordBreak: 'break-word' }}>{cat}</span>
-                  <button onClick={() => removeExpenseCat(cat)} style={{ color: 'var(--danger)', flexShrink: 0 }}><Trash2 size={14}/></button>
+                  {editingExpenseCat === cat ? (
+                    <div className="flex gap-2 items-center">
+                      <input 
+                        type="text" 
+                        value={editExpenseCatName} 
+                        onChange={e => setEditExpenseCatName(e.target.value)}
+                        onKeyPress={e => e.key === 'Enter' && handleRenameExpense(cat)}
+                        style={{ padding: '0.25rem 0.5rem', width: '120px' }}
+                        autoFocus
+                      />
+                      <button onClick={() => handleRenameExpense(cat)} style={{ color: 'var(--success)' }}><Check size={16}/></button>
+                      <button onClick={() => setEditingExpenseCat(null)} style={{ color: 'var(--text-muted)' }}><X size={16}/></button>
+                    </div>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: '0.875rem', wordBreak: 'break-word' }}>{cat}</span>
+                      <button onClick={() => { setEditingExpenseCat(cat); setEditExpenseCatName(cat); }} style={{ color: 'var(--primary)', flexShrink: 0, marginLeft: 'auto' }}><Edit2 size={14}/></button>
+                      <button onClick={() => removeExpenseCat(cat)} style={{ color: 'var(--danger)', flexShrink: 0 }}><Trash2 size={14}/></button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -145,8 +183,26 @@ const SettingsPage = () => {
                   maxWidth: '100%',
                   flexShrink: 0
                 }}>
-                  <span style={{ fontSize: '0.875rem', wordBreak: 'break-word' }}>{cat}</span>
-                  <button onClick={() => removeIncomeCat(cat)} style={{ color: 'var(--danger)', flexShrink: 0 }}><Trash2 size={14}/></button>
+                  {editingIncomeCat === cat ? (
+                    <div className="flex gap-2 items-center">
+                      <input 
+                        type="text" 
+                        value={editIncomeCatName} 
+                        onChange={e => setEditIncomeCatName(e.target.value)}
+                        onKeyPress={e => e.key === 'Enter' && handleRenameIncome(cat)}
+                        style={{ padding: '0.25rem 0.5rem', width: '120px' }}
+                        autoFocus
+                      />
+                      <button onClick={() => handleRenameIncome(cat)} style={{ color: 'var(--success)' }}><Check size={16}/></button>
+                      <button onClick={() => setEditingIncomeCat(null)} style={{ color: 'var(--text-muted)' }}><X size={16}/></button>
+                    </div>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: '0.875rem', wordBreak: 'break-word' }}>{cat}</span>
+                      <button onClick={() => { setEditingIncomeCat(cat); setEditIncomeCatName(cat); }} style={{ color: 'var(--primary)', flexShrink: 0, marginLeft: 'auto' }}><Edit2 size={14}/></button>
+                      <button onClick={() => removeIncomeCat(cat)} style={{ color: 'var(--danger)', flexShrink: 0 }}><Trash2 size={14}/></button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
