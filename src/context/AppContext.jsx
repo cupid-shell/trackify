@@ -31,10 +31,11 @@ export const AppProvider = ({ children }) => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session) {
-        fetchTransactions(session.user.id);
+        // Perform a background fetch on auth state change (like tab focus) to prevent full-page reload
+        fetchTransactions(session.user.id, true);
         fetchSettings(session.user.id);
       } else {
         setTransactions([]);
@@ -82,8 +83,8 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const fetchTransactions = async (userId) => {
-    setLoading(true);
+  const fetchTransactions = async (userId, background = false) => {
+    if (!background) setLoading(true);
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
@@ -93,7 +94,7 @@ export const AppProvider = ({ children }) => {
     if (!error && data) {
       setTransactions(data);
     }
-    setLoading(false);
+    if (!background) setLoading(false);
   };
 
   const addTransaction = async (transaction) => {
