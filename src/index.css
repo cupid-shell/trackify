@@ -132,6 +132,19 @@ input:focus, select:focus, textarea:focus {
 .gap-2 { gap: 0.5rem; }
 .gap-4 { gap: 1rem; }
 .gap-6 { gap: 1.5rem; }
+.flex-wrap { flex-wrap: wrap; }
+.hidden { display: none; }
+.w-full { width: 100%; }
+
+/* Responsive nav label visibility */
+@media (min-width: 640px) {
+  .sm\:inline { display: inline !important; }
+}
+
+/* glass-card overflow protection */
+.glass-card {
+  overflow: hidden;
+}
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {

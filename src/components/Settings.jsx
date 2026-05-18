@@ -93,15 +93,17 @@ const SettingsPage = () => {
 
           <div className="glass-card flex-col gap-4">
             <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Expense Categories</h3>
-            <div className="flex gap-2 flex-wrap">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', width: '100%' }}>
               {expenseCategories.map(cat => (
                 <div key={cat} style={{ 
                   display: 'flex', alignItems: 'center', gap: '0.5rem', 
                   backgroundColor: 'var(--bg-input)', padding: '0.5rem 0.75rem', 
-                  borderRadius: 'var(--radius-md)'
+                  borderRadius: 'var(--radius-md)',
+                  maxWidth: '100%',
+                  flexShrink: 0
                 }}>
-                  <span style={{ fontSize: '0.875rem' }}>{cat}</span>
-                  <button onClick={() => removeExpenseCat(cat)} style={{ color: 'var(--danger)' }}><Trash2 size={14}/></button>
+                  <span style={{ fontSize: '0.875rem', wordBreak: 'break-word' }}>{cat}</span>
+                  <button onClick={() => removeExpenseCat(cat)} style={{ color: 'var(--danger)', flexShrink: 0 }}><Trash2 size={14}/></button>
                 </div>
               ))}
             </div>
@@ -121,15 +123,17 @@ const SettingsPage = () => {
 
           <div className="glass-card flex-col gap-4">
             <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Income Categories</h3>
-            <div className="flex gap-2 flex-wrap">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', width: '100%' }}>
               {incomeCategories.map(cat => (
                 <div key={cat} style={{ 
                   display: 'flex', alignItems: 'center', gap: '0.5rem', 
                   backgroundColor: 'var(--bg-input)', padding: '0.5rem 0.75rem', 
-                  borderRadius: 'var(--radius-md)'
+                  borderRadius: 'var(--radius-md)',
+                  maxWidth: '100%',
+                  flexShrink: 0
                 }}>
-                  <span style={{ fontSize: '0.875rem' }}>{cat}</span>
-                  <button onClick={() => removeIncomeCat(cat)} style={{ color: 'var(--danger)' }}><Trash2 size={14}/></button>
+                  <span style={{ fontSize: '0.875rem', wordBreak: 'break-word' }}>{cat}</span>
+                  <button onClick={() => removeIncomeCat(cat)} style={{ color: 'var(--danger)', flexShrink: 0 }}><Trash2 size={14}/></button>
                 </div>
               ))}
             </div>
