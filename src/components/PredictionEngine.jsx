@@ -14,8 +14,8 @@ const PredictionEngine = () => {
     const currentDay = isCurrentMonth ? today.getDate() : totalDaysInMonth;
     const daysRemaining = isCurrentMonth ? totalDaysInMonth - currentDay : 0;
 
-    const knownFixed = ['Seat Rent', 'Utility Bill', 'Gas Bill (Cylinder)'];
-    const knownVariable = ['Personal Expenses', 'Food & Dining', 'Transport'];
+    const knownFixed = ['Rent', 'Utilities & Bills', 'Education'];
+    const knownVariable = ['Daily Living', 'Food & Dining', 'Transport', 'Other / Unexpected'];
     
     let variableExpensesSum = 0;
     
