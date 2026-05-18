@@ -103,6 +103,7 @@ const RecentTransactions = () => {
           onChange={(e) => setSelectedCategory(e.target.value)}
           style={{
             flex: '0 0 auto',
+            width: 'auto',
             padding: '0.75rem 1rem',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-color)',
