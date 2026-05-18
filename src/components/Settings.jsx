@@ -26,11 +26,24 @@ const SettingsPage = () => {
 
   const handleSave = async () => {
     setSaving(true);
+    
+    let finalExpenseCats = [...expenseCategories];
+    if (newExpenseCat.trim() && !finalExpenseCats.includes(newExpenseCat.trim())) {
+      finalExpenseCats.push(newExpenseCat.trim());
+      setNewExpenseCat('');
+    }
+
+    let finalIncomeCats = [...incomeCategories];
+    if (newIncomeCat.trim() && !finalIncomeCats.includes(newIncomeCat.trim())) {
+      finalIncomeCats.push(newIncomeCat.trim());
+      setNewIncomeCat('');
+    }
+
     await updateSettings({
       base_income: Number(baseIncome),
       savings_goal: Number(savingsGoal),
-      expense_categories: expenseCategories,
-      income_categories: incomeCategories,
+      expense_categories: finalExpenseCats,
+      income_categories: finalIncomeCats,
       category_budgets: categoryBudgets
     });
     setSaving(false);

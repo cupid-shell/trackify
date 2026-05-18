@@ -7,26 +7,38 @@ const PredictionEngine = () => {
 
   const prediction = useMemo(() => {
     const today = new Date();
-    const currentDay = today.getDate();
-    const totalDaysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    const daysRemaining = totalDaysInMonth - currentDay;
+    const isCurrentMonth = selectedMonth === today.getMonth() && selectedYear === today.getFullYear();
+    const isPastMonth = new Date(selectedYear, selectedMonth, 1) < new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    const totalDaysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+    const currentDay = isCurrentMonth ? today.getDate() : totalDaysInMonth;
+    const daysRemaining = isCurrentMonth ? totalDaysInMonth - currentDay : 0;
 
-    // Fixed categories are excluded from daily burn rate
-    const fixedCategories = ['Seat Rent', 'Utility Bill', 'Gas Bill (Cylinder)'];
+    const knownFixed = ['Seat Rent', 'Utility Bill', 'Gas Bill (Cylinder)'];
+    const knownVariable = ['Personal Expenses', 'Food & Dining', 'Transport'];
     
     let variableExpensesSum = 0;
     
     currentMonthTransactions.forEach(tx => {
-      if (tx.type === 'expense' && !fixedCategories.includes(tx.category)) {
-        variableExpensesSum += Number(tx.amount);
+      if (tx.type === 'expense') {
+        if (knownFixed.includes(tx.category)) return;
+        
+        if (knownVariable.includes(tx.category)) {
+          variableExpensesSum += Number(tx.amount);
+        } else {
+          // Smart heuristic: Include custom categories in daily burn only if they are < 1000 BDT.
+          // Large purchases (like a 5000 BDT keyboard) shouldn't be extrapolated daily.
+          if (Number(tx.amount) < 1000) {
+            variableExpensesSum += Number(tx.amount);
+          }
+        }
       }
     });
 
     // Avoid division by zero
     const dailyBurnRate = currentDay > 0 ? variableExpensesSum / currentDay : 0;
     
-    // Total projected is: what we've spent so far + (variable daily burn * days left)
-    // We assume fixed/one-time expenses don't repeat daily
+    // Project end balance based on daily burn rate for the REST of the month
     const projectedExpenses = totalExpenses + (dailyBurnRate * daysRemaining);
     const projectedBalance = totalIncome - projectedExpenses;
     
@@ -34,11 +46,12 @@ const PredictionEngine = () => {
 
     return {
       dailyBurnRate,
-      projectedBalance,
+      projectedBalance: isPastMonth ? (totalIncome - totalExpenses) : projectedBalance,
       isOnTrack,
-      daysRemaining
+      daysRemaining,
+      isPastMonth
     };
-  }, [totalExpenses, totalIncome, savingsGoal, currentMonthTransactions]);
+  }, [totalExpenses, totalIncome, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear]);
 
   return (
     <div className="glass-card flex-col gap-4" style={{ 
@@ -56,7 +69,7 @@ const PredictionEngine = () => {
           <p style={{ fontSize: '1.25rem', fontWeight: 600 }}>৳{prediction.dailyBurnRate.toFixed(0)}/day</p>
         </div>
         <div>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Projected End Balance</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{prediction.isPastMonth ? 'Final Balance' : 'Projected End Balance'}</p>
           <p style={{ 
             fontSize: '1.25rem', 
             fontWeight: 600,
@@ -82,9 +95,9 @@ const PredictionEngine = () => {
           <AlertTriangle size={18} color="var(--danger)" style={{ marginTop: '2px' }} />
         )}
         <p style={{ fontSize: '0.875rem', color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)' }}>
-          {prediction.isOnTrack 
-            ? `Great job! You are on track to save at least ৳${savingsGoal} this month.` 
-            : `Warning: At your current spending rate, you will miss your minimum ৳${savingsGoal} savings goal. Try to reduce daily spending.`}
+          {prediction.isPastMonth 
+            ? (prediction.isOnTrack ? `Goal achieved! You saved at least ৳${savingsGoal}.` : `You missed your minimum ৳${savingsGoal} savings goal.`)
+            : (prediction.isOnTrack ? `Great job! You are on track to save at least ৳${savingsGoal} this month.` : `Warning: At your current spending rate, you will miss your minimum ৳${savingsGoal} savings goal. Try to reduce daily spending.`)}
         </p>
       </div>
     </div>
