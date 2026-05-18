@@ -5,9 +5,17 @@ import { Trash2, TrendingDown, TrendingUp, Download } from 'lucide-react';
 
 const RecentTransactions = () => {
   const { currentMonthTransactions, deleteTransaction } = useAppContext();
+  const [searchTerm, setSearchTerm] = React.useState('');
+
+  // Filter by search term
+  const filteredTx = currentMonthTransactions.filter(tx => 
+    tx.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (tx.note && tx.note.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    tx.amount.toString().includes(searchTerm)
+  );
 
   // Sort by newest first
-  const sortedTx = [...currentMonthTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedTx = [...filteredTx].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const handleExportCSV = () => {
     if (currentMonthTransactions.length === 0) return;
@@ -63,6 +71,22 @@ const RecentTransactions = () => {
           </button>
         )}
       </div>
+
+      <input 
+        type="text" 
+        placeholder="Search by category, note, or amount..." 
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{
+          width: '100%',
+          padding: '0.75rem 1rem',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-color)',
+          backgroundColor: 'var(--bg-input)',
+          color: 'var(--text-main)',
+          marginBottom: '0.5rem'
+        }}
+      />
       
       {sortedTx.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>

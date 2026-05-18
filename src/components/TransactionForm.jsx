@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { PlusCircle } from 'lucide-react';
 
 const TransactionForm = () => {
-  const { addTransaction } = useAppContext();
+  const { addTransaction, userSettings } = useAppContext();
   const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Seat Rent');
+  const [category, setCategory] = useState(userSettings.expense_categories[0] || 'Expense');
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
 
-  const expenseCategories = ['Seat Rent', 'Utility Bill', 'Gas Bill (Cylinder)', 'Personal Expenses', 'Food & Dining', 'Transport', 'Other / Miscellaneous'];
-  const incomeCategories = ['Allowance', 'Bonus', 'Other'];
+  const expenseCategories = userSettings.expense_categories || [];
+  const incomeCategories = userSettings.income_categories || [];
   const paymentMethods = ['Cash', 'bKash', 'Bank'];
+
+  useEffect(() => {
+    setCategory(type === 'expense' ? expenseCategories[0] : incomeCategories[0]);
+  }, [type, userSettings]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -53,13 +57,13 @@ const TransactionForm = () => {
       <div className="flex gap-4">
         <button 
           style={btnStyle('expense')} 
-          onClick={() => { setType('expense'); setCategory('Seat Rent'); }}
+          onClick={() => setType('expense')}
         >
           Expense
         </button>
         <button 
           style={btnStyle('income')} 
-          onClick={() => { setType('income'); setCategory('Allowance'); }}
+          onClick={() => setType('income')}
         >
           Income
         </button>

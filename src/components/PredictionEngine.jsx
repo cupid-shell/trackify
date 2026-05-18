@@ -11,13 +11,13 @@ const PredictionEngine = () => {
     const totalDaysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     const daysRemaining = totalDaysInMonth - currentDay;
 
-    // Separate variable vs fixed expenses
-    const variableCategories = ['Personal Expenses', 'Food & Dining', 'Transport'];
+    // Fixed categories are excluded from daily burn rate
+    const fixedCategories = ['Seat Rent', 'Utility Bill', 'Gas Bill (Cylinder)'];
     
     let variableExpensesSum = 0;
     
     currentMonthTransactions.forEach(tx => {
-      if (tx.type === 'expense' && variableCategories.includes(tx.category)) {
+      if (tx.type === 'expense' && !fixedCategories.includes(tx.category)) {
         variableExpensesSum += Number(tx.amount);
       }
     });

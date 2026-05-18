@@ -8,6 +8,9 @@ import RecentTransactions from './components/RecentTransactions';
 import ExpenseChart from './components/ExpenseChart';
 import PredictionEngine from './components/PredictionEngine';
 import Login from './components/Login';
+import SettingsPage from './components/Settings';
+import BudgetProgress from './components/BudgetProgress';
+import TrendChart from './components/TrendChart';
 
 import MonthSelector from './components/MonthSelector';
 
@@ -23,6 +26,8 @@ const Dashboard = () => (
       <MonthSelector />
       
       <OverviewCards />
+
+      <BudgetProgress />
 
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
         <TransactionForm />
@@ -69,6 +74,7 @@ const AnalyticsPage = () => (
       }}>
         <PredictionEngine />
         <ExpenseChart />
+        <TrendChart />
       </div>
     </main>
   </>
@@ -110,6 +116,11 @@ function App() {
         <Route path="/analytics" element={
           <ProtectedRoute>
             <AnalyticsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <SettingsPage />
           </ProtectedRoute>
         } />
       </Routes>

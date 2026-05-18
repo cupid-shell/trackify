@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, LogOut, LayoutDashboard, History, PieChart } from 'lucide-react';
+import { Wallet, LogOut, LayoutDashboard, History, PieChart, Settings } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { supabase } from '../supabaseClient';
 import { Link, useLocation } from 'react-router-dom';
@@ -70,6 +70,7 @@ const Header = () => {
             <NavLink to="/" icon={LayoutDashboard} label="Dashboard" />
             <NavLink to="/history" icon={History} label="History" />
             <NavLink to="/analytics" icon={PieChart} label="Analytics" />
+            <NavLink to="/settings" icon={Settings} label="Settings" />
           </nav>
         )}
 

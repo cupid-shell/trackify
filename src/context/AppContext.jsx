@@ -10,30 +10,33 @@ export const AppProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Base configuration
-  const baseIncome = 15000;
-  
-  const [savingsGoal, setSavingsGoal] = useState(() => {
-    const saved = localStorage.getItem('trackify_goal');
-    return saved ? JSON.parse(saved) : 3000;
+  // Settings state
+  const [userSettings, setUserSettings] = useState({
+    base_income: 15000,
+    savings_goal: 3000,
+    expense_categories: ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
+    income_categories: ["Allowance", "Bonus", "Other"],
+    category_budgets: {}
   });
-
-  useEffect(() => {
-    localStorage.setItem('trackify_goal', JSON.stringify(savingsGoal));
-  }, [savingsGoal]);
 
   // Auth state listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchTransactions(session.user.id);
-      else setLoading(false);
+      if (session) {
+        fetchTransactions(session.user.id);
+        fetchSettings(session.user.id);
+      } else {
+        setLoading(false);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchTransactions(session.user.id);
-      else {
+      if (session) {
+        fetchTransactions(session.user.id);
+        fetchSettings(session.user.id);
+      } else {
         setTransactions([]);
         setLoading(false);
       }
@@ -41,6 +44,43 @@ export const AppProvider = ({ children }) => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchSettings = async (userId) => {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (!error && data) {
+      setUserSettings({
+        base_income: data.base_income || 15000,
+        savings_goal: data.savings_goal || 3000,
+        expense_categories: data.expense_categories || ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
+        income_categories: data.income_categories || ["Allowance", "Bonus", "Other"],
+        category_budgets: data.category_budgets || {}
+      });
+    }
+  };
+
+  const updateSettings = async (newSettings) => {
+    if (!session?.user) return;
+    
+    // Optimistic UI update
+    setUserSettings(prev => ({ ...prev, ...newSettings }));
+
+    const { error } = await supabase
+      .from('user_settings')
+      .upsert({
+        user_id: session.user.id,
+        ...newSettings,
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) {
+      alert('Error saving settings: ' + error.message);
+    }
+  };
 
   const fetchTransactions = async (userId) => {
     setLoading(true);
@@ -81,17 +121,14 @@ export const AppProvider = ({ children }) => {
       .single();
 
     if (!error && data) {
-      // Replace temp id with real id
       setTransactions(prev => prev.map(tx => tx.id === tempId ? data : tx));
     } else {
-      // Revert optimistic update on error
       setTransactions(prev => prev.filter(tx => tx.id !== tempId));
       alert('Error adding transaction: ' + error.message);
     }
   };
 
   const deleteTransaction = async (id) => {
-    // Optimistic UI update
     const originalTransactions = [...transactions];
     setTransactions(prev => prev.filter(tx => tx.id !== id));
 
@@ -101,17 +138,11 @@ export const AppProvider = ({ children }) => {
       .eq('id', id);
 
     if (error) {
-      // Revert on error
       setTransactions(originalTransactions);
       alert('Error deleting transaction: ' + error.message);
     }
   };
 
-  const updateSavingsGoal = (amount) => {
-    setSavingsGoal(amount);
-  };
-
-  // Derived state for selected month/year filtering
   const currentRealDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentRealDate.getMonth());
   const [selectedYear, setSelectedYear] = useState(currentRealDate.getFullYear());
@@ -125,7 +156,7 @@ export const AppProvider = ({ children }) => {
     .filter(tx => tx.type === 'income')
     .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
-  const totalIncome = baseIncome + totalAllowances;
+  const totalIncome = Number(userSettings.base_income) + totalAllowances;
 
   const totalExpenses = currentMonthTransactions
     .filter(tx => tx.type === 'expense')
@@ -136,12 +167,13 @@ export const AppProvider = ({ children }) => {
   const value = {
     session,
     transactions,
-    baseIncome,
-    savingsGoal,
+    userSettings,
+    updateSettings,
+    baseIncome: Number(userSettings.base_income),
+    savingsGoal: Number(userSettings.savings_goal),
     loading,
     addTransaction,
     deleteTransaction,
-    updateSavingsGoal,
     currentMonthTransactions,
     selectedMonth,
     setSelectedMonth,
