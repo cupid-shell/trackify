@@ -169,14 +169,6 @@ export const AppProvider = ({ children }) => {
     // Optistic UI for settings
     setUserSettings(newSettings);
 
-    // 2. Update transactions locally
-    setTransactions(prev => prev.map(tx => {
-      if (tx.type === type && tx.category === oldName) {
-        return { ...tx, category: trimmedNewName };
-      }
-      return tx;
-    }));
-
     // 3. Save settings to DB
     const { error: settingsError } = await supabase
       .from('user_settings')
@@ -190,16 +182,41 @@ export const AppProvider = ({ children }) => {
       alert('Error saving renamed category setting: ' + settingsError.message);
     }
 
-    // 4. Update transactions in DB
-    const { error: txError } = await supabase
+    // 4. Update transactions in DB (Preserve old category in note!)
+    const { data: txsToUpdate } = await supabase
       .from('transactions')
-      .update({ category: trimmedNewName })
+      .select('*')
       .eq('user_id', session.user.id)
       .eq('type', type)
       .eq('category', oldName);
 
-    if (txError) {
-      alert('Error migrating past transactions: ' + txError.message);
+    if (txsToUpdate && txsToUpdate.length > 0) {
+      const updatedTxs = txsToUpdate.map(tx => {
+        // If they are merging "Snacks" into "Food", we save "Snacks" in the note.
+        const newNote = tx.note ? `[${oldName}] ${tx.note}` : oldName;
+        return {
+          ...tx,
+          category: trimmedNewName,
+          note: newNote
+        };
+      });
+
+      const { error: txError } = await supabase
+        .from('transactions')
+        .upsert(updatedTxs);
+
+      if (txError) {
+        alert('Error migrating past transactions: ' + txError.message);
+      } else {
+        // Also update local state notes so UI reflects it immediately
+        setTransactions(prev => prev.map(tx => {
+          if (tx.type === type && tx.category === oldName) {
+            const newNote = tx.note ? `[${oldName}] ${tx.note}` : oldName;
+            return { ...tx, category: trimmedNewName, note: newNote };
+          }
+          return tx;
+        }));
+      }
     }
   };
 
