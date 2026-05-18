@@ -6,13 +6,22 @@ import { Trash2, TrendingDown, TrendingUp, Download } from 'lucide-react';
 const RecentTransactions = () => {
   const { currentMonthTransactions, deleteTransaction } = useAppContext();
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [selectedCategory, setSelectedCategory] = React.useState('All');
 
-  // Filter by search term
-  const filteredTx = currentMonthTransactions.filter(tx => 
-    tx.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (tx.note && tx.note.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    tx.amount.toString().includes(searchTerm)
-  );
+  // Get unique categories for the current month to populate the dropdown
+  const uniqueCategories = ['All', ...new Set(currentMonthTransactions.map(tx => tx.category))].sort();
+
+  // Filter by search term AND selected category
+  const filteredTx = currentMonthTransactions.filter(tx => {
+    const matchesSearch = 
+      tx.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (tx.note && tx.note.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      tx.amount.toString().includes(searchTerm);
+      
+    const matchesCategory = selectedCategory === 'All' || tx.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   // Sort by newest first
   const sortedTx = [...filteredTx].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -72,21 +81,38 @@ const RecentTransactions = () => {
         )}
       </div>
 
-      <input 
-        type="text" 
-        placeholder="Search by category, note, or amount..." 
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        style={{
-          width: '100%',
-          padding: '0.75rem 1rem',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-color)',
-          backgroundColor: 'var(--bg-input)',
-          color: 'var(--text-main)',
-          marginBottom: '0.5rem'
-        }}
-      />
+      <div className="flex gap-2" style={{ marginBottom: '0.5rem' }}>
+        <input 
+          type="text" 
+          placeholder="Search by category, note, or amount..." 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            flex: 1,
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-color)',
+            backgroundColor: 'var(--bg-input)',
+            color: 'var(--text-main)'
+          }}
+        />
+        <select 
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          style={{
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-color)',
+            backgroundColor: 'var(--bg-input)',
+            color: 'var(--text-main)',
+            minWidth: '150px'
+          }}
+        >
+          {uniqueCategories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+      </div>
       
       {sortedTx.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>

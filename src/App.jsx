@@ -27,12 +27,12 @@ const Dashboard = () => (
       
       <OverviewCards />
 
-      <div style={{ maxWidth: '800px', margin: '0 auto', marginBottom: '2rem', width: '100%' }}>
-        <BudgetProgress />
+      <div style={{ maxWidth: '600px', margin: '0 auto', marginBottom: '2rem' }}>
+        <TransactionForm />
       </div>
 
-      <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <TransactionForm />
+      <div style={{ maxWidth: '800px', margin: '0 auto', marginBottom: '2rem', width: '100%' }}>
+        <BudgetProgress />
       </div>
     </main>
   </>
