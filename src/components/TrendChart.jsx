@@ -82,7 +82,7 @@ const TrendChart = () => {
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} />
-            <YAxis stroke="var(--text-muted)" fontSize={12} tickFormatter={(v) => `৳${(v/1000).toFixed(0)}k`} />
+            <YAxis stroke="var(--text-muted)" fontSize={12} width={65} tickFormatter={(v) => `৳${(v/1000).toFixed(0)}k`} />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Area 
