@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette } from 'lucide-react';
+import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette, Download } from 'lucide-react';
+import { format } from 'date-fns';
 import Header from './Header';
 import Footer from './Footer';
 
 const SettingsPage = () => {
-  const { userSettings, updateSettings, renameCategory } = useAppContext();
+  const { userSettings, updateSettings, renameCategory, transactions } = useAppContext();
   
   const [baseIncome, setBaseIncome] = useState(userSettings.base_income);
   const [savingsGoal, setSavingsGoal] = useState(userSettings.savings_goal);
@@ -23,6 +24,30 @@ const SettingsPage = () => {
   
   const [saving, setSaving] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('trackify_theme') || 'indigo');
+
+  const handleExportAllTimeCSV = () => {
+    if (transactions.length === 0) return;
+
+    const headers = ['Date', 'Type', 'Category', 'Payment Method', 'Amount (BDT)', 'Note'];
+    const sortedAllTime = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    const csvRows = sortedAllTime.map(tx => {
+      const formattedDate = format(new Date(tx.date), 'yyyy-MM-dd');
+      const escapedNote = tx.note ? `"${tx.note.replace(/"/g, '""')}"` : '';
+      return [formattedDate, tx.type, tx.category, tx.payment_method || 'Cash', tx.amount, escapedNote].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `trackify_all_time_backup_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const themes = [
     { name: 'indigo', label: 'Indigo', color: '#6366f1', hover: '#4f46e5', glow: 'rgba(99, 102, 241, 0.4)' },
@@ -320,6 +345,38 @@ const SettingsPage = () => {
                 />
               ))}
             </div>
+          </div>
+
+          <div className="glass-card flex-col gap-4">
+            <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Download size={18} />
+              Data Backup & Export
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              Download your entire financial history to a CSV file (compatible with Excel, Google Sheets, etc.).
+            </p>
+            <button
+              onClick={handleExportAllTimeCSV}
+              disabled={transactions.length === 0}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1rem',
+                backgroundColor: 'var(--bg-input)',
+                color: transactions.length === 0 ? 'var(--text-muted)' : 'var(--text-main)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                border: '1px solid var(--border-color)',
+                cursor: transactions.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: transactions.length === 0 ? 0.6 : 1
+              }}
+            >
+              <Download size={16} />
+              Export All-Time Data ({transactions.length} records)
+            </button>
           </div>
 
           <div className="flex gap-4">

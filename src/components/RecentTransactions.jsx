@@ -7,6 +7,8 @@ const RecentTransactions = () => {
   const { currentMonthTransactions, deleteTransaction, updateTransaction, userSettings } = useAppContext();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedCategory, setSelectedCategory] = React.useState('All');
+  const [startDate, setStartDate] = React.useState('');
+  const [endDate, setEndDate] = React.useState('');
 
   // Edit mode states
   const [editingId, setEditingId] = React.useState(null);
@@ -54,7 +56,24 @@ const RecentTransactions = () => {
       
     const matchesCategory = selectedCategory === 'All' || tx.category === selectedCategory;
     
-    return matchesSearch && matchesCategory;
+    const txDate = new Date(tx.date);
+    txDate.setHours(0, 0, 0, 0);
+
+    let matchesStartDate = true;
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      matchesStartDate = txDate >= start;
+    }
+
+    let matchesEndDate = true;
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(0, 0, 0, 0);
+      matchesEndDate = txDate <= end;
+    }
+    
+    return matchesSearch && matchesCategory && matchesStartDate && matchesEndDate;
   });
 
   // Sort by newest first
@@ -115,41 +134,95 @@ const RecentTransactions = () => {
         )}
       </div>
 
-      <div className="flex gap-4" style={{ marginBottom: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 200px' }}>
-          <input 
-            type="text" 
-            placeholder="Search by category, note, or amount..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+      <div className="flex-col gap-3" style={{ marginBottom: '1rem' }}>
+        <div className="flex gap-4" style={{ flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 200px' }}>
+            <input 
+              type="text" 
+              placeholder="Search by category, note, or amount..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--text-main)'
+              }}
+            />
+          </div>
+          <select 
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             style={{
-              width: '100%',
+              flex: '0 0 auto',
+              width: 'auto',
               padding: '0.75rem 1rem',
               borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-color)',
               backgroundColor: 'var(--bg-input)',
-              color: 'var(--text-main)'
+              color: 'var(--text-main)',
+              minWidth: '150px'
             }}
-          />
+          >
+            {uniqueCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
         </div>
-        <select 
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          style={{
-            flex: '0 0 auto',
-            width: 'auto',
-            padding: '0.75rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            backgroundColor: 'var(--bg-input)',
-            color: 'var(--text-main)',
-            minWidth: '150px'
-          }}
-        >
-          {uniqueCategories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
+
+        <div className="flex gap-4 items-center" style={{ flexWrap: 'wrap', fontSize: '0.875rem' }}>
+          <div className="flex items-center gap-2" style={{ flex: '1 1 150px' }}>
+            <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>From:</span>
+            <input 
+              type="date" 
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--text-main)'
+              }}
+            />
+          </div>
+          <div className="flex items-center gap-2" style={{ flex: '1 1 150px' }}>
+            <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>To:</span>
+            <input 
+              type="date" 
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--text-main)'
+              }}
+            />
+          </div>
+          {(startDate || endDate) && (
+            <button
+              onClick={() => { setStartDate(''); setEndDate(''); }}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.75rem',
+                color: 'var(--danger)',
+                backgroundColor: 'var(--danger-bg)',
+                borderRadius: 'var(--radius-sm)',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Clear Dates
+            </button>
+          )}
+        </div>
       </div>
       
       {sortedTx.length === 0 ? (

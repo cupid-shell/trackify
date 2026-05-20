@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { PlusCircle } from 'lucide-react';
 
@@ -16,6 +16,40 @@ const TransactionForm = () => {
   const expenseCategories = userSettings.expense_categories || [];
   const incomeCategories = userSettings.income_categories || [];
   const paymentMethods = ['Cash', 'bKash', 'Bank'];
+
+  const activePresets = useMemo(() => {
+    const defaultPresets = [
+      { label: '৳15 Bus', amount: 15, category: 'Transport', note: 'Bus fare', payment: 'Cash' },
+      { label: '৳50 Snack', amount: 50, category: 'Food & Dining', note: 'Snacks', payment: 'Cash' },
+      { label: '৳120 Lunch', amount: 120, category: 'Food & Dining', note: 'Lunch', payment: 'Cash' },
+      { label: '৳100 Mobile', amount: 100, category: 'Utilities & Bills', note: 'Mobile recharge', payment: 'bKash' }
+    ];
+    
+    let filtered = defaultPresets.filter(p => expenseCategories.includes(p.category));
+    
+    if (filtered.length === 0 && expenseCategories.length > 0) {
+      filtered = expenseCategories.slice(0, 3).map(cat => ({
+        label: `৳100 ${cat}`,
+        amount: 100,
+        category: cat,
+        note: `Quick ${cat}`,
+        payment: 'Cash'
+      }));
+    }
+    return filtered;
+  }, [expenseCategories]);
+
+  const handleLogPreset = (preset) => {
+    addTransaction({
+      type: 'expense',
+      amount: preset.amount,
+      category: preset.category,
+      note: preset.note,
+      date: new Date().toISOString().split('T')[0],
+      payment_method: preset.payment
+    });
+    alert(`Logged preset transaction: ${preset.label}!`);
+  };
 
   useEffect(() => {
     setCategory(type === 'expense' ? expenseCategories[0] : incomeCategories[0]);
@@ -113,6 +147,41 @@ const TransactionForm = () => {
           </button>
         </div>
       </div>
+      
+      {type === 'expense' && activePresets.length > 0 && (
+        <div className="flex-col gap-2" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Quick Presets (One-Tap Log)</span>
+          <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+            {activePresets.map((preset, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleLogPreset(preset)}
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.4rem 0.6rem',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-main)',
+                  fontWeight: 500,
+                  transition: 'var(--transition)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--primary)';
+                  e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                  e.currentTarget.style.backgroundColor = 'var(--bg-input)';
+                }}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       
       <div className="flex gap-4">
         <button 

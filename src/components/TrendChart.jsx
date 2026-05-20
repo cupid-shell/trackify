@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subMonths } from 'date-fns';
 
 const TrendChart = () => {
@@ -65,38 +65,51 @@ const TrendChart = () => {
       <h2 style={{ fontSize: '1.25rem' }}>6-Month Trend</h2>
       <div style={{ width: '100%', height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={trendData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+          <AreaChart data={trendData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <defs>
+              <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25}/>
+                <stop offset="95%" stopColor="#22c55e" stopOpacity={0.01}/>
+              </linearGradient>
+              <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25}/>
+                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.01}/>
+              </linearGradient>
+              <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.25}/>
+                <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.01}/>
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} />
             <YAxis stroke="var(--text-muted)" fontSize={12} tickFormatter={(v) => `৳${(v/1000).toFixed(0)}k`} />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
-            <Line 
+            <Area 
               type="monotone" 
               dataKey="Income" 
               stroke="#22c55e" 
-              strokeWidth={2.5} 
-              dot={{ r: 4, fill: '#22c55e' }}
-              activeDot={{ r: 6 }}
+              fillOpacity={1}
+              fill="url(#colorIncome)"
+              strokeWidth={2.5}
             />
-            <Line 
+            <Area 
               type="monotone" 
               dataKey="Expenses" 
               stroke="#ef4444" 
+              fillOpacity={1}
+              fill="url(#colorExpenses)"
               strokeWidth={2.5}
-              dot={{ r: 4, fill: '#ef4444' }}
-              activeDot={{ r: 6 }}
             />
-            <Line 
+            <Area 
               type="monotone" 
               dataKey="Savings" 
-              stroke="#6366f1" 
+              stroke="var(--primary)" 
+              fillOpacity={1}
+              fill="url(#colorSavings)"
               strokeWidth={2}
-              strokeDasharray="5 5"
-              dot={{ r: 3, fill: '#6366f1' }}
-              activeDot={{ r: 5 }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>
