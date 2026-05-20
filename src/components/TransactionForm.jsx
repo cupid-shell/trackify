@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { PlusCircle } from 'lucide-react';
 
 const TransactionForm = () => {
-  const { addTransaction, userSettings } = useAppContext();
+  const { addTransaction, userSettings, presets } = useAppContext();
   const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(userSettings.expense_categories[0] || 'Expense');
@@ -18,14 +18,7 @@ const TransactionForm = () => {
   const paymentMethods = ['Cash', 'bKash', 'Bank'];
 
   const activePresets = useMemo(() => {
-    const defaultPresets = [
-      { label: '৳15 Bus', amount: 15, category: 'Transport', note: 'Bus fare', payment: 'Cash' },
-      { label: '৳50 Snack', amount: 50, category: 'Food & Dining', note: 'Snacks', payment: 'Cash' },
-      { label: '৳120 Lunch', amount: 120, category: 'Food & Dining', note: 'Lunch', payment: 'Cash' },
-      { label: '৳100 Mobile', amount: 100, category: 'Utilities & Bills', note: 'Mobile recharge', payment: 'bKash' }
-    ];
-    
-    let filtered = defaultPresets.filter(p => expenseCategories.includes(p.category));
+    let filtered = presets.filter(p => expenseCategories.includes(p.category));
     
     if (filtered.length === 0 && expenseCategories.length > 0) {
       filtered = expenseCategories.slice(0, 3).map(cat => ({
@@ -37,7 +30,7 @@ const TransactionForm = () => {
       }));
     }
     return filtered;
-  }, [expenseCategories]);
+  }, [presets, expenseCategories]);
 
   const handleLogPreset = (preset) => {
     addTransaction({

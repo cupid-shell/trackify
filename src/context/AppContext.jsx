@@ -35,6 +35,28 @@ export const AppProvider = ({ children }) => {
     category_budgets: {}
   });
 
+  const [presets, setPresets] = useState(() => {
+    const saved = localStorage.getItem('trackify_presets');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // use default
+      }
+    }
+    return [
+      { label: '৳15 Bus', amount: 15, category: 'Transport', note: 'Bus fare', payment: 'Cash' },
+      { label: '৳50 Snack', amount: 50, category: 'Food & Dining', note: 'Snacks', payment: 'Cash' },
+      { label: '৳120 Lunch', amount: 120, category: 'Food & Dining', note: 'Lunch', payment: 'Cash' },
+      { label: '৳100 Mobile', amount: 100, category: 'Utilities & Bills', note: 'Mobile recharge', payment: 'bKash' }
+    ];
+  });
+
+  const updatePresets = (newPresets) => {
+    setPresets(newPresets);
+    localStorage.setItem('trackify_presets', JSON.stringify(newPresets));
+  };
+
   // Auth state listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -289,6 +311,8 @@ export const AppProvider = ({ children }) => {
     transactions,
     userSettings,
     updateSettings,
+    presets,
+    updatePresets,
     baseIncome: Number(userSettings.base_income),
     savingsGoal: Number(userSettings.savings_goal),
     loading,

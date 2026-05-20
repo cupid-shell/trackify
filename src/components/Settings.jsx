@@ -6,7 +6,7 @@ import Header from './Header';
 import Footer from './Footer';
 
 const SettingsPage = () => {
-  const { userSettings, updateSettings, renameCategory, transactions } = useAppContext();
+  const { userSettings, updateSettings, renameCategory, transactions, presets, updatePresets } = useAppContext();
   
   const [baseIncome, setBaseIncome] = useState(userSettings.base_income);
   const [savingsGoal, setSavingsGoal] = useState(userSettings.savings_goal);
@@ -24,6 +24,42 @@ const SettingsPage = () => {
   
   const [saving, setSaving] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('trackify_theme') || 'indigo');
+
+  const [localPresets, setLocalPresets] = useState(presets);
+  const [newPresetLabel, setNewPresetLabel] = useState('');
+  const [newPresetAmount, setNewPresetAmount] = useState('');
+  const [newPresetCategory, setNewPresetCategory] = useState('');
+  const [newPresetNote, setNewPresetNote] = useState('');
+  const [newPresetPayment, setNewPresetPayment] = useState('Cash');
+
+  useEffect(() => {
+    if (expenseCategories.length > 0 && !newPresetCategory) {
+      setNewPresetCategory(expenseCategories[0]);
+    }
+  }, [expenseCategories, newPresetCategory]);
+
+  useEffect(() => {
+    setLocalPresets(presets);
+  }, [presets]);
+
+  const addPreset = () => {
+    if (!newPresetLabel.trim() || !newPresetAmount || isNaN(newPresetAmount)) return;
+    const newPreset = {
+      label: newPresetLabel.trim(),
+      amount: Number(newPresetAmount),
+      category: newPresetCategory || expenseCategories[0] || 'Other / Unexpected',
+      note: newPresetNote.trim() || '',
+      payment: newPresetPayment
+    };
+    setLocalPresets(prev => [...prev, newPreset]);
+    setNewPresetLabel('');
+    setNewPresetAmount('');
+    setNewPresetNote('');
+  };
+
+  const removePreset = (idx) => {
+    setLocalPresets(prev => prev.filter((_, i) => i !== idx));
+  };
 
   const handleExportAllTimeCSV = () => {
     if (transactions.length === 0) return;
@@ -81,6 +117,12 @@ const SettingsPage = () => {
         "Food & Dining": 3500,
         "Daily Living": 3000
       });
+      setLocalPresets([
+        { label: '৳15 Bus', amount: 15, category: 'Transport', note: 'Bus fare', payment: 'Cash' },
+        { label: '৳50 Snack', amount: 50, category: 'Food & Dining', note: 'Snacks', payment: 'Cash' },
+        { label: '৳120 Lunch', amount: 120, category: 'Food & Dining', note: 'Lunch', payment: 'Cash' },
+        { label: '৳100 Mobile', amount: 100, category: 'Utilities & Bills', note: 'Mobile recharge', payment: 'bKash' }
+      ]);
       alert('Settings reset to defaults. Click "Save All Settings" to commit the changes.');
     }
   };
@@ -123,6 +165,7 @@ const SettingsPage = () => {
       income_categories: finalIncomeCats,
       category_budgets: cleanedBudgets
     });
+    updatePresets(localPresets);
     setSaving(false);
     alert('Settings saved successfully!');
   };
@@ -318,6 +361,92 @@ const SettingsPage = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="glass-card flex-col gap-4">
+            <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Quick Presets (One-Tap Log)</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Configure your one-tap expense logging presets shown on the transaction form.</p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {localPresets.map((preset, idx) => (
+                <div key={idx} className="flex items-center justify-between" style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)', gap: '0.5rem' }}>
+                  <div className="flex-col" style={{ gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{preset.label}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      ৳{preset.amount} • {preset.category} • {preset.payment} {preset.note ? `• ${preset.note}` : ''}
+                    </span>
+                  </div>
+                  <button onClick={() => removePreset(idx)} style={{ color: 'var(--danger)', padding: '0.25rem' }}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Add New Preset</span>
+              <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+                <input 
+                  type="text" 
+                  placeholder="Button Label (e.g. ৳15 Bus)" 
+                  value={newPresetLabel}
+                  onChange={(e) => setNewPresetLabel(e.target.value)}
+                  style={{ flex: '1 1 200px', padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                />
+                <input 
+                  type="number" 
+                  placeholder="Amount (BDT)" 
+                  value={newPresetAmount}
+                  onChange={(e) => setNewPresetAmount(e.target.value)}
+                  style={{ flex: '1 1 120px', padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                />
+              </div>
+              <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+                <select 
+                  value={newPresetCategory} 
+                  onChange={(e) => setNewPresetCategory(e.target.value)}
+                  style={{ flex: '1 1 150px', padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                >
+                  {expenseCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <select 
+                  value={newPresetPayment} 
+                  onChange={(e) => setNewPresetPayment(e.target.value)}
+                  style={{ flex: '1 1 120px', padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="bKash">bKash</option>
+                  <option value="Bank">Bank</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Note (Optional, e.g. Bus fare)" 
+                  value={newPresetNote}
+                  onChange={(e) => setNewPresetNote(e.target.value)}
+                  style={{ flex: 1, padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                />
+                <button 
+                  onClick={addPreset} 
+                  style={{ 
+                    padding: '0.5rem 1rem', 
+                    backgroundColor: 'var(--primary)', 
+                    color: 'white', 
+                    borderRadius: 'var(--radius-md)',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}
+                >
+                  <Plus size={16} /> Add
+                </button>
+              </div>
             </div>
           </div>
 
