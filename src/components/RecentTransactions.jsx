@@ -134,7 +134,7 @@ const RecentTransactions = () => {
         )}
       </div>
 
-      <div className="flex-col gap-3" style={{ marginBottom: '1rem' }}>
+      <div className="flex-col gap-4" style={{ marginBottom: '1rem' }}>
         <div className="flex gap-4" style={{ flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 200px' }}>
             <input 
