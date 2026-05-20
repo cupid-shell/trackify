@@ -5,9 +5,10 @@ import { AlertTriangle } from 'lucide-react';
 const BudgetProgress = () => {
   const { userSettings, currentMonthTransactions } = useAppContext();
   const budgets = userSettings.category_budgets || {};
+  const expenseCategories = userSettings.expense_categories || [];
 
-  // Only show categories that have a budget set
-  const budgetedCategories = Object.keys(budgets).filter(cat => budgets[cat] > 0);
+  // Only show categories that have a budget set and exist in the current expense categories
+  const budgetedCategories = Object.keys(budgets).filter(cat => budgets[cat] > 0 && expenseCategories.includes(cat));
 
   if (budgetedCategories.length === 0) return null;
 

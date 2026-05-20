@@ -46,12 +46,20 @@ const SettingsPage = () => {
       setNewIncomeCat('');
     }
 
+    // Clean up category budgets for deleted categories
+    const cleanedBudgets = { ...categoryBudgets };
+    Object.keys(cleanedBudgets).forEach(cat => {
+      if (!finalExpenseCats.includes(cat)) {
+        delete cleanedBudgets[cat];
+      }
+    });
+
     await updateSettings({
       base_income: Number(baseIncome),
       savings_goal: Number(savingsGoal),
       expense_categories: finalExpenseCats,
       income_categories: finalIncomeCats,
-      category_budgets: categoryBudgets
+      category_budgets: cleanedBudgets
     });
     setSaving(false);
     alert('Settings saved successfully!');
