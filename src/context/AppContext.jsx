@@ -193,8 +193,7 @@ export const AppProvider = ({ children }) => {
       .from('transactions')
       .update(updatedFields)
       .eq('id', id)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       setTransactions(originalTransactions);
@@ -202,8 +201,9 @@ export const AppProvider = ({ children }) => {
       return false;
     }
 
-    if (data) {
-      setTransactions(prev => prev.map(tx => tx.id === id ? data : tx));
+    const updated = data?.[0];
+    if (updated) {
+      setTransactions(prev => prev.map(tx => tx.id === id ? updated : tx));
     }
     return true;
   };
