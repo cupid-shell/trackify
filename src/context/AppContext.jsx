@@ -193,6 +193,7 @@ export const AppProvider = ({ children }) => {
       .from('transactions')
       .update(updatedFields)
       .eq('id', id)
+      .eq('user_id', session.user.id)  // belt-and-suspenders: ensures RLS match
       .select();
 
     if (error) {
@@ -201,10 +202,14 @@ export const AppProvider = ({ children }) => {
       return false;
     }
 
-    const updated = data?.[0];
-    if (updated) {
-      setTransactions(prev => prev.map(tx => tx.id === id ? updated : tx));
+    // If no rows came back, the DB silently rejected the update (e.g. missing UPDATE policy)
+    if (!data || data.length === 0) {
+      setTransactions(originalTransactions);
+      alert('Update failed: the change was not saved to the database. Please run the missing UPDATE policy SQL in your Supabase dashboard:\n\nCREATE POLICY "Users can update own transactions" ON transactions FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);');
+      return false;
     }
+
+    setTransactions(prev => prev.map(tx => tx.id === id ? data[0] : tx));
     return true;
   };
 

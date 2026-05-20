@@ -26,3 +26,10 @@ CREATE POLICY "Users can insert own transactions" ON transactions
 -- Create policy to allow users to DELETE their own transactions
 CREATE POLICY "Users can delete own transactions" ON transactions
   FOR DELETE USING (auth.uid() = user_id);
+
+-- Create policy to allow users to UPDATE their own transactions
+-- NOTE: This was missing from the original setup and must be added manually
+-- if the table was already created without it.
+CREATE POLICY "Users can update own transactions" ON transactions
+  FOR UPDATE USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
