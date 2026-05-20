@@ -1,12 +1,46 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { format } from 'date-fns';
-import { Trash2, TrendingDown, TrendingUp, Download } from 'lucide-react';
+import { Trash2, TrendingDown, TrendingUp, Download, Edit2 } from 'lucide-react';
 
 const RecentTransactions = () => {
-  const { currentMonthTransactions, deleteTransaction } = useAppContext();
+  const { currentMonthTransactions, deleteTransaction, updateTransaction, userSettings } = useAppContext();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedCategory, setSelectedCategory] = React.useState('All');
+
+  // Edit mode states
+  const [editingId, setEditingId] = React.useState(null);
+  const [editAmount, setEditAmount] = React.useState('');
+  const [editCategory, setEditCategory] = React.useState('');
+  const [editNote, setEditNote] = React.useState('');
+  const [editPaymentMethod, setEditPaymentMethod] = React.useState('Cash');
+  const [editDate, setEditDate] = React.useState('');
+
+  const startEditing = (tx) => {
+    setEditingId(tx.id);
+    setEditAmount(tx.amount.toString());
+    setEditCategory(tx.category);
+    setEditNote(tx.note || '');
+    setEditPaymentMethod(tx.payment_method || 'Cash');
+    setEditDate(tx.date);
+  };
+
+  const saveEdit = async (txId) => {
+    if (!editAmount || isNaN(Number(editAmount)) || Number(editAmount) <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+    const success = await updateTransaction(txId, {
+      amount: Number(editAmount),
+      category: editCategory,
+      note: editNote,
+      payment_method: editPaymentMethod,
+      date: editDate
+    });
+    if (success) {
+      setEditingId(null);
+    }
+  };
 
   // Get unique categories for the current month to populate the dropdown
   const uniqueCategories = ['All', ...new Set(currentMonthTransactions.map(tx => tx.category))].sort();
@@ -124,67 +158,183 @@ const RecentTransactions = () => {
         </div>
       ) : (
         <div className="flex-col gap-4">
-          {sortedTx.map((tx) => (
-            <div 
-              key={tx.id} 
-              className="flex items-center justify-between"
-              style={{
-                padding: '1rem',
-                backgroundColor: 'var(--bg-input)',
-                borderRadius: 'var(--radius-md)',
-                transition: 'var(--transition)'
-              }}
-            >
-              <div className="flex items-center gap-4">
-                <div style={{
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-full)',
-                  backgroundColor: tx.type === 'income' ? 'var(--success-bg)' : 'var(--danger-bg)',
-                  color: tx.type === 'income' ? 'var(--success)' : 'var(--danger)'
-                }}>
-                  {tx.type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+          {sortedTx.map((tx) => {
+            const isEditing = editingId === tx.id;
+            
+            if (isEditing) {
+              return (
+                <div 
+                  key={tx.id} 
+                  className="flex-col gap-3"
+                  style={{
+                    padding: '1rem',
+                    backgroundColor: 'var(--bg-hover)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--primary)',
+                    transition: 'var(--transition)'
+                  }}
+                >
+                  <div className="flex gap-2 flex-wrap">
+                    <div style={{ flex: '1 1 120px' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Amount (BDT)</label>
+                      <input 
+                        type="number" 
+                        value={editAmount} 
+                        onChange={e => setEditAmount(e.target.value)} 
+                        style={{ padding: '0.5rem', fontSize: '0.875rem' }} 
+                      />
+                    </div>
+                    <div style={{ flex: '1 1 150px' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Category</label>
+                      <select 
+                        value={editCategory} 
+                        onChange={e => setEditCategory(e.target.value)}
+                        style={{ padding: '0.5rem', fontSize: '0.875rem' }}
+                      >
+                        {(tx.type === 'expense' ? userSettings.expense_categories : userSettings.income_categories).map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ flex: '1 1 120px' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Payment Method</label>
+                      <select 
+                        value={editPaymentMethod} 
+                        onChange={e => setEditPaymentMethod(e.target.value)}
+                        style={{ padding: '0.5rem', fontSize: '0.875rem' }}
+                      >
+                        <option value="Cash">Cash</option>
+                        <option value="Card">Card</option>
+                        <option value="bKash">bKash</option>
+                        <option value="Nagad">Nagad</option>
+                        <option value="Rocket">Rocket</option>
+                      </select>
+                    </div>
+                    <div style={{ flex: '1 1 150px' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Date</label>
+                      <input 
+                        type="date" 
+                        value={editDate} 
+                        onChange={e => setEditDate(e.target.value)} 
+                        style={{ padding: '0.5rem', fontSize: '0.875rem' }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Note</label>
+                    <input 
+                      type="text" 
+                      value={editNote} 
+                      onChange={e => setEditNote(e.target.value)} 
+                      placeholder="Optional note"
+                      style={{ padding: '0.5rem', fontSize: '0.875rem' }}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2" style={{ marginTop: '0.25rem' }}>
+                    <button 
+                      onClick={() => setEditingId(null)}
+                      style={{
+                        padding: '0.4rem 0.8rem',
+                        fontSize: '0.75rem',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border-color)',
+                        color: 'var(--text-muted)'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={() => saveEdit(tx.id)}
+                      style={{
+                        padding: '0.4rem 0.8rem',
+                        fontSize: '0.75rem',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--primary)',
+                        color: 'white',
+                        fontWeight: 600
+                      }}
+                    >
+                      Save
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <h4 style={{ fontWeight: 600 }}>{tx.category}</h4>
-                  <div className="flex gap-2 items-center" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                    <span style={{ 
-                      backgroundColor: 'rgba(255,255,255,0.1)', 
-                      padding: '2px 6px', 
-                      borderRadius: '4px',
-                      fontSize: '0.7rem'
-                    }}>
-                      {tx.payment_method || 'Cash'}
-                    </span>
-                    <span>{format(new Date(tx.date), 'MMM dd, yyyy')}</span>
-                    {tx.note && (
-                      <>
-                        <span>•</span>
-                        <span>{tx.note}</span>
-                      </>
-                    )}
+              );
+            }
+
+            return (
+              <div 
+                key={tx.id} 
+                className="flex items-center justify-between"
+                style={{
+                  padding: '1rem',
+                  backgroundColor: 'var(--bg-input)',
+                  borderRadius: 'var(--radius-md)',
+                  transition: 'var(--transition)'
+                }}
+              >
+                <div className="flex items-center gap-4">
+                  <div style={{
+                    padding: '0.75rem',
+                    borderRadius: 'var(--radius-full)',
+                    backgroundColor: tx.type === 'income' ? 'var(--success-bg)' : 'var(--danger-bg)',
+                    color: tx.type === 'income' ? 'var(--success)' : 'var(--danger)'
+                  }}>
+                    {tx.type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                  </div>
+                  <div>
+                    <h4 style={{ fontWeight: 600 }}>{tx.category}</h4>
+                    <div className="flex gap-2 items-center" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                      <span style={{ 
+                        backgroundColor: 'rgba(255,255,255,0.1)', 
+                        padding: '2px 6px', 
+                        borderRadius: '4px',
+                        fontSize: '0.7rem'
+                      }}>
+                        {tx.payment_method || 'Cash'}
+                      </span>
+                      <span>{format(new Date(tx.date), 'MMM dd, yyyy')}</span>
+                      {tx.note && (
+                        <>
+                          <span>•</span>
+                          <span>{tx.note}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <span style={{
+                    fontWeight: 700,
+                    fontSize: '1.125rem',
+                    color: tx.type === 'income' ? 'var(--success)' : 'var(--text-main)'
+                  }}>
+                    {tx.type === 'income' ? '+' : '-'}৳{tx.amount.toLocaleString('en-IN')}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => startEditing(tx)}
+                      style={{ color: 'var(--text-muted)' }}
+                      onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                      title="Edit Transaction"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      onClick={() => deleteTransaction(tx.id)}
+                      style={{ color: 'var(--text-muted)' }}
+                      onMouseOver={(e) => e.currentTarget.style.color = 'var(--danger)'}
+                      onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                      title="Delete Transaction"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </div>
               </div>
-
-              <div className="flex items-center gap-4">
-                <span style={{
-                  fontWeight: 700,
-                  fontSize: '1.125rem',
-                  color: tx.type === 'income' ? 'var(--success)' : 'var(--text-main)'
-                }}>
-                  {tx.type === 'income' ? '+' : '-'}৳{tx.amount.toLocaleString('en-IN')}
-                </span>
-                <button 
-                  onClick={() => deleteTransaction(tx.id)}
-                  style={{ color: 'var(--text-muted)' }}
-                  onMouseOver={(e) => e.currentTarget.style.color = 'var(--danger)'}
-                  onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

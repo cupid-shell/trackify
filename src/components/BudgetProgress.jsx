@@ -30,6 +30,11 @@ const BudgetProgress = () => {
           const percentage = Math.min((spent / limit) * 100, 100);
           const isOver = spent >= limit;
           const isWarning = percentage >= 80 && !isOver;
+          
+          const diff = limit - spent;
+          const diffAbs = Math.abs(diff);
+          const diffText = isOver ? `৳${diffAbs.toLocaleString('en-IN')} over` : `৳${diffAbs.toLocaleString('en-IN')} left`;
+          const diffColor = isOver ? 'var(--danger)' : 'var(--success)';
 
           return (
             <div key={cat} style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
@@ -37,13 +42,25 @@ const BudgetProgress = () => {
                 <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{cat}</span>
                 <div className="flex items-center gap-2">
                   {(isOver || isWarning) && <AlertTriangle size={14} color={isOver ? 'var(--danger)' : '#f59e0b'} />}
-                  <span style={{ 
-                    fontSize: '0.875rem', 
-                    fontWeight: 600,
-                    color: isOver ? 'var(--danger)' : isWarning ? '#f59e0b' : 'var(--text-main)'
-                  }}>
-                    ৳{spent.toLocaleString('en-IN')} / ৳{limit.toLocaleString('en-IN')}
-                  </span>
+                  <div className="flex-col" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
+                    <span style={{ 
+                      fontSize: '0.875rem', 
+                      fontWeight: 600,
+                      color: isOver ? 'var(--danger)' : isWarning ? '#f59e0b' : 'var(--text-main)',
+                      display: 'block'
+                    }}>
+                      ৳{spent.toLocaleString('en-IN')} / ৳{limit.toLocaleString('en-IN')}
+                    </span>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 500,
+                      color: diffColor,
+                      display: 'block',
+                      marginTop: '2px'
+                    }}>
+                      {diffText}
+                    </span>
+                  </div>
                 </div>
               </div>
               

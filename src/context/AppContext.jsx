@@ -10,6 +10,22 @@ export const AppProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // Initialize dynamic theme accent on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('trackify_theme') || 'indigo';
+    const themes = {
+      indigo: { primary: '#6366f1', hover: '#4f46e5', glow: 'rgba(99, 102, 241, 0.4)' },
+      emerald: { primary: '#10b981', hover: '#059669', glow: 'rgba(16, 185, 129, 0.4)' },
+      rose: { primary: '#f43f5e', hover: '#e11d48', glow: 'rgba(244, 63, 94, 0.4)' },
+      cyan: { primary: '#06b6d4', hover: '#0891b2', glow: 'rgba(6, 182, 212, 0.4)' },
+      amber: { primary: '#f59e0b', hover: '#d97706', glow: 'rgba(245, 158, 11, 0.4)' }
+    };
+    const theme = themes[savedTheme] || themes.indigo;
+    document.documentElement.style.setProperty('--primary', theme.primary);
+    document.documentElement.style.setProperty('--primary-hover', theme.hover);
+    document.documentElement.style.setProperty('--primary-glow', theme.glow);
+  }, []);
+  
   // Settings state
   const [userSettings, setUserSettings] = useState({
     base_income: 15000,
@@ -144,6 +160,32 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const updateTransaction = async (id, updatedFields) => {
+    if (!session?.user) return false;
+
+    // Optimistic UI update
+    const originalTransactions = [...transactions];
+    setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, ...updatedFields } : tx));
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .update(updatedFields)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      setTransactions(originalTransactions);
+      alert('Error updating transaction: ' + error.message);
+      return false;
+    }
+
+    if (data) {
+      setTransactions(prev => prev.map(tx => tx.id === id ? data : tx));
+    }
+    return true;
+  };
+
   const renameCategory = async (oldName, newName, type) => {
     if (!session?.user || oldName === newName || !newName.trim()) return;
     
@@ -252,6 +294,7 @@ export const AppProvider = ({ children }) => {
     loading,
     addTransaction,
     deleteTransaction,
+    updateTransaction,
     renameCategory,
     currentMonthTransactions,
     selectedMonth,

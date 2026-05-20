@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Save, Plus, Trash2, Edit2, X, Check } from 'lucide-react';
+import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette } from 'lucide-react';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -22,6 +22,43 @@ const SettingsPage = () => {
   const [editIncomeCatName, setEditIncomeCatName] = useState('');
   
   const [saving, setSaving] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('trackify_theme') || 'indigo');
+
+  const themes = [
+    { name: 'indigo', label: 'Indigo', color: '#6366f1', hover: '#4f46e5', glow: 'rgba(99, 102, 241, 0.4)' },
+    { name: 'emerald', label: 'Emerald', color: '#10b981', hover: '#059669', glow: 'rgba(16, 185, 129, 0.4)' },
+    { name: 'rose', label: 'Rose', color: '#f43f5e', hover: '#e11d48', glow: 'rgba(244, 63, 94, 0.4)' },
+    { name: 'cyan', label: 'Cyan', color: '#06b6d4', hover: '#0891b2', glow: 'rgba(6, 182, 212, 0.4)' },
+    { name: 'amber', label: 'Amber', color: '#f59e0b', hover: '#d97706', glow: 'rgba(245, 158, 11, 0.4)' }
+  ];
+
+  const handleThemeChange = (themeName) => {
+    setSelectedTheme(themeName);
+    localStorage.setItem('trackify_theme', themeName);
+    const theme = themes.find(t => t.name === themeName);
+    if (theme) {
+      document.documentElement.style.setProperty('--primary', theme.color);
+      document.documentElement.style.setProperty('--primary-hover', theme.hover);
+      document.documentElement.style.setProperty('--primary-glow', theme.glow);
+    }
+  };
+
+  const handleResetDefaults = () => {
+    if (window.confirm('Are you sure you want to reset all settings to defaults? This will reset base income, savings goals, categories, and category budgets. (Your transactions list will NOT be deleted)')) {
+      setBaseIncome(15000);
+      setSavingsGoal(3000);
+      setExpenseCategories(["Rent", "Utilities & Bills", "Food & Dining", "Transport", "Daily Living", "Education", "Other / Unexpected"]);
+      setIncomeCategories(["Allowance", "Bonus", "Other"]);
+      setCategoryBudgets({
+        "Rent": 3000,
+        "Transport": 500,
+        "Utilities & Bills": 850,
+        "Food & Dining": 3500,
+        "Daily Living": 3000
+      });
+      alert('Settings reset to defaults. Click "Save All Settings" to commit the changes.');
+    }
+  };
 
   useEffect(() => {
     setBaseIncome(userSettings.base_income);
@@ -259,25 +296,73 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          <button 
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              backgroundColor: 'var(--primary)',
-              color: 'white',
-              padding: '1rem',
-              borderRadius: 'var(--radius-md)',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              opacity: saving ? 0.7 : 1
-            }}
-          >
-            <Save size={20} />
-            {saving ? 'Saving...' : 'Save All Settings'}
-          </button>
+          <div className="glass-card flex-col gap-4">
+            <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Palette size={18} />
+              Theme Customization
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Choose your preferred accent color for the interface.</p>
+            <div className="flex gap-4" style={{ padding: '0.5rem 0' }}>
+              {themes.map(t => (
+                <button
+                  key={t.name}
+                  onClick={() => handleThemeChange(t.name)}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: 'var(--radius-full)',
+                    backgroundColor: t.color,
+                    border: selectedTheme === t.name ? '3px solid white' : '3px solid transparent',
+                    boxShadow: selectedTheme === t.name ? '0 0 10px ' + t.color : 'none',
+                    transition: 'var(--transition)'
+                  }}
+                  title={t.label}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <button 
+              onClick={handleResetDefaults}
+              style={{
+                flex: 1,
+                backgroundColor: 'var(--bg-hover)',
+                color: 'var(--text-main)',
+                padding: '1rem',
+                borderRadius: 'var(--radius-md)',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                border: '1px solid var(--border-color)'
+              }}
+            >
+              <RotateCcw size={20} />
+              Reset Defaults
+            </button>
+            <button 
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                flex: 2,
+                backgroundColor: 'var(--primary)',
+                color: 'white',
+                padding: '1rem',
+                borderRadius: 'var(--radius-md)',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                opacity: saving ? 0.7 : 1
+              }}
+            >
+              <Save size={20} />
+              {saving ? 'Saving...' : 'Save All Settings'}
+            </button>
+          </div>
         </div>
       </main>
       <Footer />
