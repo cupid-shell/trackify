@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Save, Plus, Trash2, Edit2, X, Check } from 'lucide-react';
 import Header from './Header';
+import Footer from './Footer';
 
 const SettingsPage = () => {
   const { userSettings, updateSettings, renameCategory } = useAppContext();
@@ -95,7 +96,7 @@ const SettingsPage = () => {
   return (
     <>
       <Header />
-      <main className="container">
+      <main className="container" style={{ flex: 1 }}>
         <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
           <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Settings</h2>
           <p>Customize your tracking experience.</p>
@@ -271,6 +272,7 @@ const SettingsPage = () => {
           </button>
         </div>
       </main>
+      <Footer />
     </>
   );
 };

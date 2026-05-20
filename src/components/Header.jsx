@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, LogOut, LayoutDashboard, History, PieChart, Settings } from 'lucide-react';
+import { LogOut, LayoutDashboard, History, PieChart, Settings } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { supabase } from '../supabaseClient';
 import { Link, useLocation } from 'react-router-dom';
@@ -53,15 +53,16 @@ const Header = () => {
       `}</style>
       <div className="container flex items-center justify-between" style={{ padding: 0 }}>
         <div className="flex items-center gap-2">
-          <div style={{
-            background: 'var(--primary)',
-            padding: '0.5rem',
-            borderRadius: 'var(--radius-md)',
-            display: 'flex',
-            boxShadow: 'var(--shadow-glow)'
-          }}>
-            <Wallet size={24} color="white" />
-          </div>
+          <img 
+            src="/favicon.png" 
+            alt="Trackify Logo" 
+            style={{ 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: 'var(--radius-md)', 
+              boxShadow: 'var(--shadow-glow)' 
+            }} 
+          />
           <h1 style={{ fontSize: '1.25rem', margin: 0, display: 'none' }} className="sm:inline">Trackify</h1>
         </div>
         

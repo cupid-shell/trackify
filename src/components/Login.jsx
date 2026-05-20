@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Wallet, Mail, Lock } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -47,16 +47,17 @@ const Login = () => {
     }}>
       <div className="glass-card flex-col gap-6" style={{ width: '100%', maxWidth: '400px' }}>
         <div className="flex-col items-center gap-2" style={{ textAlign: 'center' }}>
-          <div style={{
-            background: 'var(--primary)',
-            padding: '1rem',
-            borderRadius: 'var(--radius-lg)',
-            display: 'flex',
-            boxShadow: 'var(--shadow-glow)',
-            marginBottom: '1rem'
-          }}>
-            <Wallet size={32} color="white" />
-          </div>
+          <img 
+            src="/favicon.png" 
+            alt="Trackify Logo" 
+            style={{ 
+              width: '64px', 
+              height: '64px', 
+              borderRadius: 'var(--radius-lg)', 
+              boxShadow: 'var(--shadow-glow)',
+              marginBottom: '1rem'
+            }} 
+          />
           <h1 style={{ fontSize: '1.875rem' }}>Trackify</h1>
           <p>Sign in to sync your expenses securely.</p>
         </div>

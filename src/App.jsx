@@ -11,13 +11,13 @@ import Login from './components/Login';
 import SettingsPage from './components/Settings';
 import BudgetProgress from './components/BudgetProgress';
 import TrendChart from './components/TrendChart';
-
 import MonthSelector from './components/MonthSelector';
+import Footer from './components/Footer';
 
 const Dashboard = () => (
   <>
     <Header />
-    <main className="container">
+    <main className="container" style={{ flex: 1 }}>
       <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Dashboard</h2>
         <p>Track your daily, monthly, and yearly expenses. Build your savings.</p>
@@ -35,13 +35,14 @@ const Dashboard = () => (
         <BudgetProgress />
       </div>
     </main>
+    <Footer />
   </>
 );
 
 const HistoryPage = () => (
   <>
     <Header />
-    <main className="container">
+    <main className="container" style={{ flex: 1 }}>
       <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Expense Log</h2>
         <p>View your complete transaction history.</p>
@@ -53,13 +54,14 @@ const HistoryPage = () => (
         <RecentTransactions />
       </div>
     </main>
+    <Footer />
   </>
 );
 
 const AnalyticsPage = () => (
   <>
     <Header />
-    <main className="container">
+    <main className="container" style={{ flex: 1 }}>
       <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Analytics & Prediction</h2>
         <p>Analyze your spending and track your savings goals.</p>
@@ -79,6 +81,7 @@ const AnalyticsPage = () => (
         <TrendChart />
       </div>
     </main>
+    <Footer />
   </>
 );
 
