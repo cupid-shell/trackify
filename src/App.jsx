@@ -136,9 +136,9 @@ const AnalyticsPage = () => (
       <div className="analytics-grid">
         {/* Left Column: Insights & Prediction */}
         <div className="flex-col gap-6" style={{ width: '100%' }}>
-          <HealthScore />
-          <FinancialInsights />
           <PredictionEngine />
+          <FinancialInsights />
+          <HealthScore />
         </div>
 
         {/* Right Column: Charts & Trends */}
