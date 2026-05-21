@@ -288,9 +288,17 @@ const FinancialInsights = () => {
           <Calendar size={14} style={{ color: 'var(--primary)' }} /> Spend Pacing & Projection
         </span>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', backgroundColor: 'rgba(255,255,255,0.01)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '0.75rem', 
+          backgroundColor: 'rgba(255,255,255,0.01)', 
+          padding: '1rem', 
+          borderRadius: 'var(--radius-md)', 
+          border: '1px solid var(--border-color)' 
+        }}>
           {/* Comparison Text */}
-          <p style={{ fontSize: '0.8rem', margin: 0 }}>
+          <p style={{ fontSize: '0.85rem', margin: 0, lineHeight: '1.4', color: 'var(--text-main)' }}>
             {pacingData.velocity < 0 ? (
               <>
                 You are spending <strong style={{ color: paceColor }}>{Math.abs(Math.round(pacingData.velocity))}% slower</strong> than last month at this date (৳{Math.round(pacingData.currentMTD).toLocaleString('en-IN')} MTD vs ৳{Math.round(pacingData.prevMTD).toLocaleString('en-IN')}). Keep it up!
@@ -305,14 +313,14 @@ const FinancialInsights = () => {
           </p>
 
           {/* Projection Indicator */}
-          <div className="flex-col gap-1" style={{ marginTop: '0.25rem' }}>
+          <div className="flex-col gap-2" style={{ marginTop: '0.25rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              <span>Projected EOM Expense: ৳{Math.round(pacingData.projectedTotal).toLocaleString('en-IN')}</span>
-              <span>Budget Limit: ৳{pacingData.totalBudget.toLocaleString('en-IN')}</span>
+              <span>Projected EOM Expense: <strong style={{ color: 'var(--text-main)' }}>৳{Math.round(pacingData.projectedTotal).toLocaleString('en-IN')}</strong></span>
+              <span>Budget Limit: <strong style={{ color: 'var(--text-main)' }}>৳{pacingData.totalBudget.toLocaleString('en-IN')}</strong></span>
             </div>
             <div style={{
               width: '100%',
-              height: '6px',
+              height: '8px',
               backgroundColor: 'rgba(255, 255, 255, 0.05)',
               borderRadius: 'var(--radius-full)',
               overflow: 'hidden'
@@ -326,7 +334,7 @@ const FinancialInsights = () => {
               }} />
             </div>
             {pacingData.percentOfBudget > 100 && (
-              <span style={{ fontSize: '0.65rem', color: 'var(--danger)', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--danger)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 ⚠️ Your current pacing projects you to exceed your monthly limit!
               </span>
             )}
