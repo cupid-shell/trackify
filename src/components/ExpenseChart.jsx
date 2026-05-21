@@ -87,7 +87,15 @@ const ExpenseChart = () => {
           <ResponsiveContainer width="100%" height="100%">
             {chartType === 'bar' ? (
               <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="var(--text-muted)" 
+                  fontSize={11} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  interval={0} 
+                  tickFormatter={(name) => name.length > 12 ? `${name.substring(0, 10)}...` : name} 
+                />
                 <YAxis 
                   stroke="var(--text-muted)" 
                   fontSize={12} 

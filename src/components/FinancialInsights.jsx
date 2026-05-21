@@ -11,7 +11,8 @@ const FinancialInsights = () => {
     totalExpenses, 
     userSettings, 
     balance,
-    savingsGoal
+    savingsGoal,
+    totalIncome
   } = useAppContext();
 
   const stats = useMemo(() => {
@@ -172,18 +173,19 @@ const FinancialInsights = () => {
       });
     }
 
-    // 2. Savings rate warning / success
-    if (balance < savingsGoal) {
-      const needed = savingsGoal - balance;
+    // 2. Savings rate warning / success based on pacing projection
+    const projectedBalance = totalIncome - pacingData.projectedTotal;
+    if (projectedBalance < savingsGoal) {
+      const needed = savingsGoal - projectedBalance;
       list.push({
-        type: 'info',
-        text: `You are currently ৳${needed.toLocaleString('en-IN')} away from hitting your monthly savings goal of ৳${savingsGoal.toLocaleString('en-IN')}.`,
-        icon: <TrendingUp size={16} style={{ color: 'var(--primary)' }} />
+        type: 'warning',
+        text: `Warning: Based on your current spending rate, you are projected to miss your monthly savings goal of ৳${savingsGoal.toLocaleString('en-IN')} by ৳${Math.ceil(needed).toLocaleString('en-IN')}. Try to reduce daily spending.`,
+        icon: <AlertCircle size={16} style={{ color: 'var(--danger)' }} />
       });
     } else if (totalExpenses > 0) {
       list.push({
         type: 'success',
-        text: `Excellent job! You have reached your monthly savings goal. Current net surplus: ৳${balance.toLocaleString('en-IN')}.`,
+        text: `Excellent job! You are on track to reach your monthly savings goal. Projected net surplus: ৳${Math.round(projectedBalance).toLocaleString('en-IN')}.`,
         icon: <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
       });
     }
@@ -213,7 +215,7 @@ const FinancialInsights = () => {
     }
 
     return list;
-  }, [currentMonthTransactions, balance, savingsGoal, stats, userSettings]);
+  }, [currentMonthTransactions, totalIncome, pacingData, savingsGoal, stats, userSettings, totalExpenses]);
 
   if (totalExpenses === 0) {
     return (
