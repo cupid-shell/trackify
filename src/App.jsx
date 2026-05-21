@@ -77,17 +77,18 @@ const AnalyticsPage = () => (
       
       <MonthSelector />
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr',
-        gap: '1.5rem',
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}>
-        <FinancialInsights />
-        <PredictionEngine />
-        <ExpenseChart />
-        <TrendChart />
+      <div className="analytics-grid">
+        {/* Left Column: Insights & Prediction */}
+        <div className="flex-col gap-6" style={{ width: '100%' }}>
+          <FinancialInsights />
+          <PredictionEngine />
+        </div>
+
+        {/* Right Column: Charts & Trends */}
+        <div className="flex-col gap-6" style={{ width: '100%' }}>
+          <ExpenseChart />
+          <TrendChart />
+        </div>
       </div>
     </main>
     <Footer />
