@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 
 const AppContext = createContext();
@@ -77,6 +77,144 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('trackify_recurring_bills', JSON.stringify(newBills));
   };
 
+  // Notifications state & persistence
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      const saved = localStorage.getItem(`trackify_notifications_${session.user.id}`);
+      if (saved) {
+        try {
+          setNotifications(JSON.parse(saved));
+        } catch (e) {
+          setNotifications([]);
+        }
+      } else {
+        setNotifications([]);
+      }
+    } else {
+      setNotifications([]);
+    }
+  }, [session]);
+
+  const addNotification = (title, message, type = 'info') => {
+    const newNotif = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title,
+      message,
+      date: new Date().toISOString(),
+      read: false,
+      type
+    };
+    setNotifications(prev => {
+      const updated = [newNotif, ...prev];
+      if (session?.user?.id) {
+        localStorage.setItem(`trackify_notifications_${session.user.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
+  const markAllNotificationsRead = () => {
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, read: true }));
+      if (session?.user?.id) {
+        localStorage.setItem(`trackify_notifications_${session.user.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
+  const clearNotifications = () => {
+    setNotifications([]);
+    if (session?.user?.id) {
+      localStorage.removeItem(`trackify_notifications_${session.user.id}`);
+    }
+  };
+
+  // Guard ref for tracking already processed auto-logs in the current session
+  const processedBillsRef = useRef(new Set());
+
+  const checkAndAutoLogBills = async () => {
+    if (!session?.user || loading) return;
+
+    const today = new Date();
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    // Filter recurring bills due on or before today
+    const eligibleBills = recurringBills.filter(bill => currentDay >= bill.dueDate);
+
+    for (const bill of eligibleBills) {
+      const billKey = `${currentYear}-${currentMonth}-${bill.name}`;
+
+      if (processedBillsRef.current.has(billKey)) {
+        continue;
+      }
+
+      // Check if a transaction for this bill already exists in the transactions state for the current month
+      const alreadyLogged = transactions.some(tx => {
+        if (tx.type !== 'expense') return false;
+        const txDate = new Date(tx.date);
+        return (
+          txDate.getMonth() === currentMonth &&
+          txDate.getFullYear() === currentYear &&
+          tx.note &&
+          tx.note.toLowerCase().includes(bill.name.toLowerCase())
+        );
+      });
+
+      if (!alreadyLogged) {
+        // Mark as processed immediately to avoid race conditions
+        processedBillsRef.current.add(billKey);
+
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const day = Math.min(bill.dueDate, daysInMonth);
+        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+        try {
+          const { data, error } = await supabase
+            .from('transactions')
+            .insert([
+              {
+                user_id: session.user.id,
+                type: 'expense',
+                amount: bill.amount,
+                category: bill.category,
+                date: dateStr,
+                note: bill.name,
+                payment_method: bill.payment || 'Cash'
+              }
+            ])
+            .select()
+            .single();
+
+          if (!error && data) {
+            setTransactions(prev => [data, ...prev]);
+            addNotification(
+              'Bill Auto-Paid',
+              `Your bill "${bill.name}" of ৳${bill.amount} was auto-logged via ${bill.payment || 'Cash'}.`,
+              'success'
+            );
+          } else {
+            console.error('Failed to auto-log bill:', error);
+            processedBillsRef.current.delete(billKey);
+          }
+        } catch (err) {
+          console.error('Error during auto-log:', err);
+          processedBillsRef.current.delete(billKey);
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (session?.user && !loading) {
+      checkAndAutoLogBills();
+    }
+  }, [session, loading, transactions, recurringBills]);
+
   // Auth state listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -92,7 +230,6 @@ export const AppProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session) {
-        // Perform a background fetch on auth state change (like tab focus) to prevent full-page reload
         fetchTransactions(session.user.id, true);
         fetchSettings(session.user.id);
       } else {
@@ -354,7 +491,11 @@ export const AppProvider = ({ children }) => {
     setSelectedYear,
     totalIncome,
     totalExpenses,
-    balance
+    balance,
+    notifications,
+    addNotification,
+    markAllNotificationsRead,
+    clearNotifications
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

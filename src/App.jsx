@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAppContext } from './context/AppContext';
 import Header from './components/Header';
@@ -15,6 +15,7 @@ import MonthSelector from './components/MonthSelector';
 import Footer from './components/Footer';
 import RecurringTracker from './components/RecurringTracker';
 import FinancialInsights from './components/FinancialInsights';
+import ExpenseCalendar from './components/ExpenseCalendar';
 
 
 const Dashboard = () => (
@@ -47,24 +48,77 @@ const Dashboard = () => (
   </>
 );
 
-const HistoryPage = () => (
-  <>
-    <Header />
-    <main className="container" style={{ flex: 1 }}>
-      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Expense Log</h2>
-        <p>View your complete transaction history.</p>
-      </div>
-      
-      <MonthSelector />
-      
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <RecentTransactions />
-      </div>
-    </main>
-    <Footer />
-  </>
-);
+const HistoryPage = () => {
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
+
+  return (
+    <>
+      <Header />
+      <main className="container" style={{ flex: 1 }}>
+        <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Expense Log</h2>
+          <p>View your complete transaction history.</p>
+        </div>
+        
+        <MonthSelector />
+
+        {/* View Toggle */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          marginBottom: '2rem',
+          gap: '0.5rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            padding: '4px',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-color)',
+            display: 'flex'
+          }}>
+            <button 
+              onClick={() => setViewMode('list')}
+              style={{
+                padding: '0.5rem 1.25rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: viewMode === 'list' ? 'var(--primary)' : 'transparent',
+                color: viewMode === 'list' ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              List View
+            </button>
+            <button 
+              onClick={() => setViewMode('calendar')}
+              style={{
+                padding: '0.5rem 1.25rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: viewMode === 'calendar' ? 'var(--primary)' : 'transparent',
+                color: viewMode === 'calendar' ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Calendar Heatmap
+            </button>
+          </div>
+        </div>
+        
+        <div style={{ maxWidth: viewMode === 'calendar' ? '900px' : '800px', margin: '0 auto' }}>
+          {viewMode === 'list' ? (
+            <RecentTransactions />
+          ) : (
+            <ExpenseCalendar />
+          )}
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
+};
 
 const AnalyticsPage = () => (
   <>
