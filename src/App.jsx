@@ -30,16 +30,17 @@ const Dashboard = () => (
       
       <OverviewCards />
 
-      <div style={{ maxWidth: '600px', margin: '0 auto', marginBottom: '2rem' }}>
-        <TransactionForm />
-      </div>
+      <div className="dashboard-grid">
+        {/* Left Column: Transaction Input */}
+        <div style={{ width: '100%' }}>
+          <TransactionForm />
+        </div>
 
-      <div style={{ maxWidth: '800px', margin: '0 auto', marginBottom: '2rem', width: '100%' }}>
-        <BudgetProgress />
-      </div>
-
-      <div style={{ maxWidth: '800px', margin: '0 auto', marginBottom: '2rem', width: '100%' }}>
-        <RecurringTracker />
+        {/* Right Column: Status & Checklists */}
+        <div className="flex-col gap-6" style={{ width: '100%' }}>
+          <BudgetProgress />
+          <RecurringTracker />
+        </div>
       </div>
     </main>
     <Footer />
