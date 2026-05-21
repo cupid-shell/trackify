@@ -6,7 +6,7 @@ import Header from './Header';
 import Footer from './Footer';
 
 const SettingsPage = () => {
-  const { userSettings, updateSettings, renameCategory, transactions, presets, updatePresets } = useAppContext();
+  const { userSettings, updateSettings, renameCategory, transactions, presets, updatePresets, recurringBills, updateRecurringBills } = useAppContext();
   
   const [baseIncome, setBaseIncome] = useState(userSettings.base_income);
   const [savingsGoal, setSavingsGoal] = useState(userSettings.savings_goal);
@@ -32,15 +32,29 @@ const SettingsPage = () => {
   const [newPresetNote, setNewPresetNote] = useState('');
   const [newPresetPayment, setNewPresetPayment] = useState('Cash');
 
+  const [localRecurringBills, setLocalRecurringBills] = useState(recurringBills);
+  const [newBillName, setNewBillName] = useState('');
+  const [newBillAmount, setNewBillAmount] = useState('');
+  const [newBillCategory, setNewBillCategory] = useState('');
+  const [newBillDueDate, setNewBillDueDate] = useState('');
+  const [newBillPayment, setNewBillPayment] = useState('Cash');
+
   useEffect(() => {
     if (expenseCategories.length > 0 && !newPresetCategory) {
       setNewPresetCategory(expenseCategories[0]);
     }
-  }, [expenseCategories, newPresetCategory]);
+    if (expenseCategories.length > 0 && !newBillCategory) {
+      setNewBillCategory(expenseCategories[0]);
+    }
+  }, [expenseCategories, newPresetCategory, newBillCategory]);
 
   useEffect(() => {
     setLocalPresets(presets);
   }, [presets]);
+
+  useEffect(() => {
+    setLocalRecurringBills(recurringBills);
+  }, [recurringBills]);
 
   const addPreset = () => {
     if (!newPresetLabel.trim() || !newPresetAmount || isNaN(newPresetAmount)) return;
@@ -59,6 +73,25 @@ const SettingsPage = () => {
 
   const removePreset = (idx) => {
     setLocalPresets(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const addRecurringBill = () => {
+    if (!newBillName.trim() || !newBillAmount || isNaN(newBillAmount) || !newBillDueDate || isNaN(newBillDueDate)) return;
+    const newBill = {
+      name: newBillName.trim(),
+      amount: Number(newBillAmount),
+      category: newBillCategory || expenseCategories[0] || 'Other / Unexpected',
+      dueDate: Number(newBillDueDate),
+      payment: newBillPayment
+    };
+    setLocalRecurringBills(prev => [...prev, newBill]);
+    setNewBillName('');
+    setNewBillAmount('');
+    setNewBillDueDate('');
+  };
+
+  const removeRecurringBill = (idx) => {
+    setLocalRecurringBills(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleExportAllTimeCSV = () => {
@@ -123,6 +156,10 @@ const SettingsPage = () => {
         { label: '৳120 Lunch', amount: 120, category: 'Food & Dining', note: 'Lunch', payment: 'Cash' },
         { label: '৳100 Mobile', amount: 100, category: 'Utilities & Bills', note: 'Mobile recharge', payment: 'bKash' }
       ]);
+      setLocalRecurringBills([
+        { name: 'Home WiFi Bill', amount: 525, category: 'Utilities & Bills', dueDate: 20, payment: 'bKash' },
+        { name: 'Seat Rent', amount: 3000, category: 'Rent', dueDate: 5, payment: 'Cash' }
+      ]);
       alert('Settings reset to defaults. Click "Save All Settings" to commit the changes.');
     }
   };
@@ -166,6 +203,7 @@ const SettingsPage = () => {
       category_budgets: cleanedBudgets
     });
     updatePresets(localPresets);
+    updateRecurringBills(localRecurringBills);
     setSaving(false);
     alert('Settings saved successfully!');
   };
@@ -445,6 +483,94 @@ const SettingsPage = () => {
                   }}
                 >
                   <Plus size={16} /> Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-card flex-col gap-4">
+            <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Recurring Bills & Subscriptions</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Configure your monthly subscriptions and recurring bills.</p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {localRecurringBills.map((bill, idx) => (
+                <div key={idx} className="flex items-center justify-between" style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)', gap: '0.5rem' }}>
+                  <div className="flex-col" style={{ gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{bill.name}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      ৳{bill.amount} • {bill.category} • Due on {bill.dueDate}th • {bill.payment}
+                    </span>
+                  </div>
+                  <button onClick={() => removeRecurringBill(idx)} style={{ color: 'var(--danger)', padding: '0.25rem' }}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Add New Recurring Bill</span>
+              <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+                <input 
+                  type="text" 
+                  placeholder="Bill Name (e.g. Netflix)" 
+                  value={newBillName}
+                  onChange={(e) => setNewBillName(e.target.value)}
+                  style={{ flex: '1 1 200px', padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                />
+                <input 
+                  type="number" 
+                  placeholder="Amount (BDT)" 
+                  value={newBillAmount}
+                  onChange={(e) => setNewBillAmount(e.target.value)}
+                  style={{ flex: '1 1 120px', padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                />
+              </div>
+              <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+                <select 
+                  value={newBillCategory} 
+                  onChange={(e) => setNewBillCategory(e.target.value)}
+                  style={{ flex: '1 1 150px', padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                >
+                  {expenseCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <input 
+                  type="number" 
+                  placeholder="Due Day (1-31)" 
+                  value={newBillDueDate}
+                  min="1"
+                  max="31"
+                  onChange={(e) => setNewBillDueDate(e.target.value)}
+                  style={{ flex: '1 1 100px', padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                />
+                <select 
+                  value={newBillPayment} 
+                  onChange={(e) => setNewBillPayment(e.target.value)}
+                  style={{ flex: '1 1 120px', padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="bKash">bKash</option>
+                  <option value="Bank">Bank</option>
+                </select>
+              </div>
+              <div className="flex justify-end">
+                <button 
+                  onClick={addRecurringBill} 
+                  style={{ 
+                    padding: '0.5rem 1rem', 
+                    backgroundColor: 'var(--primary)', 
+                    color: 'white', 
+                    borderRadius: 'var(--radius-md)',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}
+                >
+                  <Plus size={16} /> Add Bill
                 </button>
               </div>
             </div>

@@ -57,6 +57,26 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('trackify_presets', JSON.stringify(newPresets));
   };
 
+  const [recurringBills, setRecurringBills] = useState(() => {
+    const saved = localStorage.getItem('trackify_recurring_bills');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // use default
+      }
+    }
+    return [
+      { name: 'Home WiFi Bill', amount: 525, category: 'Utilities & Bills', dueDate: 20, payment: 'bKash' },
+      { name: 'Seat Rent', amount: 3000, category: 'Rent', dueDate: 5, payment: 'Cash' }
+    ];
+  });
+
+  const updateRecurringBills = (newBills) => {
+    setRecurringBills(newBills);
+    localStorage.setItem('trackify_recurring_bills', JSON.stringify(newBills));
+  };
+
   // Auth state listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -318,6 +338,8 @@ export const AppProvider = ({ children }) => {
     updateSettings,
     presets,
     updatePresets,
+    recurringBills,
+    updateRecurringBills,
     baseIncome: Number(userSettings.base_income),
     savingsGoal: Number(userSettings.savings_goal),
     loading,

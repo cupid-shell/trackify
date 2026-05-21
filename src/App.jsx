@@ -13,6 +13,9 @@ import BudgetProgress from './components/BudgetProgress';
 import TrendChart from './components/TrendChart';
 import MonthSelector from './components/MonthSelector';
 import Footer from './components/Footer';
+import RecurringTracker from './components/RecurringTracker';
+import FinancialInsights from './components/FinancialInsights';
+
 
 const Dashboard = () => (
   <>
@@ -33,6 +36,10 @@ const Dashboard = () => (
 
       <div style={{ maxWidth: '800px', margin: '0 auto', marginBottom: '2rem', width: '100%' }}>
         <BudgetProgress />
+      </div>
+
+      <div style={{ maxWidth: '800px', margin: '0 auto', marginBottom: '2rem', width: '100%' }}>
+        <RecurringTracker />
       </div>
     </main>
     <Footer />
@@ -76,6 +83,7 @@ const AnalyticsPage = () => (
         maxWidth: '800px',
         margin: '0 auto'
       }}>
+        <FinancialInsights />
         <PredictionEngine />
         <ExpenseChart />
         <TrendChart />

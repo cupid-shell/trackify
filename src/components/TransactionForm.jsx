@@ -48,6 +48,29 @@ const TransactionForm = () => {
     setCategory(type === 'expense' ? expenseCategories[0] : incomeCategories[0]);
   }, [type, userSettings]);
 
+  const evaluateMathExpression = (str) => {
+    // Remove all characters except digits, +, -, *, /, ., and parentheses
+    const safeString = str.replace(/[^0-9+\-*/().\s]/g, '');
+    if (!safeString.trim()) return '';
+    try {
+      // Safe evaluation of simple math expression
+      const result = new Function(`return (${safeString})`)();
+      if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
+        return Math.round(result * 100) / 100;
+      }
+    } catch (e) {
+      // Return original on error
+    }
+    return str;
+  };
+
+  const handleAmountBlur = () => {
+    if (amount) {
+      const parsed = evaluateMathExpression(amount.toString());
+      setAmount(parsed.toString());
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -75,16 +98,19 @@ const TransactionForm = () => {
       });
       
       setMultiAddText('');
-      // Optional: switch back to standard mode, or stay in multi-add. We will stay to be helpful.
       alert(`Successfully added ${lines.length} transactions!`);
       return;
     }
 
-    if (!amount || isNaN(amount)) return;
+    const evaluated = evaluateMathExpression(amount.toString());
+    if (!evaluated || isNaN(evaluated)) {
+      alert('Please enter a valid amount or math expression.');
+      return;
+    }
 
     addTransaction({
       type,
-      amount: parseFloat(amount),
+      amount: parseFloat(evaluated),
       category,
       note,
       date,
@@ -218,12 +244,12 @@ const TransactionForm = () => {
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Amount (BDT)</label>
             <input 
-              type="number" 
+              type="text" 
               value={amount} 
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="e.g. 500"
+              onBlur={handleAmountBlur}
+              placeholder="e.g. 100+50 or 500"
               required={!isMultiAdd}
-              min="1"
             />
           </div>
         )}
