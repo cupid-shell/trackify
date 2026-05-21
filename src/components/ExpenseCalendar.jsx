@@ -6,7 +6,8 @@ const ExpenseCalendar = () => {
   const { 
     currentMonthTransactions, 
     selectedMonth, 
-    selectedYear 
+    selectedYear,
+    getCategoryStyle
   } = useAppContext();
   
   const [selectedDayTransactions, setSelectedDayTransactions] = useState(null);
@@ -329,19 +330,25 @@ const ExpenseCalendar = () => {
                             width: '36px',
                             height: '36px',
                             borderRadius: 'var(--radius-full)',
-                            background: isExpense ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                            background: isExpense ? `${getCategoryStyle(tx.category).color}15` : 'rgba(16, 185, 129, 0.1)',
+                            border: `1px solid ${isExpense ? `${getCategoryStyle(tx.category).color}30` : 'rgba(16, 185, 129, 0.2)'}`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: isExpense ? 'var(--danger)' : 'var(--success)',
+                            fontSize: isExpense ? '1.125rem' : '0.9rem',
                             flexShrink: 0
                           }}>
-                            {isExpense ? <TrendingDown size={18} /> : <TrendingUp size={18} />}
+                            {isExpense ? <span>{getCategoryStyle(tx.category).emoji}</span> : <TrendingUp size={18} style={{ color: 'var(--success)' }} />}
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{tx.note || tx.category}</span>
-                            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                              <span>{tx.category}</span>
+                            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)', alignItems: 'center' }}>
+                              <span style={{ 
+                                color: isExpense ? getCategoryStyle(tx.category).color : 'var(--success)', 
+                                fontWeight: 500 
+                              }}>
+                                {isExpense ? `${getCategoryStyle(tx.category).emoji} ${tx.category}` : tx.category}
+                              </span>
                               <span>•</span>
                               <span>{tx.payment_method || 'Cash'}</span>
                             </div>

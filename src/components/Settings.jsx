@@ -6,7 +6,18 @@ import Header from './Header';
 import Footer from './Footer';
 
 const SettingsPage = () => {
-  const { userSettings, updateSettings, renameCategory, transactions, presets, updatePresets, recurringBills, updateRecurringBills } = useAppContext();
+  const { 
+    userSettings, 
+    updateSettings, 
+    renameCategory, 
+    transactions, 
+    presets, 
+    updatePresets, 
+    recurringBills, 
+    updateRecurringBills,
+    updateCategoryMetadata,
+    getCategoryStyle
+  } = useAppContext();
   
   const [baseIncome, setBaseIncome] = useState(userSettings.base_income);
   const [savingsGoal, setSavingsGoal] = useState(userSettings.savings_goal);
@@ -24,6 +35,9 @@ const SettingsPage = () => {
   
   const [saving, setSaving] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('trackify_theme') || 'indigo');
+
+  const [activeCustomizeCat, setActiveCustomizeCat] = useState(null);
+  const [customEmojiInput, setCustomEmojiInput] = useState('');
 
   const [localPresets, setLocalPresets] = useState(presets);
   const [newPresetLabel, setNewPresetLabel] = useState('');
@@ -399,6 +413,140 @@ const SettingsPage = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="glass-card flex-col gap-4">
+            <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Palette size={18} />
+              Category Styling & Emojis
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Customize the visual indicators for your expense categories.</p>
+            
+            <div className="flex-col gap-3">
+              {expenseCategories.map(cat => {
+                const style = getCategoryStyle(cat);
+                const isCustomizing = activeCustomizeCat === cat;
+                
+                return (
+                  <div key={cat} className="flex-col gap-2" style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span style={{ 
+                          width: '32px', 
+                          height: '32px', 
+                          borderRadius: 'var(--radius-full)', 
+                          backgroundColor: `${style.color}15`, 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          fontSize: '1.15rem',
+                          color: style.color,
+                          border: `1px solid ${style.color}33`,
+                          boxShadow: `0 0 8px ${style.color}22`
+                        }}>
+                          {style.emoji}
+                        </span>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{cat}</span>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          if (isCustomizing) {
+                            setActiveCustomizeCat(null);
+                          } else {
+                            setActiveCustomizeCat(cat);
+                            setCustomEmojiInput('');
+                          }
+                        }}
+                        style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--primary)',
+                          fontWeight: 600
+                        }}
+                      >
+                        {isCustomizing ? 'Close' : 'Customize'}
+                      </button>
+                    </div>
+
+                    {isCustomizing && (
+                      <div className="flex-col gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
+                        {/* Emojis Selector */}
+                        <div className="flex-col gap-1.5">
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Select Emoji</span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                            {['🍔', '🏠', '⚡', '🚗', '🛒', '🎓', '🎁', '🎮', '🩺', '✈️', '💵', '🛍️', '❓'].map(emoji => (
+                              <button
+                                key={emoji}
+                                onClick={() => updateCategoryMetadata(cat, { emoji })}
+                                style={{
+                                  padding: '0.35rem',
+                                  fontSize: '1.2rem',
+                                  backgroundColor: style.emoji === emoji ? 'rgba(255,255,255,0.08)' : 'transparent',
+                                  borderRadius: 'var(--radius-sm)',
+                                  border: style.emoji === emoji ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
+                                }}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                          
+                          {/* Custom emoji input */}
+                          <div className="flex gap-2 items-center" style={{ marginTop: '0.25rem' }}>
+                            <input 
+                              type="text" 
+                              placeholder="Or enter custom emoji..." 
+                              value={customEmojiInput}
+                              onChange={e => setCustomEmojiInput(e.target.value)}
+                              style={{ padding: '0.35rem 0.5rem', fontSize: '0.8rem', flex: 1 }}
+                            />
+                            <button
+                              onClick={() => {
+                                if (customEmojiInput.trim()) {
+                                  updateCategoryMetadata(cat, { emoji: customEmojiInput.trim() });
+                                  setCustomEmojiInput('');
+                                }
+                              }}
+                              style={{
+                                padding: '0.35rem 0.75rem',
+                                backgroundColor: 'var(--bg-hover)',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: '0.8rem',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)'
+                              }}
+                            >
+                              Apply
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Colors Selector */}
+                        <div className="flex-col gap-1.5" style={{ marginTop: '0.25rem' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Select Color Accent</span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            {['#f43f5e', '#ff6b6b', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#a855f7', '#ec4899'].map(color => (
+                              <button
+                                key={color}
+                                onClick={() => updateCategoryMetadata(cat, { color })}
+                                style={{
+                                  width: '24px',
+                                  height: '24px',
+                                  borderRadius: 'var(--radius-full)',
+                                  backgroundColor: color,
+                                  border: style.color === color ? '2px solid white' : '1px solid transparent',
+                                  boxShadow: style.color === color ? `0 0 8px ${color}` : 'none',
+                                  padding: 0
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

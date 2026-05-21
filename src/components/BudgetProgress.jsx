@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { AlertTriangle } from 'lucide-react';
 
 const BudgetProgress = () => {
-  const { userSettings, currentMonthTransactions } = useAppContext();
+  const { userSettings, currentMonthTransactions, getCategoryStyle } = useAppContext();
   const budgets = userSettings.category_budgets || {};
   const expenseCategories = userSettings.expense_categories || [];
 
@@ -39,7 +39,10 @@ const BudgetProgress = () => {
           return (
             <div key={cat} style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
               <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem' }}>
-                <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{cat}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1rem' }}>{getCategoryStyle(cat).emoji}</span>
+                  <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{cat}</span>
+                </div>
                 <div className="flex items-center gap-2">
                   {(isOver || isWarning) && <AlertTriangle size={14} color={isOver ? 'var(--danger)' : '#f59e0b'} />}
                   <div className="flex-col" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
@@ -80,7 +83,7 @@ const BudgetProgress = () => {
                     ? 'var(--danger)' 
                     : isWarning 
                       ? 'linear-gradient(90deg, #f59e0b, #ef4444)' 
-                      : 'linear-gradient(90deg, var(--primary), #818cf8)',
+                      : `linear-gradient(90deg, ${getCategoryStyle(cat).color}, ${getCategoryStyle(cat).color}dd)`,
                   transition: 'width 0.5s ease'
                 }} />
               </div>

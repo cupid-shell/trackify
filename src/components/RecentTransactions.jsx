@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { Trash2, TrendingDown, TrendingUp, Download, Edit2 } from 'lucide-react';
 
 const RecentTransactions = () => {
-  const { currentMonthTransactions, deleteTransaction, updateTransaction, userSettings } = useAppContext();
+  const { currentMonthTransactions, deleteTransaction, updateTransaction, userSettings, getCategoryStyle } = useAppContext();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedCategory, setSelectedCategory] = React.useState('All');
   const [startDate, setStartDate] = React.useState('');
@@ -347,12 +347,17 @@ const RecentTransactions = () => {
               >
                 <div className="flex items-center gap-4">
                   <div style={{
-                    padding: '0.75rem',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     borderRadius: 'var(--radius-full)',
-                    backgroundColor: tx.type === 'income' ? 'var(--success-bg)' : 'var(--danger-bg)',
-                    color: tx.type === 'income' ? 'var(--success)' : 'var(--danger)'
+                    backgroundColor: tx.type === 'income' ? 'var(--success-bg)' : `${getCategoryStyle(tx.category).color}15`,
+                    border: `1px solid ${tx.type === 'income' ? 'rgba(16, 185, 129, 0.2)' : `${getCategoryStyle(tx.category).color}30`}`,
+                    fontSize: tx.type === 'income' ? '1rem' : '1.25rem'
                   }}>
-                    {tx.type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                    {tx.type === 'income' ? <TrendingUp size={20} style={{ color: 'var(--success)' }} /> : <span>{getCategoryStyle(tx.category).emoji}</span>}
                   </div>
                   <div>
                     <h4 style={{ fontWeight: 600 }}>{tx.category}</h4>

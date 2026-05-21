@@ -5,6 +5,7 @@ import { TrendingUp, Sparkles, Calendar, Coffee, AlertCircle, CheckCircle2 } fro
 const FinancialInsights = () => {
   const { 
     currentMonthTransactions, 
+    transactions,
     selectedMonth, 
     selectedYear, 
     totalExpenses, 
@@ -77,9 +78,71 @@ const FinancialInsights = () => {
       highestAmount,
       topCategory,
       topCategoryAmount,
-      daysInMonth
+      daysInMonth,
+      activeDays
     };
   }, [currentMonthTransactions, selectedMonth, selectedYear, totalExpenses]);
+
+  // Calculate Month-over-Month spend velocity & budget projections
+  const pacingData = useMemo(() => {
+    const today = new Date();
+    const isCurrentMonth = selectedMonth === today.getMonth() && selectedYear === today.getFullYear();
+    const daysInMonth = stats.daysInMonth;
+    const activeDays = stats.activeDays;
+
+    // Projected Monthly Expense
+    const projectedTotal = (totalExpenses / activeDays) * daysInMonth;
+
+    // Previous month logic
+    let prevMonth = selectedMonth - 1;
+    let prevYear = selectedYear;
+    if (prevMonth < 0) {
+      prevMonth = 11;
+      prevYear -= 1;
+    }
+    const prevDaysInMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
+    const prevLimitDay = isCurrentMonth ? Math.min(today.getDate(), prevDaysInMonth) : prevDaysInMonth;
+
+    // Filter transactions up to limit day
+    const currentMTD = currentMonthTransactions
+      .filter(tx => tx.type === 'expense' && new Date(tx.date).getDate() <= activeDays)
+      .reduce((sum, tx) => sum + Number(tx.amount), 0);
+
+    const prevMonthTransactions = transactions.filter(tx => {
+      const txDate = new Date(tx.date);
+      return txDate.getMonth() === prevMonth && txDate.getFullYear() === prevYear;
+    });
+
+    const prevMTD = prevMonthTransactions
+      .filter(tx => tx.type === 'expense' && new Date(tx.date).getDate() <= prevLimitDay)
+      .reduce((sum, tx) => sum + Number(tx.amount), 0);
+
+    let velocity = 0;
+    if (prevMTD > 0) {
+      velocity = ((currentMTD - prevMTD) / prevMTD) * 100;
+    } else if (currentMTD > 0) {
+      velocity = 100; // 100% increase if prev month had 0 spend
+    }
+
+    // Budget threshold: sum of all budgets, or base income
+    const categoryBudgets = userSettings.category_budgets || {};
+    const hasBudgets = Object.keys(categoryBudgets).length > 0;
+    const totalBudget = hasBudgets 
+      ? Object.values(categoryBudgets).reduce((sum, val) => sum + val, 0)
+      : Number(userSettings.base_income);
+
+    const percentOfBudget = totalBudget > 0 ? (projectedTotal / totalBudget) * 100 : 0;
+
+    return {
+      projectedTotal,
+      velocity,
+      totalBudget,
+      currentMTD,
+      prevMTD,
+      isCurrentMonth,
+      percentOfBudget
+    };
+  }, [currentMonthTransactions, transactions, selectedMonth, selectedYear, totalExpenses, userSettings, stats]);
 
   // Generate dynamic tips based on actual metrics
   const tips = useMemo(() => {
@@ -163,6 +226,9 @@ const FinancialInsights = () => {
     );
   }
 
+  // Determine pacing message and color
+  const paceColor = pacingData.velocity < 0 ? 'var(--success)' : pacingData.velocity > 0 ? 'var(--warning)' : 'var(--text-muted)';
+
   return (
     <div className="glass-card flex-col gap-4">
       <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
@@ -214,6 +280,58 @@ const FinancialInsights = () => {
             </span>
           </div>
         )}
+      </div>
+
+      {/* Spend Pacing & Projection Section */}
+      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }} className="flex-col gap-3">
+        <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <Calendar size={14} style={{ color: 'var(--primary)' }} /> Spend Pacing & Projection
+        </span>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', backgroundColor: 'rgba(255,255,255,0.01)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+          {/* Comparison Text */}
+          <p style={{ fontSize: '0.8rem', margin: 0 }}>
+            {pacingData.velocity < 0 ? (
+              <>
+                You are spending <strong style={{ color: paceColor }}>{Math.abs(Math.round(pacingData.velocity))}% slower</strong> than last month at this date (৳{Math.round(pacingData.currentMTD).toLocaleString('en-IN')} MTD vs ৳{Math.round(pacingData.prevMTD).toLocaleString('en-IN')}). Keep it up!
+              </>
+            ) : pacingData.velocity > 0 ? (
+              <>
+                You are spending <strong style={{ color: paceColor }}>{Math.round(pacingData.velocity)}% faster</strong> than last month at this date (৳{Math.round(pacingData.currentMTD).toLocaleString('en-IN')} MTD vs ৳{Math.round(pacingData.prevMTD).toLocaleString('en-IN')}). Try to dial back.
+              </>
+            ) : (
+              <>Spending is identical to last month at this date.</>
+            )}
+          </p>
+
+          {/* Projection Indicator */}
+          <div className="flex-col gap-1" style={{ marginTop: '0.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <span>Projected EOM Expense: ৳{Math.round(pacingData.projectedTotal).toLocaleString('en-IN')}</span>
+              <span>Budget Limit: ৳{pacingData.totalBudget.toLocaleString('en-IN')}</span>
+            </div>
+            <div style={{
+              width: '100%',
+              height: '6px',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: 'var(--radius-full)',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                width: `${Math.min(100, pacingData.percentOfBudget)}%`,
+                height: '100%',
+                backgroundColor: pacingData.percentOfBudget > 100 ? 'var(--danger)' : pacingData.percentOfBudget > 85 ? 'var(--warning)' : 'var(--primary)',
+                borderRadius: 'var(--radius-full)',
+                transition: 'width 0.4s ease'
+              }} />
+            </div>
+            {pacingData.percentOfBudget > 100 && (
+              <span style={{ fontSize: '0.65rem', color: 'var(--danger)', fontWeight: 600 }}>
+                ⚠️ Your current pacing projects you to exceed your monthly limit!
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }} className="flex-col gap-3">

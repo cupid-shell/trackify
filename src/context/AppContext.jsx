@@ -32,7 +32,9 @@ export const AppProvider = ({ children }) => {
     savings_goal: 3000,
     expense_categories: ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
     income_categories: ["Allowance", "Bonus", "Other"],
-    category_budgets: {}
+    category_budgets: {},
+    savings_goals: [],
+    category_metadata: {}
   });
 
   const [presets, setPresets] = useState(() => {
@@ -254,7 +256,9 @@ export const AppProvider = ({ children }) => {
         savings_goal: data.savings_goal || 3000,
         expense_categories: data.expense_categories || ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
         income_categories: data.income_categories || ["Allowance", "Bonus", "Other"],
-        category_budgets: data.category_budgets || {}
+        category_budgets: data.category_budgets || {},
+        savings_goals: data.savings_goals || [],
+        category_metadata: data.category_metadata || {}
       });
     }
   };
@@ -447,6 +451,69 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const addSavingsGoal = async (goal) => {
+    if (!session?.user) return;
+    const newGoals = [...(userSettings.savings_goals || []), goal];
+    await updateSettings({ savings_goals: newGoals });
+  };
+
+  const deleteSavingsGoal = async (id) => {
+    if (!session?.user) return;
+    const newGoals = (userSettings.savings_goals || []).filter(g => g.id !== id);
+    await updateSettings({ savings_goals: newGoals });
+  };
+
+  const updateSavingsGoalProgress = async (id, amount, isContribution) => {
+    if (!session?.user) return;
+    const newGoals = (userSettings.savings_goals || []).map(g => {
+      if (g.id === id) {
+        const change = Number(amount);
+        const current = Number(g.current_amount || 0);
+        const next = isContribution ? current + change : Math.max(0, current - change);
+        return { ...g, current_amount: next };
+      }
+      return g;
+    });
+    await updateSettings({ savings_goals: newGoals });
+  };
+
+  const updateCategoryMetadata = async (categoryName, metadata) => {
+    if (!session?.user) return;
+    const newMetadata = {
+      ...(userSettings.category_metadata || {}),
+      [categoryName]: {
+        ...(userSettings.category_metadata?.[categoryName] || {}),
+        ...metadata
+      }
+    };
+    await updateSettings({ category_metadata: newMetadata });
+  };
+
+  const getCategoryStyle = (catName) => {
+    const defaults = {
+      "Rent": { emoji: "🏠", color: "#6366f1" },
+      "Seat Rent": { emoji: "🏠", color: "#6366f1" },
+      "Utilities & Bills": { emoji: "⚡", color: "#06b6d4" },
+      "Utility Bill": { emoji: "⚡", color: "#06b6d4" },
+      "Gas Bill (Cylinder)": { emoji: "🔥", color: "#ec4899" },
+      "Food & Dining": { emoji: "🍔", color: "#f59e0b" },
+      "Transport": { emoji: "🚗", color: "#10b981" },
+      "Daily Living": { emoji: "🛒", color: "#a855f7" },
+      "Personal Expenses": { emoji: "🛍️", color: "#a855f7" },
+      "Education": { emoji: "🎓", color: "#84cc16" },
+      "Other / Unexpected": { emoji: "❓", color: "#f43f5e" },
+      "Other / Miscellaneous": { emoji: "❓", color: "#f43f5e" }
+    };
+    const metadata = userSettings.category_metadata || {};
+    if (metadata[catName]) {
+      return {
+        emoji: metadata[catName].emoji || "🏷️",
+        color: metadata[catName].color || "#94a3b8"
+      };
+    }
+    return defaults[catName] || { emoji: "🏷️", color: "#94a3b8" };
+  };
+
   const currentRealDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentRealDate.getMonth());
   const [selectedYear, setSelectedYear] = useState(currentRealDate.getFullYear());
@@ -495,7 +562,12 @@ export const AppProvider = ({ children }) => {
     notifications,
     addNotification,
     markAllNotificationsRead,
-    clearNotifications
+    clearNotifications,
+    addSavingsGoal,
+    deleteSavingsGoal,
+    updateSavingsGoalProgress,
+    updateCategoryMetadata,
+    getCategoryStyle
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

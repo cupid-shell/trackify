@@ -16,6 +16,8 @@ import Footer from './components/Footer';
 import RecurringTracker from './components/RecurringTracker';
 import FinancialInsights from './components/FinancialInsights';
 import ExpenseCalendar from './components/ExpenseCalendar';
+import HealthScore from './components/HealthScore';
+import SavingsGoals from './components/SavingsGoals';
 
 
 const Dashboard = () => (
@@ -134,12 +136,14 @@ const AnalyticsPage = () => (
       <div className="analytics-grid">
         {/* Left Column: Insights & Prediction */}
         <div className="flex-col gap-6" style={{ width: '100%' }}>
+          <HealthScore />
           <FinancialInsights />
           <PredictionEngine />
         </div>
 
         {/* Right Column: Charts & Trends */}
         <div className="flex-col gap-6" style={{ width: '100%' }}>
+          <SavingsGoals />
           <ExpenseChart />
           <TrendChart />
         </div>
