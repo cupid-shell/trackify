@@ -605,6 +605,8 @@ export const AppProvider = ({ children }) => {
       "Daily Living": { emoji: "🛒", color: "#a855f7" },
       "Personal Expenses": { emoji: "🛍️", color: "#a855f7" },
       "Education": { emoji: "🎓", color: "#84cc16" },
+      "AI Subscription": { emoji: "🤖", color: "#8b5cf6" },
+      "Ai Subscription": { emoji: "🤖", color: "#8b5cf6" },
       "Other / Unexpected": { emoji: "❓", color: "#f43f5e" },
       "Other / Miscellaneous": { emoji: "❓", color: "#f43f5e" }
     };
