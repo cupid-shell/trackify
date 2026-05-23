@@ -442,33 +442,43 @@ const LedgerPage = () => {
                 >
                   {/* Top line: Contact, Type Badge, Due Alerts */}
                   <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <div className="flex items-center gap-2.5" style={{ flexWrap: 'wrap' }}>
-                      <div className="flex-col">
-                        <span style={{ fontSize: '1.1rem', fontWeight: 700, lineHeight: 1.2 }}>{debt.person}</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
-                          {isLent ? 'Lent' : 'Borrowed'} on {debt.date ? format(parseISO(debt.date), 'MMM dd, yyyy') : format(parseISO(debt.created_at), 'MMM dd, yyyy')}
+                    <div className="flex-col gap-1">
+                      <div className="flex items-center gap-2.5" style={{ flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)' }}>{debt.person}</span>
+                        <span style={{ 
+                          fontSize: '0.65rem', 
+                          fontWeight: 700, 
+                          color: typeColor, 
+                          backgroundColor: typeBg,
+                          padding: '2px 8px',
+                          borderRadius: 'var(--radius-full)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          border: `1px solid ${typeColor}33`
+                        }}>
+                          {isLent ? 'Receivable' : 'Payable'}
                         </span>
                       </div>
-                      <span style={{ 
-                        fontSize: '0.675rem', 
-                        fontWeight: 700, 
-                        color: typeColor, 
-                        backgroundColor: typeBg,
-                        padding: '2px 8px',
-                        borderRadius: 'var(--radius-full)',
-                        textTransform: 'uppercase',
-                        alignSelf: 'center'
-                      }}>
-                        {isLent ? 'Receivable' : 'Payable'}
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {isLent ? 'Lent' : 'Borrowed'} on {debt.date ? format(parseISO(debt.date), 'MMM dd, yyyy') : format(parseISO(debt.created_at), 'MMM dd, yyyy')}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       {debt.due_date && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem' }}>
-                          <Calendar size={12} color="var(--text-muted)" />
-                          <span style={{ color: dueStatus.label ? dueStatus.color : 'var(--text-muted)', fontWeight: dueStatus.label ? 600 : 400 }}>
-                            Due: {formattedDueDate} {dueStatus.label ? `(${dueStatus.label})` : ''}
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '0.35rem', 
+                          fontSize: '0.75rem',
+                          backgroundColor: dueStatus.label ? `${dueStatus.color}15` : 'var(--bg-input)',
+                          padding: '0.35rem 0.6rem',
+                          borderRadius: 'var(--radius-sm)',
+                          border: `1px solid ${dueStatus.label ? `${dueStatus.color}33` : 'var(--border-color)'}`
+                        }}>
+                          <Calendar size={13} color={dueStatus.label ? dueStatus.color : 'var(--text-muted)'} />
+                          <span style={{ color: dueStatus.label ? dueStatus.color : 'var(--text-muted)', fontWeight: 600 }}>
+                            {dueStatus.label ? `${dueStatus.label}: ` : 'Due: '}{formattedDueDate}
                           </span>
                         </div>
                       )}
@@ -480,41 +490,87 @@ const LedgerPage = () => {
                             deleteDebt(debt.id);
                           }
                         }}
-                        style={{ color: 'var(--text-muted)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}
-                        onMouseOver={e => e.currentTarget.style.color = 'var(--danger)'}
-                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                        style={{ 
+                          color: 'var(--text-muted)', 
+                          padding: '0.4rem', 
+                          borderRadius: 'var(--radius-full)',
+                          backgroundColor: 'var(--bg-input)',
+                          border: '1px solid var(--border-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          transition: 'var(--transition)'
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.color = 'var(--danger)';
+                          e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                          e.currentTarget.style.backgroundColor = 'var(--danger-bg)';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.color = 'var(--text-muted)';
+                          e.currentTarget.style.borderColor = 'var(--border-color)';
+                          e.currentTarget.style.backgroundColor = 'var(--bg-input)';
+                        }}
                         title="Delete record"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
 
                   {/* Summary / Progress block */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>
                     <div className="flex-col gap-1">
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Balance: ৳{remaining.toLocaleString('en-IN')} outstanding of ৳{target.toLocaleString('en-IN')}
-                      </span>
-                      {debt.note && (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-main)', fontStyle: 'italic' }}>
-                          "{debt.note}"
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Outstanding Balance</span>
+                      <div className="flex items-baseline gap-1">
+                        <span style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                          ৳{remaining.toLocaleString('en-IN')}
                         </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          of ৳{target.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      {debt.note && (
+                        <div style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                          borderLeft: `2px solid var(--border-color)`,
+                          padding: '0.3rem 0.6rem',
+                          borderRadius: '0 4px 4px 0',
+                          fontSize: '0.775rem',
+                          color: 'var(--text-muted)',
+                          marginTop: '0.35rem',
+                          fontStyle: 'italic'
+                        }}>
+                          "{debt.note}"
+                        </div>
                       )}
                     </div>
-                    <span style={{ fontSize: '0.825rem', fontWeight: 600, color: typeColor }}>
-                      {percent}% Settle Rate
-                    </span>
+                    
+                    <div className="flex-col" style={{ alignItems: 'flex-end', gap: '0.15rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Settle Rate</span>
+                      <span style={{ fontSize: '1.15rem', fontWeight: 700, color: typeColor }}>
+                        {percent}%
+                      </span>
+                    </div>
                   </div>
 
                   {/* Progress bar */}
-                  <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                  <div style={{ 
+                    width: '100%', 
+                    height: '8px', 
+                    backgroundColor: 'var(--bg-input)', 
+                    borderRadius: 'var(--radius-full)', 
+                    overflow: 'hidden',
+                    border: '1px solid rgba(255, 255, 255, 0.02)'
+                  }}>
                     <div style={{
                       width: `${percent}%`,
                       backgroundColor: typeColor,
                       height: '100%',
                       borderRadius: 'var(--radius-full)',
-                      transition: 'width 0.35s'
+                      transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                      boxShadow: `0 0 8px ${typeColor}66`
                     }} />
                   </div>
 
@@ -530,7 +586,8 @@ const LedgerPage = () => {
                             color: 'var(--text-muted)',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.25rem'
+                            gap: '0.25rem',
+                            cursor: 'pointer'
                           }}
                         >
                           {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -553,7 +610,7 @@ const LedgerPage = () => {
                             }
                           }}
                           style={{
-                            padding: '0.35rem 0.75rem',
+                            padding: '0.45rem 0.9rem',
                             fontSize: '0.75rem',
                             fontWeight: 600,
                             borderRadius: 'var(--radius-sm)',
@@ -562,23 +619,44 @@ const LedgerPage = () => {
                             color: 'var(--text-main)',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.25rem'
+                            gap: '0.35rem',
+                            cursor: 'pointer',
+                            transition: 'var(--transition)'
+                          }}
+                          onMouseOver={e => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                          }}
+                          onMouseOut={e => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-input)';
+                            e.currentTarget.style.borderColor = 'var(--border-color)';
                           }}
                         >
-                          <PlusCircle size={13} /> Repayment
+                          <PlusCircle size={14} /> Repayment
                         </button>
 
                         {/* Quick Settle Fully */}
                         <button
                           onClick={() => handleFullSettlement(debt.id, remaining)}
                           style={{
-                            padding: '0.35rem 0.75rem',
+                            padding: '0.45rem 0.9rem',
                             fontSize: '0.75rem',
                             fontWeight: 600,
                             borderRadius: 'var(--radius-sm)',
-                            backgroundColor: `${typeColor}15`,
-                            color: typeColor,
-                            border: `1px solid ${typeColor}33`
+                            backgroundColor: typeColor,
+                            color: 'white',
+                            border: `1px solid transparent`,
+                            cursor: 'pointer',
+                            boxShadow: `0 2px 8px ${typeColor}33`,
+                            transition: 'var(--transition)'
+                          }}
+                          onMouseOver={e => {
+                            e.currentTarget.style.opacity = '0.9';
+                            e.currentTarget.style.boxShadow = `0 4px 12px ${typeColor}55`;
+                          }}
+                          onMouseOut={e => {
+                            e.currentTarget.style.opacity = '1';
+                            e.currentTarget.style.boxShadow = `0 2px 8px ${typeColor}33`;
                           }}
                         >
                           Settle Fully
