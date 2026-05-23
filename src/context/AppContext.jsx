@@ -308,7 +308,8 @@ export const AppProvider = ({ children }) => {
           category: txCategory,
           date: debt.date || new Date().toISOString().split('T')[0],
           note: txNote,
-          payment_method: 'Cash'
+          payment_method: 'Cash',
+          debt_id: data.id
         });
       }
     } else {
@@ -373,14 +374,17 @@ export const AppProvider = ({ children }) => {
         category: txCategory,
         date: new Date().toISOString().split('T')[0],
         note: txNote,
-        payment_method: 'Cash'
+        payment_method: 'Cash',
+        debt_id: debtId
       });
     }
   };
 
   const deleteDebt = async (debtId) => {
     const originalDebts = [...debts];
+    const originalTransactions = [...transactions];
     setDebts(prev => prev.filter(d => d.id !== debtId));
+    setTransactions(prev => prev.filter(tx => tx.debt_id !== debtId));
 
     const { error } = await supabase
       .from('debts')
@@ -390,6 +394,7 @@ export const AppProvider = ({ children }) => {
 
     if (error) {
       setDebts(originalDebts);
+      setTransactions(originalTransactions);
       alert('Error deleting debt record: ' + error.message);
     }
   };
@@ -412,7 +417,8 @@ export const AppProvider = ({ children }) => {
           category: transaction.category,
           date: transaction.date,
           note: transaction.note,
-          payment_method: transaction.payment_method || 'Cash'
+          payment_method: transaction.payment_method || 'Cash',
+          debt_id: transaction.debt_id || null
         }
       ])
       .select()

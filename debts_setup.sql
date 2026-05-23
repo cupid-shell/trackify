@@ -35,3 +35,6 @@ CREATE POLICY "Users can update own debts" ON debts
 -- Create policy to allow users to DELETE their own debts
 CREATE POLICY "Users can delete own debts" ON debts
   FOR DELETE USING (auth.uid() = user_id);
+
+-- Link transactions table to debts table for cascade deletion
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS debt_id UUID REFERENCES debts(id) ON DELETE CASCADE;
