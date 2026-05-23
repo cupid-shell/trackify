@@ -1,0 +1,683 @@
+import React, { useState, useMemo } from 'react';
+import { useAppContext } from '../context/AppContext';
+import { 
+  Plus, Trash2, Calendar, Target, PlusCircle, CheckCircle2, 
+  AlertTriangle, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Coins 
+} from 'lucide-react';
+import Header from './Header';
+import Footer from './Footer';
+import { format, parseISO } from 'date-fns';
+
+const LedgerPage = () => {
+  const { debts, addDebt, recordDebtRepayment, deleteDebt } = useAppContext();
+
+  // Tab State: 'active' or 'settled'
+  const [tab, setTab] = useState('active');
+
+  // New Debt Form State
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [person, setPerson] = useState('');
+  const [type, setType] = useState('lent'); // 'lent' or 'borrowed'
+  const [amount, setAmount] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [note, setNote] = useState('');
+  const [logAsTx, setLogAsTx] = useState(true);
+
+  // Local state for repayment input per debt item
+  const [repayAmount, setRepayAmount] = useState({});
+  const [repayNote, setRepayNote] = useState({});
+  const [repayLogAsTx, setRepayLogAsTx] = useState({});
+  const [showRepayFormId, setShowRepayFormId] = useState(null);
+  const [expandedDebtId, setExpandedDebtId] = useState(null);
+
+  // Calculate Metrics
+  const metrics = useMemo(() => {
+    let totalLent = 0;
+    let totalBorrowed = 0;
+
+    debts.forEach(d => {
+      const remaining = Number(d.amount) - Number(d.settled_amount);
+      if (d.status === 'active') {
+        if (d.type === 'lent') {
+          totalLent += remaining;
+        } else if (d.type === 'borrowed') {
+          totalBorrowed += remaining;
+        }
+      }
+    });
+
+    const netPosition = totalLent - totalBorrowed;
+
+    return {
+      totalLent,
+      totalBorrowed,
+      netPosition
+    };
+  }, [debts]);
+
+  // Filter debts by status
+  const activeDebts = debts.filter(d => d.status === 'active');
+  const settledDebts = debts.filter(d => d.status === 'settled');
+  const displayDebts = tab === 'active' ? activeDebts : settledDebts;
+
+  const handleAddDebtSubmit = async (e) => {
+    e.preventDefault();
+    if (!person.trim() || !amount || isNaN(amount) || Number(amount) <= 0) {
+      alert('Please enter a valid person and positive amount.');
+      return;
+    }
+
+    const debtData = {
+      type,
+      person: person.trim(),
+      amount: Number(amount),
+      due_date: dueDate || null,
+      note: note.trim() || null,
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    await addDebt(debtData, logAsTx);
+
+    // Reset Form
+    setPerson('');
+    setAmount('');
+    setDueDate('');
+    setNote('');
+    setLogAsTx(true);
+    setShowAddForm(false);
+  };
+
+  const handleRepaymentSubmit = async (debtId) => {
+    const amt = Number(repayAmount[debtId]);
+    if (isNaN(amt) || amt <= 0) {
+      alert('Please enter a valid payment amount.');
+      return;
+    }
+
+    const noteText = repayNote[debtId] || '';
+    const logTx = repayLogAsTx[debtId] !== false; // default true
+
+    await recordDebtRepayment(debtId, amt, noteText, logTx);
+
+    // Reset inputs
+    setRepayAmount(prev => ({ ...prev, [debtId]: '' }));
+    setRepayNote(prev => ({ ...prev, [debtId]: '' }));
+    setRepayLogAsTx(prev => ({ ...prev, [debtId]: true }));
+    setShowRepayFormId(null);
+  };
+
+  const handleFullSettlement = async (debtId, remainingAmount) => {
+    if (window.confirm(`Are you sure you want to fully settle this debt with a final payment of ৳${remainingAmount}?`)) {
+      const logTx = window.confirm('Would you like to log this final repayment in your main transaction history?');
+      await recordDebtRepayment(debtId, remainingAmount, 'Final settlement', logTx);
+    }
+  };
+
+  const getDueDateStatus = (dueDateStr) => {
+    if (!dueDateStr) return { label: '', color: 'var(--text-muted)' };
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const due = new Date(dueDateStr);
+    due.setHours(0,0,0,0);
+
+    if (due < today) {
+      return { label: 'Overdue', color: 'var(--danger)' };
+    } else if (due.getTime() === today.getTime()) {
+      return { label: 'Due Today', color: 'var(--warning)' };
+    }
+    return { label: '', color: 'var(--success)' };
+  };
+
+  return (
+    <>
+      <Header />
+      <main className="container" style={{ flex: 1 }}>
+        
+        {/* Title */}
+        <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Debt & Loan Ledger</h2>
+          <p>Lend and borrow tracker. Manage outstanding balances with friends.</p>
+        </div>
+
+        {/* Overview metrics cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          {/* Total Lent Card */}
+          <div className="glass-card flex items-center justify-between" style={{ padding: '1.25rem 1.5rem' }}>
+            <div className="flex-col gap-1">
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Lent (Receivables)</span>
+              <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--success)' }}>
+                ৳{metrics.totalLent.toLocaleString('en-IN')}
+              </span>
+            </div>
+            <div style={{
+              background: 'var(--success-bg)',
+              padding: '0.6rem',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--success)'
+            }}>
+              <ArrowUpRight size={24} />
+            </div>
+          </div>
+
+          {/* Total Borrowed Card */}
+          <div className="glass-card flex items-center justify-between" style={{ padding: '1.25rem 1.5rem' }}>
+            <div className="flex-col gap-1">
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Borrowed (Payables)</span>
+              <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--danger)' }}>
+                ৳{metrics.totalBorrowed.toLocaleString('en-IN')}
+              </span>
+            </div>
+            <div style={{
+              background: 'var(--danger-bg)',
+              padding: '0.6rem',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--danger)'
+            }}>
+              <ArrowDownLeft size={24} />
+            </div>
+          </div>
+
+          {/* Net Position Card */}
+          <div className="glass-card flex items-center justify-between" style={{ 
+            padding: '1.25rem 1.5rem',
+            border: metrics.netPosition !== 0 ? `1px solid ${metrics.netPosition > 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` : '1px solid rgba(255,255,255,0.05)'
+          }}>
+            <div className="flex-col gap-1">
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Net Position</span>
+              <span style={{ 
+                fontSize: '1.75rem', 
+                fontWeight: 700, 
+                color: metrics.netPosition > 0 ? 'var(--success)' : metrics.netPosition < 0 ? 'var(--danger)' : 'var(--text-main)' 
+              }}>
+                {metrics.netPosition > 0 ? '+' : ''}৳{metrics.netPosition.toLocaleString('en-IN')}
+              </span>
+            </div>
+            <div style={{
+              background: metrics.netPosition > 0 ? 'var(--success-bg)' : metrics.netPosition < 0 ? 'var(--danger-bg)' : 'var(--bg-input)',
+              padding: '0.6rem',
+              borderRadius: 'var(--radius-md)',
+              color: metrics.netPosition > 0 ? 'var(--success)' : metrics.netPosition < 0 ? 'var(--danger)' : 'var(--text-muted)'
+            }}>
+              <Coins size={24} />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Button & Add Form */}
+        <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            style={{
+              padding: '0.6rem 1.25rem',
+              backgroundColor: showAddForm ? 'var(--bg-input)' : 'var(--primary)',
+              color: 'white',
+              borderRadius: 'var(--radius-md)',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              alignSelf: 'center',
+              boxShadow: showAddForm ? 'none' : 'var(--shadow-glow)'
+            }}
+          >
+            {showAddForm ? 'Cancel' : <><Plus size={16} /> Log New Debt / Loan</>}
+          </button>
+
+          {showAddForm && (
+            <form onSubmit={handleAddDebtSubmit} className="glass-card flex-col gap-4" style={{
+              width: '100%',
+              maxWidth: '550px',
+              marginTop: '1.5rem',
+              padding: '1.5rem',
+              border: '1px solid var(--border-color)'
+            }}>
+              <h3 style={{ fontSize: '1.15rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '0.25rem' }}>
+                New Debt/Loan Record
+              </h3>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {/* Type Selection */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Transaction Type</label>
+                  <select
+                    value={type}
+                    onChange={e => setType(e.target.value)}
+                    style={{ padding: '0.6rem', fontSize: '0.875rem' }}
+                  >
+                    <option value="lent">Lent (I gave money)</option>
+                    <option value="borrowed">Borrowed (I took money)</option>
+                  </select>
+                </div>
+
+                {/* Person name */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Person / Contact Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Asif"
+                    value={person}
+                    onChange={e => setPerson(e.target.value)}
+                    required
+                    style={{ padding: '0.6rem', fontSize: '0.875rem' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {/* Amount */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Amount (BDT)</label>
+                  <input
+                    type="number"
+                    placeholder="1000"
+                    min="1"
+                    value={amount}
+                    onChange={e => setAmount(e.target.value)}
+                    required
+                    style={{ padding: '0.6rem', fontSize: '0.875rem' }}
+                  />
+                </div>
+
+                {/* Due date */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Due Date (Optional)</label>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={e => setDueDate(e.target.value)}
+                    style={{ padding: '0.6rem', fontSize: '0.875rem' }}
+                  />
+                </div>
+              </div>
+
+              {/* Note */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Description / Note</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Seat Rent share, lunch bill (optional)"
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  style={{ padding: '0.6rem', fontSize: '0.875rem' }}
+                />
+              </div>
+
+              {/* Checkbox log to main transactions */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                <input
+                  type="checkbox"
+                  id="logAsTx"
+                  checked={logAsTx}
+                  onChange={e => setLogAsTx(e.target.checked)}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <label htmlFor="logAsTx" style={{ fontSize: '0.825rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  Record immediately in main transaction history ({type === 'lent' ? 'Expense' : 'Income'})
+                </label>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                style={{
+                  padding: '0.65rem',
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  borderRadius: 'var(--radius-md)',
+                  fontWeight: 600,
+                  marginTop: '0.5rem',
+                  fontSize: '0.875rem'
+                }}
+              >
+                Create Record
+              </button>
+            </form>
+          )}
+        </div>
+
+        {/* Tab switcher */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            padding: '4px',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-color)',
+            display: 'flex'
+          }}>
+            <button
+              onClick={() => setTab('active')}
+              style={{
+                padding: '0.5rem 1.25rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: tab === 'active' ? 'var(--primary)' : 'transparent',
+                color: tab === 'active' ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Active Ledger ({activeDebts.length})
+            </button>
+            <button
+              onClick={() => setTab('settled')}
+              style={{
+                padding: '0.5rem 1.25rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: tab === 'settled' ? 'var(--primary)' : 'transparent',
+                color: tab === 'settled' ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Settled History ({settledDebts.length})
+            </button>
+          </div>
+        </div>
+
+        {/* Ledger Items List */}
+        <div style={{ maxWidth: '750px', margin: '0 auto' }} className="flex-col gap-4">
+          {displayDebts.length === 0 ? (
+            <div className="glass-card" style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <Coins size={36} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: '0.75rem' }} />
+              <p style={{ fontSize: '0.875rem' }}>
+                No {tab} records found.
+              </p>
+            </div>
+          ) : (
+            displayDebts.map(debt => {
+              const current = Number(debt.settled_amount || 0);
+              const target = Number(debt.amount || 1);
+              const remaining = target - current;
+              const percent = Math.min(100, Math.round((current / target) * 100));
+
+              const isLent = debt.type === 'lent';
+              const typeColor = isLent ? 'var(--success)' : 'var(--danger)';
+              const typeBg = isLent ? 'var(--success-bg)' : 'var(--danger-bg)';
+              const dueStatus = getDueDateStatus(debt.due_date);
+
+              let formattedDueDate = '';
+              if (debt.due_date) {
+                try {
+                  formattedDueDate = format(parseISO(debt.due_date), 'MMM dd, yyyy');
+                } catch (e) {
+                  formattedDueDate = debt.due_date;
+                }
+              }
+
+              const isRepaying = showRepayFormId === debt.id;
+              const isExpanded = expandedDebtId === debt.id;
+
+              return (
+                <div
+                  key={debt.id}
+                  className="glass-card flex-col gap-3"
+                  style={{
+                    border: '1px solid var(--border-color)',
+                    padding: '1.25rem',
+                    transition: 'all 0.2s ease',
+                    position: 'relative'
+                  }}
+                >
+                  {/* Top line: Contact, Type Badge, Due Alerts */}
+                  <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div className="flex items-center gap-2.5">
+                      <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{debt.person}</span>
+                      <span style={{ 
+                        fontSize: '0.675rem', 
+                        fontWeight: 700, 
+                        color: typeColor, 
+                        backgroundColor: typeBg,
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-full)',
+                        textTransform: 'uppercase'
+                      }}>
+                        {isLent ? 'Receivable' : 'Payable'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {debt.due_date && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem' }}>
+                          <Calendar size={12} color="var(--text-muted)" />
+                          <span style={{ color: dueStatus.label ? dueStatus.color : 'var(--text-muted)', fontWeight: dueStatus.label ? 600 : 400 }}>
+                            Due: {formattedDueDate} {dueStatus.label ? `(${dueStatus.label})` : ''}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Delete */}
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to delete this record for ${debt.person}?`)) {
+                            deleteDebt(debt.id);
+                          }
+                        }}
+                        style={{ color: 'var(--text-muted)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}
+                        onMouseOver={e => e.currentTarget.style.color = 'var(--danger)'}
+                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                        title="Delete record"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Summary / Progress block */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.25rem' }}>
+                    <div className="flex-col gap-1">
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Balance: ৳{remaining.toLocaleString('en-IN')} outstanding of ৳{target.toLocaleString('en-IN')}
+                      </span>
+                      {debt.note && (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-main)', fontStyle: 'italic' }}>
+                          "{debt.note}"
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ fontSize: '0.825rem', fontWeight: 600, color: typeColor }}>
+                      {percent}% Settle Rate
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${percent}%`,
+                      backgroundColor: typeColor,
+                      height: '100%',
+                      borderRadius: 'var(--radius-full)',
+                      transition: 'width 0.35s'
+                    }} />
+                  </div>
+
+                  {/* Action Bar */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.75rem' }}>
+                    <div className="flex gap-3">
+                      {/* Repayment Log history toggle */}
+                      {debt.payments && debt.payments.length > 0 && (
+                        <button
+                          onClick={() => setExpandedDebtId(isExpanded ? null : debt.id)}
+                          style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-muted)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                          }}
+                        >
+                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          Logs ({debt.payments.length})
+                        </button>
+                      )}
+                    </div>
+
+                    {tab === 'active' && (
+                      <div className="flex gap-2">
+                        {/* Repay / Payment Button */}
+                        <button
+                          onClick={() => {
+                            if (isRepaying) {
+                              setShowRepayFormId(null);
+                            } else {
+                              setShowRepayFormId(debt.id);
+                              // set default checkboxes
+                              setRepayLogAsTx(prev => ({ ...prev, [debt.id]: true }));
+                            }
+                          }}
+                          style={{
+                            padding: '0.35rem 0.75rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            borderRadius: 'var(--radius-sm)',
+                            backgroundColor: 'var(--bg-input)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-main)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                          }}
+                        >
+                          <PlusCircle size={13} /> Repayment
+                        </button>
+
+                        {/* Quick Settle Fully */}
+                        <button
+                          onClick={() => handleFullSettlement(debt.id, remaining)}
+                          style={{
+                            padding: '0.35rem 0.75rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            borderRadius: 'var(--radius-sm)',
+                            backgroundColor: `${typeColor}15`,
+                            color: typeColor,
+                            border: `1px solid ${typeColor}33`
+                          }}
+                        >
+                          Settle Fully
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Expandable repays list logs */}
+                  {isExpanded && debt.payments && (
+                    <div style={{
+                      backgroundColor: 'rgba(0,0,0,0.15)',
+                      padding: '0.75rem',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: '0.8rem',
+                      border: '1px solid var(--border-color)'
+                    }} className="flex-col gap-2">
+                      <span style={{ fontWeight: 600, fontSize: '0.725rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Repayment Log</span>
+                      <div className="flex-col gap-1.5" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                        {debt.payments.map((p, idx) => (
+                          <div key={idx} className="flex justify-between" style={{ padding: '0.25rem 0', borderBottom: idx < debt.payments.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+                            <div className="flex gap-2 text-muted">
+                              <span>{format(parseISO(p.date), 'yyyy-MM-dd')}</span>
+                              {p.note && <span>•</span>}
+                              {p.note && <span style={{ color: 'var(--text-main)', fontStyle: 'italic' }}>"{p.note}"</span>}
+                            </div>
+                            <span style={{ fontWeight: 600, color: typeColor }}>
+                              ৳{Number(p.amount).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Inline Repayment form */}
+                  {isRepaying && (
+                    <div style={{
+                      padding: '1rem',
+                      borderRadius: 'var(--radius-md)',
+                      backgroundColor: 'var(--bg-input)',
+                      border: '1px solid var(--border-color)',
+                      marginTop: '0.5rem'
+                    }} className="flex-col gap-3">
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Log Repayment for {debt.person}</span>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Payment Amount</label>
+                          <input
+                            type="number"
+                            placeholder="e.g. 500"
+                            max={remaining}
+                            value={repayAmount[debt.id] || ''}
+                            onChange={e => setRepayAmount(prev => ({ ...prev, [debt.id]: e.target.value }))}
+                            style={{ padding: '0.4rem', fontSize: '0.8rem' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Payment Note (Optional)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. cash, bkash transfer"
+                            value={repayNote[debt.id] || ''}
+                            onChange={e => setRepayNote(prev => ({ ...prev, [debt.id]: e.target.value }))}
+                            style={{ padding: '0.4rem', fontSize: '0.8rem' }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* log repayment to transactions */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                          type="checkbox"
+                          id={`repayLogTx-${debt.id}`}
+                          checked={repayLogAsTx[debt.id] !== false}
+                          onChange={e => setRepayLogAsTx(prev => ({ ...prev, [debt.id]: e.target.checked }))}
+                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                        />
+                        <label htmlFor={`repayLogTx-${debt.id}`} style={{ fontSize: '0.775rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                          Record in main transactions ({isLent ? 'Income / cash returned' : 'Expense / cash paid'})
+                        </label>
+                      </div>
+
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={() => setShowRepayFormId(null)}
+                          style={{
+                            padding: '0.4rem 0.8rem',
+                            fontSize: '0.75rem',
+                            borderRadius: 'var(--radius-sm)',
+                            color: 'var(--text-muted)'
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => handleRepaymentSubmit(debt.id)}
+                          style={{
+                            padding: '0.4rem 0.8rem',
+                            fontSize: '0.75rem',
+                            borderRadius: 'var(--radius-sm)',
+                            backgroundColor: 'var(--primary)',
+                            color: 'white',
+                            fontWeight: 600
+                          }}
+                        >
+                          Submit Payment
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
+};
+
+export default LedgerPage;

@@ -8,6 +8,7 @@ export const useAppContext = () => useContext(AppContext);
 export const AppProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [transactions, setTransactions] = useState([]);
+  const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // Initialize dynamic theme accent on mount
@@ -134,88 +135,35 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // Guard ref for tracking already processed auto-logs in the current session
-  const processedBillsRef = useRef(new Set());
-
-  const checkAndAutoLogBills = async () => {
-    if (!session?.user || loading) return;
-
-    const today = new Date();
-    const currentDay = today.getDate();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-
-    // Filter recurring bills due on or before today
-    const eligibleBills = recurringBills.filter(bill => currentDay >= bill.dueDate);
-
-    for (const bill of eligibleBills) {
-      const billKey = `${currentYear}-${currentMonth}-${bill.name}`;
-
-      if (processedBillsRef.current.has(billKey)) {
-        continue;
-      }
-
-      // Check if a transaction for this bill already exists in the transactions state for the current month
-      const alreadyLogged = transactions.some(tx => {
-        if (tx.type !== 'expense') return false;
-        const txDate = new Date(tx.date);
-        return (
-          txDate.getMonth() === currentMonth &&
-          txDate.getFullYear() === currentYear &&
-          tx.note &&
-          tx.note.toLowerCase().includes(bill.name.toLowerCase())
-        );
-      });
-
-      if (!alreadyLogged) {
-        // Mark as processed immediately to avoid race conditions
-        processedBillsRef.current.add(billKey);
-
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        const day = Math.min(bill.dueDate, daysInMonth);
-        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-        try {
-          const { data, error } = await supabase
-            .from('transactions')
-            .insert([
-              {
-                user_id: session.user.id,
-                type: 'expense',
-                amount: bill.amount,
-                category: bill.category,
-                date: dateStr,
-                note: bill.name,
-                payment_method: bill.payment || 'Cash'
-              }
-            ])
-            .select()
-            .single();
-
-          if (!error && data) {
-            setTransactions(prev => [data, ...prev]);
-            addNotification(
-              'Bill Auto-Paid',
-              `Your bill "${bill.name}" of ৳${bill.amount} was auto-logged via ${bill.payment || 'Cash'}.`,
-              'success'
-            );
-          } else {
-            console.error('Failed to auto-log bill:', error);
-            processedBillsRef.current.delete(billKey);
-          }
-        } catch (err) {
-          console.error('Error during auto-log:', err);
-          processedBillsRef.current.delete(billKey);
-        }
+  const [skippedBills, setSkippedBills] = useState(() => {
+    const saved = localStorage.getItem('trackify_skipped_bills');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
       }
     }
+    return [];
+  });
+
+  const skipBillForMonth = (billName, year, month) => {
+    const key = `${year}-${month}-${billName}`;
+    setSkippedBills(prev => {
+      const next = prev.includes(key) ? prev : [...prev, key];
+      localStorage.setItem('trackify_skipped_bills', JSON.stringify(next));
+      return next;
+    });
   };
 
-  useEffect(() => {
-    if (session?.user && !loading) {
-      checkAndAutoLogBills();
-    }
-  }, [session, loading, transactions, recurringBills]);
+  const unskipBillForMonth = (billName, year, month) => {
+    const key = `${year}-${month}-${billName}`;
+    setSkippedBills(prev => {
+      const next = prev.filter(k => k !== key);
+      localStorage.setItem('trackify_skipped_bills', JSON.stringify(next));
+      return next;
+    });
+  };
 
   // Auth state listener
   useEffect(() => {
@@ -224,6 +172,7 @@ export const AppProvider = ({ children }) => {
       if (session) {
         fetchTransactions(session.user.id);
         fetchSettings(session.user.id);
+        fetchDebts(session.user.id);
       } else {
         setLoading(false);
       }
@@ -234,8 +183,10 @@ export const AppProvider = ({ children }) => {
       if (session) {
         fetchTransactions(session.user.id, true);
         fetchSettings(session.user.id);
+        fetchDebts(session.user.id, true);
       } else {
         setTransactions([]);
+        setDebts([]);
         setLoading(false);
       }
     });
@@ -294,6 +245,152 @@ export const AppProvider = ({ children }) => {
       setTransactions(data);
     }
     if (!background) setLoading(false);
+  };
+
+  const fetchDebts = async (userId, background = false) => {
+    if (!background) setLoading(true);
+    const { data, error } = await supabase
+      .from('debts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setDebts(data);
+    }
+    if (!background) setLoading(false);
+  };
+
+  const addDebt = async (debt, logAsTransaction) => {
+    if (!session?.user) return;
+
+    const tempId = `temp-${Date.now()}`;
+    const newDebt = { 
+      ...debt, 
+      id: tempId, 
+      user_id: session.user.id, 
+      settled_amount: 0, 
+      status: 'active',
+      payments: []
+    };
+    setDebts(prev => [newDebt, ...prev]);
+
+    const { data, error } = await supabase
+      .from('debts')
+      .insert([
+        {
+          user_id: session.user.id,
+          type: debt.type,
+          person: debt.person,
+          amount: debt.amount,
+          due_date: debt.due_date || null,
+          note: debt.note || null,
+          payments: []
+        }
+      ])
+      .select()
+      .single();
+
+    if (!error && data) {
+      setDebts(prev => prev.map(d => d.id === tempId ? data : d));
+      
+      if (logAsTransaction) {
+        const txType = debt.type === 'lent' ? 'expense' : 'income';
+        const txCategory = 'Debt/Loan';
+        const txNote = debt.type === 'lent' 
+          ? `Lent to ${debt.person}${debt.note ? `: ${debt.note}` : ''}`
+          : `Borrowed from ${debt.person}${debt.note ? `: ${debt.note}` : ''}`;
+        
+        await addTransaction({
+          type: txType,
+          amount: debt.amount,
+          category: txCategory,
+          date: debt.date || new Date().toISOString().split('T')[0],
+          note: txNote,
+          payment_method: 'Cash'
+        });
+      }
+    } else {
+      setDebts(prev => prev.filter(d => d.id !== tempId));
+      alert('Error adding debt record: ' + error?.message);
+    }
+  };
+
+  const recordDebtRepayment = async (debtId, amount, note, logAsTransaction) => {
+    if (!session?.user) return;
+
+    const debt = debts.find(d => d.id === debtId);
+    if (!debt) return;
+
+    const newSettledAmount = Number(debt.settled_amount || 0) + Number(amount);
+    const newStatus = newSettledAmount >= Number(debt.amount) ? 'settled' : 'active';
+    const newPayment = {
+      date: new Date().toISOString().split('T')[0],
+      amount: Number(amount),
+      note: note || ''
+    };
+    const newPayments = [...(debt.payments || []), newPayment];
+
+    const originalDebts = [...debts];
+    setDebts(prev => prev.map(d => d.id === debtId ? { 
+      ...d, 
+      settled_amount: newSettledAmount, 
+      status: newStatus,
+      payments: newPayments
+    } : d));
+
+    const { data, error } = await supabase
+      .from('debts')
+      .update({
+        settled_amount: newSettledAmount,
+        status: newStatus,
+        payments: newPayments,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', debtId)
+      .eq('user_id', session.user.id)
+      .select();
+
+    if (error || !data || data.length === 0) {
+      setDebts(originalDebts);
+      alert('Error updating debt repayment: ' + (error?.message || 'Update failed'));
+      return;
+    }
+
+    setDebts(prev => prev.map(d => d.id === debtId ? data[0] : d));
+
+    if (logAsTransaction) {
+      const txType = debt.type === 'lent' ? 'income' : 'expense';
+      const txCategory = 'Debt/Loan';
+      const txNote = debt.type === 'lent'
+        ? `Repayment from ${debt.person}${note ? `: ${note}` : ''}`
+        : `Repay to ${debt.person}${note ? `: ${note}` : ''}`;
+
+      await addTransaction({
+        type: txType,
+        amount: Number(amount),
+        category: txCategory,
+        date: new Date().toISOString().split('T')[0],
+        note: txNote,
+        payment_method: 'Cash'
+      });
+    }
+  };
+
+  const deleteDebt = async (debtId) => {
+    const originalDebts = [...debts];
+    setDebts(prev => prev.filter(d => d.id !== debtId));
+
+    const { error } = await supabase
+      .from('debts')
+      .delete()
+      .eq('id', debtId)
+      .eq('user_id', session.user.id);
+
+    if (error) {
+      setDebts(originalDebts);
+      alert('Error deleting debt record: ' + error.message);
+    }
   };
 
   const addTransaction = async (transaction) => {
@@ -538,6 +635,7 @@ export const AppProvider = ({ children }) => {
   const value = {
     session,
     transactions,
+    debts,
     userSettings,
     updateSettings,
     presets,
@@ -567,7 +665,13 @@ export const AppProvider = ({ children }) => {
     deleteSavingsGoal,
     updateSavingsGoalProgress,
     updateCategoryMetadata,
-    getCategoryStyle
+    getCategoryStyle,
+    addDebt,
+    recordDebtRepayment,
+    deleteDebt,
+    skippedBills,
+    skipBillForMonth,
+    unskipBillForMonth
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

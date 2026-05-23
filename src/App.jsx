@@ -18,6 +18,7 @@ import FinancialInsights from './components/FinancialInsights';
 import ExpenseCalendar from './components/ExpenseCalendar';
 import HealthScore from './components/HealthScore';
 import SavingsGoals from './components/SavingsGoals';
+import LedgerPage from './components/Ledger';
 
 
 const Dashboard = () => (
@@ -194,6 +195,11 @@ function App() {
         <Route path="/settings" element={
           <ProtectedRoute>
             <SettingsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/ledger" element={
+          <ProtectedRoute>
+            <LedgerPage />
           </ProtectedRoute>
         } />
       </Routes>
