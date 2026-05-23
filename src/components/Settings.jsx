@@ -474,7 +474,7 @@ const SettingsPage = () => {
                         <div className="flex-col gap-1.5">
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Select Emoji</span>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                            {['🍔', '🏠', '⚡', '🚗', '🛒', '🎓', '🎁', '🎮', '🩺', '✈️', '💵', '🛍️', '❓'].map(emoji => (
+                            {['🍔', '🏠', '⚡', '🚗', '🛒', '🎓', '🤖', '🎁', '🎮', '🩺', '✈️', '💵', '🛍️', '❓'].map(emoji => (
                               <button
                                 key={emoji}
                                 onClick={() => updateCategoryMetadata(cat, { emoji })}
