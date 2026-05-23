@@ -285,6 +285,7 @@ export const AppProvider = ({ children }) => {
           amount: debt.amount,
           due_date: debt.due_date || null,
           note: debt.note || null,
+          date: debt.date || new Date().toISOString().split('T')[0],
           payments: []
         }
       ])

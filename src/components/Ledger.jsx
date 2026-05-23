@@ -22,6 +22,7 @@ const LedgerPage = () => {
   const [dueDate, setDueDate] = useState('');
   const [note, setNote] = useState('');
   const [logAsTx, setLogAsTx] = useState(true);
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Local state for repayment input per debt item
   const [repayAmount, setRepayAmount] = useState({});
@@ -73,7 +74,7 @@ const LedgerPage = () => {
       amount: Number(amount),
       due_date: dueDate || null,
       note: note.trim() || null,
-      date: new Date().toISOString().split('T')[0]
+      date: date
     };
 
     await addDebt(debtData, logAsTx);
@@ -83,6 +84,7 @@ const LedgerPage = () => {
     setAmount('');
     setDueDate('');
     setNote('');
+    setDate(new Date().toISOString().split('T')[0]);
     setLogAsTx(true);
     setShowAddForm(false);
   };
@@ -283,6 +285,20 @@ const LedgerPage = () => {
                   />
                 </div>
 
+                {/* Date Lent/Borrowed */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Date Lent/Borrowed</label>
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={e => setDate(e.target.value)}
+                    required
+                    style={{ padding: '0.6rem', fontSize: '0.875rem' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {/* Due date */}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Due Date (Optional)</label>
@@ -293,18 +309,18 @@ const LedgerPage = () => {
                     style={{ padding: '0.6rem', fontSize: '0.875rem' }}
                   />
                 </div>
-              </div>
 
-              {/* Note */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Description / Note</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Seat Rent share, lunch bill (optional)"
-                  value={note}
-                  onChange={e => setNote(e.target.value)}
-                  style={{ padding: '0.6rem', fontSize: '0.875rem' }}
-                />
+                {/* Note */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Description / Note</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Seat Rent share, lunch bill (optional)"
+                    value={note}
+                    onChange={e => setNote(e.target.value)}
+                    style={{ padding: '0.6rem', fontSize: '0.875rem' }}
+                  />
+                </div>
               </div>
 
               {/* Checkbox log to main transactions */}
@@ -426,8 +442,13 @@ const LedgerPage = () => {
                 >
                   {/* Top line: Contact, Type Badge, Due Alerts */}
                   <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <div className="flex items-center gap-2.5">
-                      <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{debt.person}</span>
+                    <div className="flex items-center gap-2.5" style={{ flexWrap: 'wrap' }}>
+                      <div className="flex-col">
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, lineHeight: 1.2 }}>{debt.person}</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                          {isLent ? 'Lent' : 'Borrowed'} on {debt.date ? format(parseISO(debt.date), 'MMM dd, yyyy') : format(parseISO(debt.created_at), 'MMM dd, yyyy')}
+                        </span>
+                      </div>
                       <span style={{ 
                         fontSize: '0.675rem', 
                         fontWeight: 700, 
@@ -435,7 +456,8 @@ const LedgerPage = () => {
                         backgroundColor: typeBg,
                         padding: '2px 8px',
                         borderRadius: 'var(--radius-full)',
-                        textTransform: 'uppercase'
+                        textTransform: 'uppercase',
+                        alignSelf: 'center'
                       }}>
                         {isLent ? 'Receivable' : 'Payable'}
                       </span>

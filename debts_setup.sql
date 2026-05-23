@@ -11,6 +11,7 @@ CREATE TABLE debts (
   status TEXT DEFAULT 'active' NOT NULL CHECK (status IN ('active', 'settled')),
   due_date DATE,
   note TEXT,
+  date DATE DEFAULT CURRENT_DATE NOT NULL,
   payments JSONB DEFAULT '[]'::jsonb NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
