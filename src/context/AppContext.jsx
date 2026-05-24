@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { version as currentVersion } from '../../package.json';
 
 const AppContext = createContext();
 
@@ -339,6 +342,83 @@ export const AppProvider = ({ children }) => {
       supabase.removeChannel(settingsChannel);
     };
   }, [session]);
+
+  // Native APK Update Checker
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const checkAppUpdate = async () => {
+      try {
+        const response = await fetch('https://api.github.com/repos/cupid-shell/trackify/releases/latest');
+        if (!response.ok) return;
+        const data = await response.json();
+        const latestVersion = data.tag_name ? data.tag_name.replace(/^v/, '') : null;
+
+        if (!latestVersion) return;
+
+        const isNewer = (latest, current) => {
+          const lParts = latest.split('.').map(Number);
+          const cParts = current.split('.').map(Number);
+          for (let i = 0; i < Math.max(lParts.length, cParts.length); i++) {
+            const l = lParts[i] || 0;
+            const c = cParts[i] || 0;
+            if (l > c) return true;
+            if (l < c) return false;
+          }
+          return false;
+        };
+
+        const cleanCurrent = currentVersion.replace(/^v/, '');
+
+        if (isNewer(latestVersion, cleanCurrent)) {
+          const lastNotified = localStorage.getItem('trackify_notified_update_version');
+          if (lastNotified === latestVersion) return;
+
+          let perm = await LocalNotifications.checkPermissions();
+          if (perm.display !== 'granted') {
+            perm = await LocalNotifications.requestPermissions();
+          }
+
+          if (perm.display === 'granted') {
+            await LocalNotifications.schedule({
+              notifications: [
+                {
+                  title: 'Trackify Update Available 🚀',
+                  body: `Version v${latestVersion} is ready to download! Tap to download the new APK.`,
+                  id: 9999,
+                  extra: {
+                    url: 'https://github.com/cupid-shell/trackify/releases'
+                  }
+                }
+              ]
+            });
+            localStorage.setItem('trackify_notified_update_version', latestVersion);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for APK update:', error);
+      }
+    };
+
+    // Check 5 seconds after startup
+    const timer = setTimeout(checkAppUpdate, 5000);
+
+    // Register listener for tapping notification
+    const actionListener = LocalNotifications.addListener(
+      'localNotificationActionPerformed',
+      (action) => {
+        const url = action.notification.extra?.url;
+        if (url) {
+          window.open(url, '_blank');
+        }
+      }
+    );
+
+    return () => {
+      clearTimeout(timer);
+      actionListener.remove();
+    };
+  }, []);
 
   const fetchSettings = async (userId) => {
     const { data, error } = await supabase
