@@ -107,40 +107,17 @@ const ExpenseCalendar = () => {
       <div
         key={`day-${day}`}
         onClick={() => handleDayClick(day)}
-        style={{
-          ...style,
-          cursor: 'pointer',
-          borderRadius: 'var(--radius-sm)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '0.5rem',
-          aspectRatio: '1/1',
-          position: 'relative',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
+        style={style}
         className="calendar-day-cell"
       >
-        <span style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>{day}</span>
+        <span className="calendar-day-cell-number">{day}</span>
         {dayInfo.totalExpense > 0 && (
-          <span style={{ 
-            fontSize: '0.7rem', 
-            fontWeight: 600, 
-            textAlign: 'right',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-          }}>
+          <span className="calendar-day-cell-amount">
             ৳{dayInfo.totalExpense}
           </span>
         )}
         {dayInfo.totalExpense === 0 && (
-          <span style={{ 
-            fontSize: '0.6rem', 
-            opacity: 0.8,
-            textAlign: 'right',
-            fontWeight: 'normal'
-          }}>
+          <span className="calendar-day-cell-nospend">
             No spend
           </span>
         )}
@@ -155,11 +132,21 @@ const ExpenseCalendar = () => {
   return (
     <div className="glass-card" style={{ padding: '1.5rem', position: 'relative' }}>
       <style>{`
+        .calendar-scroll-container {
+          width: 100%;
+          overflow-x: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .calendar-scroll-container::-webkit-scrollbar {
+          display: none;
+        }
         .calendar-grid {
           display: grid;
-          grid-template-columns: repeat(7, 1fr);
+          grid-template-columns: repeat(7, minmax(40px, 1fr));
           gap: 0.5rem;
           margin-top: 1rem;
+          min-width: 280px;
         }
         .weekday-header {
           text-align: center;
@@ -169,10 +156,57 @@ const ExpenseCalendar = () => {
           padding-bottom: 0.5rem;
           border-bottom: 1px solid var(--border-color);
         }
+        .calendar-day-cell {
+          cursor: pointer;
+          border-radius: var(--radius-sm);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 0.5rem;
+          aspect-ratio: 1/1;
+          position: relative;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
         .calendar-day-cell:hover {
           transform: translateY(-2px);
           filter: brightness(1.15);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        }
+        .calendar-day-cell-number {
+          font-size: 0.875rem;
+          font-weight: bold;
+        }
+        .calendar-day-cell-amount {
+          font-size: 0.7rem;
+          font-weight: 600;
+          text-align: right;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .calendar-day-cell-nospend {
+          font-size: 0.6rem;
+          opacity: 0.8;
+          text-align: right;
+          font-weight: normal;
+        }
+
+        @media (max-width: 480px) {
+          .calendar-grid {
+            gap: 0.25rem;
+          }
+          .calendar-day-cell {
+            padding: 0.25rem;
+          }
+          .calendar-day-cell-number {
+            font-size: 0.75rem;
+          }
+          .calendar-day-cell-amount {
+            font-size: 0.55rem;
+          }
+          .calendar-day-cell-nospend {
+            display: none;
+          }
         }
       `}</style>
 
@@ -213,13 +247,15 @@ const ExpenseCalendar = () => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="calendar-grid">
-        {weekdays.map(day => (
-          <div key={day} className="weekday-header">
-            {day}
-          </div>
-        ))}
-        {cells}
+      <div className="calendar-scroll-container">
+        <div className="calendar-grid">
+          {weekdays.map(day => (
+            <div key={day} className="weekday-header">
+              {day}
+            </div>
+          ))}
+          {cells}
+        </div>
       </div>
 
       {/* Transaction Modal Overlay */}

@@ -345,7 +345,7 @@ const RecentTransactions = () => {
                   transition: 'var(--transition)'
                 }}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4" style={{ minWidth: 0, flex: 1 }}>
                   <div style={{
                     width: '40px',
                     height: '40px',
@@ -355,41 +355,48 @@ const RecentTransactions = () => {
                     borderRadius: 'var(--radius-full)',
                     backgroundColor: tx.type === 'income' ? 'var(--success-bg)' : `${getCategoryStyle(tx.category).color}15`,
                     border: `1px solid ${tx.type === 'income' ? 'rgba(16, 185, 129, 0.2)' : `${getCategoryStyle(tx.category).color}30`}`,
-                    fontSize: tx.type === 'income' ? '1rem' : '1.25rem'
+                    fontSize: tx.type === 'income' ? '1rem' : '1.25rem',
+                    flexShrink: 0
                   }}>
                     {tx.type === 'income' ? <TrendingUp size={20} style={{ color: 'var(--success)' }} /> : <span>{getCategoryStyle(tx.category).emoji}</span>}
                   </div>
-                  <div>
-                    <h4 style={{ fontWeight: 600 }}>{tx.category}</h4>
-                    <div className="flex gap-2 items-center" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <h4 style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.category}</h4>
+                    <div className="flex items-center flex-wrap" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', columnGap: '0.5rem', rowGap: '0.25rem' }}>
                       <span style={{ 
                         backgroundColor: 'rgba(255,255,255,0.1)', 
                         padding: '2px 6px', 
                         borderRadius: '4px',
-                        fontSize: '0.7rem'
+                        fontSize: '0.7rem',
+                        flexShrink: 0
                       }}>
                         {tx.payment_method || 'Cash'}
                       </span>
-                      <span>{format(new Date(tx.date), 'MMM dd, yyyy')}</span>
+                      <span style={{ flexShrink: 0 }}>{format(new Date(tx.date), 'MMM dd, yyyy')}</span>
                       {tx.note && (
                         <>
-                          <span>•</span>
-                          <span>{tx.note}</span>
+                          <span style={{ flexShrink: 0, opacity: 0.5 }}>•</span>
+                          <span style={{ 
+                            wordBreak: 'break-word',
+                            overflowWrap: 'anywhere'
+                          }}>{tx.note}</span>
                         </>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4" style={{ flexShrink: 0, marginLeft: 'auto' }}>
                   <span style={{
                     fontWeight: 700,
                     fontSize: '1.125rem',
-                    color: tx.type === 'income' ? 'var(--success)' : 'var(--text-main)'
+                    color: tx.type === 'income' ? 'var(--success)' : 'var(--text-main)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}>
                     {tx.type === 'income' ? '+' : '-'}৳{tx.amount.toLocaleString('en-IN')}
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
                     <button 
                       onClick={() => startEditing(tx)}
                       style={{ color: 'var(--text-muted)' }}
