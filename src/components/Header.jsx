@@ -31,29 +31,29 @@ const Header = () => {
     return (
       <Link 
         to={to} 
+        className="nav-link"
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.5rem 1rem',
+          gap: '0.35rem',
           borderRadius: 'var(--radius-md)',
           backgroundColor: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
           color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
           textDecoration: 'none',
           fontWeight: isActive ? 600 : 400,
-          transition: 'all 0.2s ease'
+          transition: 'all 0.2s ease',
+          flexShrink: 0
         }}
       >
-        <Icon size={18} />
+        <Icon size={18} style={{ flexShrink: 0 }} />
         <span style={{ display: 'none' }} className="sm:inline">{label}</span>
       </Link>
     );
   };
 
   return (
-    <header style={{
+    <header className="site-header" style={{
       borderBottom: '1px solid var(--border-color)',
-      padding: '1rem',
       backgroundColor: 'rgba(28, 31, 38, 0.8)',
       backdropFilter: 'blur(12px)',
       position: 'sticky',
@@ -61,7 +61,19 @@ const Header = () => {
       zIndex: 200, // Make sure dropdown sits above other panels
     }}>
       <style>{`
+        .site-header {
+          padding: 0.75rem 0.5rem;
+        }
+        .nav-link {
+          padding: 0.5rem 0.5rem;
+        }
         @media (min-width: 640px) {
+          .site-header {
+            padding: 1rem !important;
+          }
+          .nav-link {
+            padding: 0.5rem 1rem !important;
+          }
           .sm\\:inline { display: inline !important; }
         }
         .hover-action:hover {
@@ -70,7 +82,7 @@ const Header = () => {
         }
       `}</style>
       <div className="container flex items-center justify-between" style={{ padding: 0 }}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
           <img 
             src="/favicon.png" 
             alt="Trackify Logo" 
@@ -78,14 +90,15 @@ const Header = () => {
               width: '32px', 
               height: '32px', 
               borderRadius: 'var(--radius-md)', 
-              boxShadow: 'var(--shadow-glow)' 
+              boxShadow: 'var(--shadow-glow)',
+              flexShrink: 0
             }} 
           />
           <h1 style={{ fontSize: '1.25rem', margin: 0, display: 'none' }} className="sm:inline">Trackify</h1>
         </div>
         
         {session && (
-          <nav className="flex items-center gap-1" style={{ flex: 1, justifyContent: 'center' }}>
+          <nav className="flex items-center gap-0.5" style={{ flex: 1, justifyContent: 'center', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <NavLink to="/" icon={LayoutDashboard} label="Dashboard" />
             <NavLink to="/history" icon={History} label="History" />
             <NavLink to="/analytics" icon={PieChart} label="Analytics" />
@@ -95,7 +108,7 @@ const Header = () => {
         )}
 
         {session && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
             {/* Notification Bell Dropdown */}
             <div style={{ position: 'relative' }} ref={dropdownRef}>
               <button 
