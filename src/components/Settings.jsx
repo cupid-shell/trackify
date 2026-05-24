@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { Capacitor } from '@capacitor/core';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -16,7 +17,8 @@ const SettingsPage = () => {
     recurringBills, 
     updateRecurringBills,
     updateCategoryMetadata,
-    getCategoryStyle
+    getCategoryStyle,
+    testNativeNotification
   } = useAppContext();
   
   const [baseIncome, setBaseIncome] = useState(userSettings.base_income);
@@ -722,6 +724,36 @@ const SettingsPage = () => {
                 </button>
               </div>
             </div>
+          </div>
+
+          <div className="glass-card flex-col gap-4">
+            <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>🔔</span>
+              Native Notifications Test
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              Test the native notification integration on your device. This will trigger a test alert instantly.
+            </p>
+            <button
+              onClick={testNativeNotification}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1rem',
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--text-main)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                border: '1px solid var(--border-color)',
+                cursor: 'pointer',
+                width: 'fit-content'
+              }}
+            >
+              <span>🔔</span> Trigger Test Notification
+            </button>
           </div>
 
           <div className="glass-card flex-col gap-4">

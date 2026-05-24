@@ -848,6 +848,37 @@ export const AppProvider = ({ children }) => {
     return defaults[catName] || { emoji: "🏷️", color: "#94a3b8" };
   };
 
+  const testNativeNotification = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      alert("Native notifications can only be tested inside the Android app (APK).");
+      return;
+    }
+    try {
+      let perm = await LocalNotifications.checkPermissions();
+      if (perm.display !== 'granted') {
+        perm = await LocalNotifications.requestPermissions();
+      }
+      if (perm.display === 'granted') {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: 'Trackify Notification Test 🔔',
+              body: 'If you can read this, your native Android notifications are working perfectly!',
+              id: 8888,
+              extra: {
+                url: 'https://github.com/cupid-shell/trackify/releases'
+              }
+            }
+          ]
+        });
+      } else {
+        alert("Notification permissions were denied.");
+      }
+    } catch (e) {
+      alert("Error triggering notification: " + e.message);
+    }
+  };
+
   const currentRealDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentRealDate.getMonth());
   const [selectedYear, setSelectedYear] = useState(currentRealDate.getFullYear());
@@ -908,7 +939,8 @@ export const AppProvider = ({ children }) => {
     deleteDebt,
     skippedBills,
     skipBillForMonth,
-    unskipBillForMonth
+    unskipBillForMonth,
+    testNativeNotification
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
