@@ -251,6 +251,95 @@ export const AppProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Realtime database subscription listener
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const transactionsChannel = supabase
+      .channel('realtime:transactions')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${session.user.id}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setTransactions(prev => {
+              if (prev.some(t => t.id === payload.new.id)) return prev;
+              const tempIndex = prev.findIndex(t => 
+                t.id.toString().startsWith('temp-') && 
+                t.amount == payload.new.amount && 
+                t.category === payload.new.category &&
+                t.date === payload.new.date
+              );
+              if (tempIndex !== -1) {
+                return prev.map((t, idx) => idx === tempIndex ? payload.new : t);
+              }
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setTransactions(prev => prev.map(t => t.id === payload.new.id ? payload.new : t));
+          } else if (payload.eventType === 'DELETE') {
+            setTransactions(prev => prev.filter(t => t.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    const debtsChannel = supabase
+      .channel('realtime:debts')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'debts', filter: `user_id=eq.${session.user.id}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setDebts(prev => {
+              if (prev.some(d => d.id === payload.new.id)) return prev;
+              const tempIndex = prev.findIndex(d => 
+                d.id.toString().startsWith('temp-') && 
+                d.amount == payload.new.amount && 
+                d.person === payload.new.person
+              );
+              if (tempIndex !== -1) {
+                return prev.map((d, idx) => idx === tempIndex ? payload.new : d);
+              }
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setDebts(prev => prev.map(d => d.id === payload.new.id ? payload.new : d));
+          } else if (payload.eventType === 'DELETE') {
+            setDebts(prev => prev.filter(d => d.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    const settingsChannel = supabase
+      .channel('realtime:user_settings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_settings', filter: `user_id=eq.${session.user.id}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            setUserSettings({
+              base_income: payload.new.base_income || 15000,
+              savings_goal: payload.new.savings_goal || 3000,
+              expense_categories: payload.new.expense_categories || ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
+              income_categories: payload.new.income_categories || ["Allowance", "Bonus", "Other"],
+              category_budgets: payload.new.category_budgets || {},
+              savings_goals: payload.new.savings_goals || [],
+              category_metadata: payload.new.category_metadata || {}
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(transactionsChannel);
+      supabase.removeChannel(debtsChannel);
+      supabase.removeChannel(settingsChannel);
+    };
+  }, [session]);
+
   const fetchSettings = async (userId) => {
     const { data, error } = await supabase
       .from('user_settings')
