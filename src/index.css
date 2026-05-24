@@ -193,4 +193,10 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
+@media (max-width: 640px) {
+  .container {
+    padding: 1.5rem 0.75rem;
+  }
+}
+
 

@@ -145,7 +145,7 @@ const LedgerPage = () => {
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1.5rem',
+          gap: '1rem',
           marginBottom: '2rem'
         }}>
           {/* Total Lent Card */}
@@ -242,7 +242,7 @@ const LedgerPage = () => {
                 New Debt/Loan Record
               </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 {/* Type Selection */}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Transaction Type</label>
@@ -270,7 +270,7 @@ const LedgerPage = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 {/* Amount */}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Amount (BDT)</label>
@@ -298,7 +298,7 @@ const LedgerPage = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 {/* Due date */}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Due Date (Optional)</label>
@@ -324,15 +324,15 @@ const LedgerPage = () => {
               </div>
 
               {/* Checkbox log to main transactions */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '0.25rem' }}>
                 <input
                   type="checkbox"
                   id="logAsTx"
                   checked={logAsTx}
                   onChange={e => setLogAsTx(e.target.checked)}
-                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer', marginTop: '3px' }}
                 />
-                <label htmlFor="logAsTx" style={{ fontSize: '0.825rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <label htmlFor="logAsTx" style={{ fontSize: '0.825rem', color: 'var(--text-muted)', cursor: 'pointer', lineHeight: '1.4' }}>
                   Record immediately in main transaction history ({type === 'lent' ? 'Expense' : 'Income'})
                 </label>
               </div>
@@ -575,7 +575,7 @@ const LedgerPage = () => {
                   </div>
 
                   {/* Action Bar */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.75rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                     <div className="flex gap-3">
                       {/* Repayment Log history toggle */}
                       {debt.payments && debt.payments.length > 0 && (
@@ -597,7 +597,7 @@ const LedgerPage = () => {
                     </div>
 
                     {tab === 'active' && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2" style={{ flexWrap: 'wrap', justifyContent: 'flex-end', width: '100%', smWidth: 'auto' }}>
                         {/* Repay / Payment Button */}
                         <button
                           onClick={() => {
@@ -703,7 +703,7 @@ const LedgerPage = () => {
                     }} className="flex-col gap-3">
                       <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Log Repayment for {debt.person}</span>
                       
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
                         <div>
                           <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Payment Amount</label>
                           <input
@@ -728,15 +728,15 @@ const LedgerPage = () => {
                       </div>
 
                       {/* log repayment to transactions */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
                         <input
                           type="checkbox"
                           id={`repayLogTx-${debt.id}`}
                           checked={repayLogAsTx[debt.id] !== false}
                           onChange={e => setRepayLogAsTx(prev => ({ ...prev, [debt.id]: e.target.checked }))}
-                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                          style={{ width: '16px', height: '16px', cursor: 'pointer', marginTop: '2px' }}
                         />
-                        <label htmlFor={`repayLogTx-${debt.id}`} style={{ fontSize: '0.775rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                        <label htmlFor={`repayLogTx-${debt.id}`} style={{ fontSize: '0.775rem', color: 'var(--text-muted)', cursor: 'pointer', lineHeight: '1.4' }}>
                           Record in main transactions ({isLent ? 'Income / cash returned' : 'Expense / cash paid'})
                         </label>
                       </div>
