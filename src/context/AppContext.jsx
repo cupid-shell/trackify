@@ -259,7 +259,7 @@ export const AppProvider = ({ children }) => {
       .channel('realtime:transactions')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${session.user.id}` },
+        { event: '*', schema: 'public', table: 'transactions' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
             setTransactions(prev => {
@@ -288,7 +288,7 @@ export const AppProvider = ({ children }) => {
       .channel('realtime:debts')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'debts', filter: `user_id=eq.${session.user.id}` },
+        { event: '*', schema: 'public', table: 'debts' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
             setDebts(prev => {
@@ -316,7 +316,7 @@ export const AppProvider = ({ children }) => {
       .channel('realtime:user_settings')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'user_settings', filter: `user_id=eq.${session.user.id}` },
+        { event: '*', schema: 'public', table: 'user_settings' },
         (payload) => {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             setUserSettings({
