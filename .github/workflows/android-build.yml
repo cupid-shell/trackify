@@ -31,13 +31,15 @@ jobs:
     - name: Build Web Application
       run: npm run build
 
+    - name: Make Gradle Wrapper Executable
+      run: chmod +x android/gradlew
+
     - name: Sync Capacitor
       run: npx cap sync
 
     - name: Build Android APK
       run: |
         cd android
-        chmod +x gradlew
         ./gradlew assembleDebug --no-daemon
 
     - name: Upload APK Artifact
