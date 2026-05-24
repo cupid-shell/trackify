@@ -52,13 +52,14 @@ jobs:
 
     - name: Prepare Release APK File
       run: |
-        cp android/app/build/outputs/apk/debug/app-debug.apk trackify-v${{ steps.get_version.outputs.version }}-debug.apk
+        VERSION=${{ steps.get_version.outputs.version }}
+        cp android/app/build/outputs/apk/debug/app-debug.apk "Trackify-v${VERSION}.apk"
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: trackify-v${{ steps.get_version.outputs.version }}-debug
-        path: trackify-v${{ steps.get_version.outputs.version }}-debug.apk
+        name: Trackify-v${{ steps.get_version.outputs.version }}
+        path: Trackify-v${{ steps.get_version.outputs.version }}.apk
         retention-days: 7
 
     - name: Create or Update GitHub Release
@@ -66,7 +67,27 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         VERSION=${{ steps.get_version.outputs.version }}
-        gh release create "v$VERSION" "trackify-v$VERSION-debug.apk" \
+        
+        # Configure Git
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Delete all existing releases and tags on remote to keep only the latest version
+        gh release list --limit 100 | cut -f 1 | while read -r tag; do
+          if [ -n "$tag" ]; then
+            echo "Deleting release and tag: $tag"
+            gh release delete "$tag" --yes --cleanup-tag || true
+          fi
+        done
+        
+        # Delete local tag if it exists
+        git tag -d "v$VERSION" || true
+        
+        # Create and push the new tag
+        git tag "v$VERSION"
+        git push origin "v$VERSION" --force
+        
+        # Create the new Release and upload the asset
+        gh release create "v$VERSION" "Trackify-v$VERSION.apk" \
           --title "Trackify Release v$VERSION" \
-          --notes "Automated release of Trackify version v$VERSION compiled from the master branch." \
-          --clobber
+          --notes "Automated release of Trackify version v$VERSION compiled from the master branch."
