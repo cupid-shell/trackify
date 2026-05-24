@@ -73,7 +73,7 @@ jobs:
         git config user.email "github-actions[bot]@users.noreply.github.com"
         
         # Delete all existing releases and tags on remote to keep only the latest version
-        gh release list --limit 100 | cut -f 1 | while read -r tag; do
+        gh release list --limit 100 --json tagName --jq '.[].tagName' | while read -r tag; do
           if [ -n "$tag" ]; then
             echo "Deleting release and tag: $tag"
             gh release delete "$tag" --yes --cleanup-tag || true
