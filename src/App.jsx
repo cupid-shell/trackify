@@ -19,6 +19,8 @@ import ExpenseCalendar from './components/ExpenseCalendar';
 import HealthScore from './components/HealthScore';
 import SavingsGoals from './components/SavingsGoals';
 import LedgerPage from './components/Ledger';
+import PWAUpdateToast from './components/PWAUpdateToast';
+
 
 
 const Dashboard = () => (
@@ -203,6 +205,7 @@ function App() {
           </ProtectedRoute>
         } />
       </Routes>
+      <PWAUpdateToast />
     </BrowserRouter>
   );
 }

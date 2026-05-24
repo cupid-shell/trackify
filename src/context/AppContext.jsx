@@ -100,9 +100,9 @@ export const AppProvider = ({ children }) => {
     }
   }, [session]);
 
-  const addNotification = (title, message, type = 'info') => {
+  const addNotification = (title, message, type = 'info', customId = null) => {
     const newNotif = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: customId || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title,
       message,
       date: new Date().toISOString(),
@@ -110,6 +110,9 @@ export const AppProvider = ({ children }) => {
       type
     };
     setNotifications(prev => {
+      if (prev.some(n => n.id === newNotif.id)) {
+        return prev;
+      }
       const updated = [newNotif, ...prev];
       if (session?.user?.id) {
         localStorage.setItem(`trackify_notifications_${session.user.id}`, JSON.stringify(updated));
@@ -164,6 +167,60 @@ export const AppProvider = ({ children }) => {
       return next;
     });
   };
+
+  // Automatically check due dates for active loans/debts
+  useEffect(() => {
+    if (session?.user && debts.length > 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      debts.forEach(debt => {
+        if (debt.status !== 'active' || !debt.due_date) return;
+
+        const dueDate = new Date(debt.due_date);
+        dueDate.setHours(0, 0, 0, 0);
+
+        const diffTime = dueDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        const isOverdue = diffDays < 0;
+        const isDueSoon = diffDays >= 0 && diffDays <= 3;
+
+        if (isOverdue || isDueSoon) {
+          const notifId = `debt-${debt.id}-${isOverdue ? 'overdue' : 'duesoon'}`;
+          
+          const alreadyNotified = notifications.some(n => n.id === notifId);
+          
+          if (!alreadyNotified) {
+            const formattedDate = new Date(debt.due_date).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            });
+            const typeStr = debt.type === 'lent' ? 'Receivable' : 'Payable';
+            const directionStr = debt.type === 'lent' ? 'from' : 'to';
+            const remainingAmount = Number(debt.amount) - Number(debt.settled_amount || 0);
+
+            if (isOverdue) {
+              addNotification(
+                `Overdue ${typeStr}`,
+                `৳${remainingAmount} is overdue ${directionStr} ${debt.person} since ${formattedDate}.`,
+                'warning',
+                notifId
+              );
+            } else {
+              addNotification(
+                `Due Soon: ${typeStr}`,
+                `৳${remainingAmount} is due ${directionStr} ${debt.person} on ${formattedDate} (${diffDays === 0 ? 'today' : diffDays === 1 ? 'tomorrow' : `in ${diffDays} days`}).`,
+                'info',
+                notifId
+              );
+            }
+          }
+        }
+      });
+    }
+  }, [debts, session, notifications]);
 
   // Auth state listener
   useEffect(() => {
