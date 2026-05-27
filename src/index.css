@@ -404,10 +404,12 @@ button:not(.nav-link):active {
 
 /* Fluid active navigation pill and toggle pill gliding */
 ::view-transition-group(active-tab-pill),
-::view-transition-group(history-toggle-pill) {
+::view-transition-group(history-toggle-pill),
+::view-transition-group(ledger-toggle-pill) {
   animation-duration: 380ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 
 /* --- Premium Glowing Icon System --- */
 

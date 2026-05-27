@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import CategoryIcon from './CategoryIcon';
-import { Capacitor } from '@capacitor/core';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -264,13 +263,13 @@ const SettingsPage = () => {
   return (
     <>
       <Header />
-      <main className="container" style={{ flex: 1 }}>
-        <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+      <main className="container animate-fade-in" style={{ flex: 1 }}>
+        <div className="animate-fade-in stagger-1" style={{ marginBottom: '2rem', textAlign: 'center' }}>
           <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Settings</h2>
           <p>Customize your tracking experience.</p>
         </div>
 
-        <div style={{ maxWidth: '600px', margin: '0 auto' }} className="flex-col gap-6">
+        <div style={{ maxWidth: '600px', margin: '0 auto' }} className="flex-col gap-6 animate-fade-in stagger-2">
           <div className="glass-card flex-col gap-4">
             <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Financial Goals</h3>
             

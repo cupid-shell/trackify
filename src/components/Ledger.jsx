@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { 
-  Plus, Trash2, Calendar, Target, PlusCircle, CheckCircle2, 
-  AlertTriangle, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Coins 
+  Plus, Trash2, Calendar, PlusCircle, 
+  ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Coins 
 } from 'lucide-react';
 import Header from './Header';
 import Footer from './Footer';
@@ -13,6 +13,16 @@ const LedgerPage = () => {
 
   // Tab State: 'active' or 'settled'
   const [tab, setTab] = useState('active');
+
+  const handleTabToggle = (mode) => {
+    if (document.startViewTransition) {
+      document.startViewTransition(() => {
+        setTab(mode);
+      });
+    } else {
+      setTab(mode);
+    }
+  };
 
   // New Debt Form State
   const [showAddForm, setShowAddForm] = useState(false);
@@ -133,16 +143,16 @@ const LedgerPage = () => {
   return (
     <>
       <Header />
-      <main className="container" style={{ flex: 1 }}>
+      <main className="container animate-fade-in" style={{ flex: 1 }}>
         
         {/* Title */}
-        <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <div className="animate-fade-in stagger-1" style={{ marginBottom: '2rem', textAlign: 'center' }}>
           <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Debt & Loan Ledger</h2>
           <p>Lend and borrow tracker. Manage outstanding balances with friends.</p>
         </div>
 
         {/* Overview metrics cards */}
-        <div style={{
+        <div className="animate-fade-in stagger-2" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
           gap: '1rem',
@@ -211,7 +221,7 @@ const LedgerPage = () => {
         </div>
 
         {/* Action Button & Add Form */}
-        <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div className="animate-fade-in stagger-3" style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
             style={{
@@ -357,7 +367,7 @@ const LedgerPage = () => {
         </div>
 
         {/* Tab switcher */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+        <div className="animate-fade-in stagger-3" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
           <div style={{
             background: 'var(--bg-card)',
             padding: '4px',
@@ -366,29 +376,31 @@ const LedgerPage = () => {
             display: 'flex'
           }}>
             <button
-              onClick={() => setTab('active')}
+              onClick={() => handleTabToggle('active')}
               style={{
                 padding: '0.5rem 1.25rem',
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: tab === 'active' ? 'var(--primary)' : 'transparent',
-                color: tab === 'active' ? '#ffffff' : 'var(--text-muted)',
+                color: tab === 'active' ? '#07090e' : 'var(--text-muted)',
                 fontWeight: 600,
                 fontSize: '0.875rem',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                viewTransitionName: tab === 'active' ? 'ledger-toggle-pill' : 'none'
               }}
             >
               Active Ledger ({activeDebts.length})
             </button>
             <button
-              onClick={() => setTab('settled')}
+              onClick={() => handleTabToggle('settled')}
               style={{
                 padding: '0.5rem 1.25rem',
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: tab === 'settled' ? 'var(--primary)' : 'transparent',
-                color: tab === 'settled' ? '#ffffff' : 'var(--text-muted)',
+                color: tab === 'settled' ? '#07090e' : 'var(--text-muted)',
                 fontWeight: 600,
                 fontSize: '0.875rem',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                viewTransitionName: tab === 'settled' ? 'ledger-toggle-pill' : 'none'
               }}
             >
               Settled History ({settledDebts.length})
@@ -397,7 +409,7 @@ const LedgerPage = () => {
         </div>
 
         {/* Ledger Items List */}
-        <div style={{ maxWidth: '750px', margin: '0 auto' }} className="flex-col gap-4">
+        <div style={{ maxWidth: '750px', margin: '0 auto' }} className="flex-col gap-4 animate-fade-in stagger-4">
           {displayDebts.length === 0 ? (
             <div className="glass-card" style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
               <Coins size={36} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: '0.75rem' }} />
@@ -421,7 +433,7 @@ const LedgerPage = () => {
               if (debt.due_date) {
                 try {
                   formattedDueDate = format(parseISO(debt.due_date), 'MMM dd, yyyy');
-                } catch (e) {
+                } catch {
                   formattedDueDate = debt.due_date;
                 }
               }
