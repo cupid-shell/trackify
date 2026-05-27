@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { X, TrendingUp, TrendingDown, Calendar as CalendarIcon, Info } from 'lucide-react';
+import { X, TrendingUp, Calendar as CalendarIcon, Info } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 
 const ExpenseCalendar = () => {
@@ -54,22 +54,35 @@ const ExpenseCalendar = () => {
   const getHeatmapStyle = (dayInfo) => {
     if (dayInfo.totalExpense === 0) {
       return {
-        background: 'rgba(16, 185, 129, 0.08)',
-        border: '1px solid rgba(16, 185, 129, 0.25)',
-        color: '#10b981'
+        background: 'rgba(57, 211, 83, 0.02)',
+        border: '1px solid rgba(57, 211, 83, 0.08)',
+        boxShadow: 'inset 0 0 4px rgba(57, 211, 83, 0.02)'
       };
     }
     
-    // Scale intensity: opacity ranges from 0.15 (low expense) to 0.85 (max expense)
     const ratio = maxDailyExpense > 0 ? dayInfo.totalExpense / maxDailyExpense : 0;
-    const opacity = 0.15 + ratio * 0.70;
     
-    return {
-      background: `rgba(239, 68, 68, ${opacity})`,
-      border: '1px solid rgba(239, 68, 68, 0.3)',
-      color: '#ffffff',
-      boxShadow: ratio > 0.7 ? '0 0 10px rgba(239, 68, 68, 0.25)' : 'none'
-    };
+    if (ratio < 0.25) {
+      return {
+        background: 'rgba(255, 123, 114, 0.08)',
+        border: '1px solid rgba(255, 123, 114, 0.18)',
+        color: '#ff7b72'
+      };
+    } else if (ratio < 0.7) {
+      return {
+        background: 'rgba(255, 123, 114, 0.25)',
+        border: '1px solid rgba(255, 123, 114, 0.35)',
+        color: '#ffffff',
+        boxShadow: 'inset 0 0 6px rgba(255, 123, 114, 0.1)'
+      };
+    } else {
+      return {
+        background: 'rgba(255, 123, 114, 0.65)',
+        border: '1px solid rgba(255, 123, 114, 0.85)',
+        color: '#ffffff',
+        boxShadow: '0 0 12px rgba(255, 123, 114, 0.3), inset 0 0 8px rgba(255, 255, 255, 0.2)'
+      };
+    }
   };
 
   const handleDayClick = (dayNumber) => {
@@ -95,15 +108,14 @@ const ExpenseCalendar = () => {
   const cells = [];
   // Prefix cells for empty days before start of month
   for (let i = 0; i < firstDayIndex; i++) {
-    cells.push(<div key={`empty-${i}`} className="calendar-cell empty" style={{ opacity: 0.15 }} />);
+    cells.push(<div key={`empty-${i}`} className="calendar-cell empty" />);
   }
 
   // Actual day cells
   for (let day = 1; day <= daysInMonth; day++) {
     const dayInfo = dailyData[day];
-    const hasTransactions = dayInfo.expenses.length > 0 || dayInfo.income.length > 0;
     const style = getHeatmapStyle(dayInfo);
-
+ 
     cells.push(
       <div
         key={`day-${day}`}
@@ -112,15 +124,12 @@ const ExpenseCalendar = () => {
         className="calendar-day-cell"
       >
         <span className="calendar-day-cell-number">{day}</span>
-        {dayInfo.totalExpense > 0 && (
+        {dayInfo.totalExpense > 0 ? (
           <span className="calendar-day-cell-amount">
-            ৳{dayInfo.totalExpense}
+            ৳{dayInfo.totalExpense.toLocaleString('en-IN')}
           </span>
-        )}
-        {dayInfo.totalExpense === 0 && (
-          <span className="calendar-day-cell-nospend">
-            No spend
-          </span>
+        ) : (
+          <div className="calendar-day-cell-dot" title="No spend day!" />
         )}
       </div>
     );
@@ -157,39 +166,56 @@ const ExpenseCalendar = () => {
           padding-bottom: 0.5rem;
           border-bottom: 1px solid var(--border-color);
         }
+        .calendar-cell.empty {
+          background: transparent;
+          border: 1px dashed rgba(255, 255, 255, 0.03);
+          border-radius: var(--radius-md);
+          aspect-ratio: 1/1;
+          pointer-events: none;
+        }
         .calendar-day-cell {
           cursor: pointer;
-          border-radius: var(--radius-sm);
+          border-radius: var(--radius-md);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          padding: 0.5rem;
+          padding: 0.45rem;
           aspect-ratio: 1/1;
           position: relative;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border-color);
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .calendar-day-cell:hover {
-          transform: translateY(-2px);
-          filter: brightness(1.15);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+          transform: scale(1.08) translateY(-2px);
+          filter: brightness(1.2);
+          z-index: 10;
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4) !important;
         }
         .calendar-day-cell-number {
-          font-size: 0.875rem;
-          font-weight: bold;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--text-muted);
+          line-height: 1;
         }
         .calendar-day-cell-amount {
-          font-size: 0.7rem;
-          font-weight: 600;
+          font-size: 0.65rem;
+          font-family: 'Hubot Sans Variable', monospace;
+          font-weight: 700;
           text-align: right;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          margin-top: auto;
         }
-        .calendar-day-cell-nospend {
-          font-size: 0.6rem;
-          opacity: 0.8;
-          text-align: right;
-          font-weight: normal;
+        .calendar-day-cell-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: var(--radius-full);
+          background-color: var(--success);
+          box-shadow: 0 0 6px var(--success);
+          align-self: flex-end;
+          margin-top: auto;
         }
 
         @media (max-width: 480px) {
@@ -200,13 +226,14 @@ const ExpenseCalendar = () => {
             padding: 0.25rem;
           }
           .calendar-day-cell-number {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
           }
           .calendar-day-cell-amount {
-            font-size: 0.55rem;
+            font-size: 0.525rem;
           }
-          .calendar-day-cell-nospend {
-            display: none;
+          .calendar-day-cell-dot {
+            width: 4px;
+            height: 4px;
           }
         }
       `}</style>
@@ -229,19 +256,19 @@ const ExpenseCalendar = () => {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)' }} />
+            <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(57, 211, 83, 0.05)', border: '1px solid rgba(57, 211, 83, 0.15)' }} />
             <span>No Spend</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)' }} />
+            <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(255, 123, 114, 0.08)', border: '1px solid rgba(255, 123, 114, 0.18)' }} />
             <span>Low</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(239, 68, 68, 0.5)', border: '1px solid rgba(239, 68, 68, 0.3)' }} />
+            <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(255, 123, 114, 0.25)', border: '1px solid rgba(255, 123, 114, 0.35)' }} />
             <span>Medium</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(239, 68, 68, 0.85)', border: '1px solid rgba(239, 68, 68, 0.3)' }} />
+            <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(255, 123, 114, 0.65)', border: '1px solid rgba(255, 123, 114, 0.85)' }} />
             <span>High</span>
           </div>
         </div>

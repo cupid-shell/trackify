@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import { BarChart2, PieChart as PieIcon } from 'lucide-react';
@@ -29,7 +29,7 @@ const ExpenseChart = () => {
   return (
     <div className="glass-card flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h2 style={{ fontSize: '1.25rem' }}>Expenses by Category</h2>
+        <h2 style={{ fontSize: '1.25rem', lineHeight: '1.4', paddingTop: '2px' }}>Expenses by Category</h2>
         {data.length > 0 && (
           <div className="flex gap-1" style={{ backgroundColor: 'var(--bg-input)', padding: '2px', borderRadius: 'var(--radius-sm)' }}>
             <button
@@ -77,10 +77,16 @@ const ExpenseChart = () => {
               left: '50%',
               transform: 'translate(-50%, -50%)',
               textAlign: 'center',
-              pointerEvents: 'none'
+              pointerEvents: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              whiteSpace: 'nowrap',
+              width: '120px'
             }}>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Expenses</span>
-              <h3 style={{ fontSize: '1.35rem', fontWeight: 700, marginTop: '2px' }}>৳{totalExpenseValue.toLocaleString('en-IN')}</h3>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Total Expenses</span>
+              <span style={{ fontSize: '1.4rem', fontFamily: 'Hubot Sans Variable', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.15rem' }}>৳{totalExpenseValue.toLocaleString('en-IN')}</span>
             </div>
           )}
           
