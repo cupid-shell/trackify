@@ -1,12 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LogOut, LayoutDashboard, History, PieChart, Settings, Bell, Trash2, Coins } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { supabase } from '../supabaseClient';
 import { Link, useLocation } from 'react-router-dom';
 
+const NavLink = ({ to, icon: Icon, label }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+  return (
+    <Link 
+      to={to} 
+      viewTransition
+      className={`nav-link ${isActive ? 'active' : ''}`}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.35rem',
+        borderRadius: 'var(--radius-md)',
+        textDecoration: 'none',
+        flexShrink: 0
+      }}
+    >
+      <Icon size={16} style={{ flexShrink: 0 }} />
+      <span style={{ display: 'none' }} className="sm:inline">{label}</span>
+    </Link>
+  );
+};
+
 const Header = () => {
   const { session, notifications, markAllNotificationsRead, clearNotifications } = useAppContext();
-  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -25,28 +47,6 @@ const Header = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const NavLink = ({ to, icon: Icon, label }) => {
-    const isActive = location.pathname === to;
-    return (
-      <Link 
-        to={to} 
-        viewTransition
-        className={`nav-link ${isActive ? 'active' : ''}`}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.35rem',
-          borderRadius: 'var(--radius-md)',
-          textDecoration: 'none',
-          flexShrink: 0
-        }}
-      >
-        <Icon size={16} style={{ flexShrink: 0 }} />
-        <span style={{ display: 'none' }} className="sm:inline">{label}</span>
-      </Link>
-    );
-  };
 
   return (
     <header className="site-header" style={{

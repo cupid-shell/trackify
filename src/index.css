@@ -368,6 +368,8 @@ button:not(.nav-link):active {
 }
 
 /* Pulse animation utility */
+.pulse-glow {
+  animation: pulseGlow 3s infinite ease-in-out;
 }
 
 /* --- View Transitions API Custom Animations (React Router & state transitions) --- */
