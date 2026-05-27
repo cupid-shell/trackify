@@ -398,4 +398,55 @@ button:not(.nav-link):active {
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* --- Premium Glowing Icon System --- */
+
+/* Card SVG elements with glowing filters matching their colors */
+.glass-card svg {
+  filter: drop-shadow(0 0 3px currentColor);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+}
+
+.glass-card:hover svg {
+  transform: scale(1.18) rotate(3deg);
+  filter: drop-shadow(0 0 7px currentColor);
+}
+
+/* Custom icon badge containers inside cards */
+.icon-badge {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.01);
+  transition: var(--transition);
+}
+
+.glass-card:hover .icon-badge {
+  border-color: currentColor;
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05), 0 0 12px currentColor;
+}
+
+/* Nav Link Icons styling */
+.nav-link svg {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+}
+
+.nav-link:hover svg {
+  transform: translateY(-1px) scale(1.12);
+  filter: drop-shadow(0 0 5px var(--primary-hover));
+}
+
+.nav-link.active svg {
+  filter: drop-shadow(0 0 6px var(--primary));
+}
+
+/* Form input prefix icons dynamic animations */
+div[style*="position: relative"] svg {
+  transition: color 0.2s ease, filter 0.2s ease, transform 0.2s ease;
+}
+
+div[style*="position: relative"]:focus-within svg {
+  color: var(--primary) !important;
+  filter: drop-shadow(0 0 6px var(--primary-glow));
+  transform: translateY(-50%) scale(1.1);
+}
+
 

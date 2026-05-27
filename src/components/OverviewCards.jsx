@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
 
@@ -56,14 +55,18 @@ const OverviewCards = () => {
             }}>
               {card.title}
             </h3>
-            <div style={{
-              background: card.bg,
-              padding: '0.45rem',
-              borderRadius: 'var(--radius-md)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+            <div 
+              className="icon-badge"
+              style={{
+                background: card.bg,
+                color: card.color,
+                padding: '0.45rem',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
               {card.icon}
             </div>
           </div>
