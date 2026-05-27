@@ -45,59 +45,117 @@ const Login = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '1rem',
-      background: 'var(--bg-main)'
+      padding: '1.5rem',
+      background: 'var(--bg-main)',
+      backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px)',
+      backgroundSize: '32px 32px'
     }}>
-      <div className="glass-card flex-col gap-6" style={{ width: '100%', maxWidth: '400px' }}>
+      <div className="glass-card flex-col gap-6" style={{ 
+        width: '100%', 
+        maxWidth: '380px',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'var(--shadow-lg)'
+      }}>
         <div className="flex-col items-center gap-2" style={{ textAlign: 'center' }}>
           <img 
             src="/favicon.png" 
             alt="Trackify Logo" 
             style={{ 
-              width: '64px', 
-              height: '64px', 
-              borderRadius: 'var(--radius-lg)', 
+              width: '56px', 
+              height: '56px', 
+              borderRadius: 'var(--radius-md)', 
               boxShadow: 'var(--shadow-glow)',
-              marginBottom: '1rem'
+              marginBottom: '0.75rem',
+              border: '1px solid rgba(88, 166, 255, 0.3)'
             }} 
           />
-          <h1 style={{ fontSize: '1.875rem' }}>Trackify</h1>
-          <p>Sign in to sync your expenses securely.</p>
+          <h1 style={{ 
+            fontSize: '2rem',
+            fontFamily: "'Hubot Sans Variable', sans-serif",
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            color: '#ffffff'
+          }}>
+            TRACKIFY
+          </h1>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Sign in to sync your expenses securely.
+          </p>
         </div>
 
         {error && (
-          <div style={{ padding: '0.75rem', backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: 'var(--radius-md)', fontSize: '0.875rem' }}>
+          <div style={{ 
+            padding: '0.75rem', 
+            backgroundColor: 'var(--danger-bg)', 
+            color: 'var(--danger)', 
+            borderRadius: 'var(--radius-md)', 
+            fontSize: '0.8rem',
+            border: '1px solid rgba(255, 123, 114, 0.15)',
+            fontFamily: "'Mona Sans Variable', sans-serif"
+          }}>
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="flex-col gap-4">
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Email</label>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.35rem', 
+              color: 'var(--text-muted)', 
+              fontSize: '0.8rem',
+              fontFamily: "'Hubot Sans Variable', sans-serif",
+              fontWeight: 600,
+              letterSpacing: '0.02em'
+            }}>
+              EMAIL ADDRESS
+            </label>
             <div style={{ position: 'relative' }}>
-              <Mail size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <Mail size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input 
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                style={{ paddingLeft: '2.5rem' }}
+                style={{ 
+                  paddingLeft: '2.5rem',
+                  fontSize: '0.85rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-input)'
+                }}
               />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Password</label>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.35rem', 
+              color: 'var(--text-muted)', 
+              fontSize: '0.8rem',
+              fontFamily: "'Hubot Sans Variable', sans-serif",
+              fontWeight: 600,
+              letterSpacing: '0.02em'
+            }}>
+              PASSWORD
+            </label>
             <div style={{ position: 'relative' }}>
-              <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <Lock size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                style={{ paddingLeft: '2.5rem' }}
+                style={{ 
+                  paddingLeft: '2.5rem',
+                  fontSize: '0.85rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-input)'
+                }}
               />
             </div>
           </div>
@@ -107,34 +165,46 @@ const Login = () => {
             disabled={loading}
             style={{
               backgroundColor: 'var(--primary)',
-              color: 'white',
-              padding: '1rem',
+              color: '#07090e',
+              padding: '0.85rem',
               borderRadius: 'var(--radius-md)',
-              fontWeight: 600,
+              fontWeight: 700,
+              fontFamily: "'Hubot Sans Variable', sans-serif",
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              fontSize: '0.85rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginTop: '0.5rem',
               boxShadow: 'var(--shadow-glow)',
-              opacity: loading ? 0.7 : 1
+              opacity: loading ? 0.7 : 1,
+              transition: 'var(--transition)'
             }}
           >
             {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button 
             onClick={() => setIsLogin(!isLogin)}
-            style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline' }}
+            style={{ 
+              color: 'var(--primary)', 
+              fontWeight: 700, 
+              fontFamily: "'Hubot Sans Variable', sans-serif",
+              fontSize: '0.8rem',
+              textDecoration: 'none',
+              marginLeft: '0.25rem'
+            }}
           >
-            {isLogin ? 'Sign up' : 'Sign in'}
+            {isLogin ? 'SIGN UP' : 'SIGN IN'}
           </button>
         </p>
       </div>
     </div>
   );
-};
+}
 
 export default Login;

@@ -31,21 +31,17 @@ const Header = () => {
     return (
       <Link 
         to={to} 
-        className="nav-link"
+        className={`nav-link ${isActive ? 'active' : ''}`}
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: '0.35rem',
           borderRadius: 'var(--radius-md)',
-          backgroundColor: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-          color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
           textDecoration: 'none',
-          fontWeight: isActive ? 600 : 400,
-          transition: 'all 0.2s ease',
           flexShrink: 0
         }}
       >
-        <Icon size={18} style={{ flexShrink: 0 }} />
+        <Icon size={16} style={{ flexShrink: 0 }} />
         <span style={{ display: 'none' }} className="sm:inline">{label}</span>
       </Link>
     );
@@ -54,22 +50,43 @@ const Header = () => {
   return (
     <header className="site-header" style={{
       borderBottom: '1px solid var(--border-color)',
-      backgroundColor: 'rgba(28, 31, 38, 0.8)',
-      backdropFilter: 'blur(12px)',
+      backgroundColor: 'rgba(7, 9, 14, 0.8)',
+      backdropFilter: 'blur(16px)',
       position: 'sticky',
       top: 0,
-      zIndex: 200, // Make sure dropdown sits above other panels
+      zIndex: 200,
     }}>
       <style>{`
         .site-header {
           padding: 0.75rem 0.5rem;
         }
         .nav-link {
-          padding: 0.5rem 0.5rem;
+          padding: 0.5rem 0.75rem;
+          color: var(--text-muted);
+          font-family: 'Hubot Sans Variable', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 500;
+          font-stretch: 100%;
+          border: 1px solid transparent;
+          transition: var(--transition);
+        }
+        .nav-link.active {
+          background-color: var(--bg-hover);
+          border-color: var(--border-color);
+          color: var(--primary);
+          font-stretch: 105%;
+          font-weight: 600;
+          box-shadow: inset 0 0 10px rgba(88, 166, 255, 0.05);
+        }
+        .nav-link:hover {
+          color: var(--primary-hover);
+          font-stretch: 112%;
+          background-color: rgba(255, 255, 255, 0.02);
+          border-color: rgba(255, 255, 255, 0.05);
         }
         @media (min-width: 640px) {
           .site-header {
-            padding: 1rem !important;
+            padding: 0.875rem 1.5rem !important;
           }
           .nav-link {
             padding: 0.5rem 1rem !important;
@@ -161,7 +178,7 @@ const Header = () => {
                   right: 0,
                   top: 'calc(100% + 10px)',
                   width: '320px',
-                  backgroundColor: 'rgba(28, 31, 38, 0.95)',
+                  backgroundColor: 'rgba(15, 18, 27, 0.98)',
                   backdropFilter: 'blur(16px)',
                   border: '1px solid var(--border-color)',
                   borderRadius: 'var(--radius-md)',

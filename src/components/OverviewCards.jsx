@@ -41,36 +41,61 @@ const OverviewCards = () => {
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
       gap: '1.5rem',
       marginBottom: '2rem'
     }}>
       {cards.map((card, idx) => (
         <div key={idx} className="glass-card flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h3 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 500 }}>
+            <h3 style={{ 
+              color: 'var(--text-muted)', 
+              fontSize: '0.85rem', 
+              fontWeight: 500,
+              fontFamily: "'Mona Sans Variable', sans-serif"
+            }}>
               {card.title}
             </h3>
             <div style={{
               background: card.bg,
-              padding: '0.5rem',
-              borderRadius: 'var(--radius-md)'
+              padding: '0.45rem',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
               {card.icon}
             </div>
           </div>
           
           <div>
-            <h2 style={{ fontSize: '1.875rem', fontWeight: 700 }}>
+            <h2 style={{ 
+              fontSize: '1.75rem', 
+              fontWeight: 800,
+              fontFamily: "'Hubot Sans Variable', sans-serif",
+              letterSpacing: '-0.02em',
+              fontStretch: '105%',
+              color: '#ffffff'
+            }}>
               ৳{card.amount.toLocaleString('en-IN')}
             </h2>
             {card.subtitle && (
-              <p style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>{card.subtitle}</p>
+              <div style={{ marginTop: '0.5rem' }}>
+                <span className="tech-badge" style={{ 
+                  fontSize: '0.65rem', 
+                  color: 'var(--text-muted)',
+                  border: '1px solid var(--border-color)',
+                  padding: '2px 6px',
+                  borderRadius: 'var(--radius-sm)'
+                }}>
+                  {card.subtitle}
+                </span>
+              </div>
             )}
           </div>
 
           {card.progress !== undefined && (
-            <div style={{ width: '100%', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-full)', height: '6px', overflow: 'hidden' }}>
+            <div style={{ width: '100%', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-full)', height: '6px', overflow: 'hidden', marginTop: '0.25rem' }}>
               <div style={{
                 width: `${Math.max(card.progress, 0)}%`,
                 backgroundColor: card.color,
