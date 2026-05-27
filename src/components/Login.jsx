@@ -110,7 +110,7 @@ const Login = () => {
             }}>
               EMAIL ADDRESS
             </label>
-            <div style={{ position: 'relative' }}>
+            <div className="input-icon-wrapper" style={{ position: 'relative' }}>
               <Mail size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input 
                 type="email" 
@@ -141,7 +141,7 @@ const Login = () => {
             }}>
               PASSWORD
             </label>
-            <div style={{ position: 'relative' }}>
+            <div className="input-icon-wrapper" style={{ position: 'relative' }}>
               <Lock size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input 
                 type="password" 

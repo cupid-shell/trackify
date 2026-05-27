@@ -138,7 +138,9 @@ const Header = () => {
                   }
                 }}
                 style={{
-                  padding: '0.5rem',
+                  width: '36px',
+                  height: '36px',
+                  padding: 0,
                   borderRadius: 'var(--radius-full)',
                   backgroundColor: 'var(--bg-input)',
                   color: unreadCount > 0 ? 'var(--primary)' : 'var(--text-muted)',
@@ -279,13 +281,15 @@ const Header = () => {
             <button 
               onClick={handleLogout}
               style={{
-                padding: '0.5rem',
+                width: '36px',
+                height: '36px',
+                padding: 0,
                 borderRadius: 'var(--radius-full)',
                 backgroundColor: 'var(--bg-input)',
                 color: 'var(--text-muted)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                justifyContent: 'center'
               }}
               title="Sign Out"
             >
