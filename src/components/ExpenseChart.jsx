@@ -1,11 +1,90 @@
 import { useMemo, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Sector } from 'recharts';
 import { BarChart2, PieChart as PieIcon } from 'lucide-react';
+
+const renderActiveShape = (props) => {
+  const RADIAN = Math.PI / 180;
+  const {
+    cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle,
+    fill, payload, percent, value
+  } = props;
+  
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  
+  // Coordinates for the leader line (start, elbow, end)
+  const sx = cx + (outerRadius + 2) * cos;
+  const sy = cy + (outerRadius + 2) * sin;
+  const mx = cx + (outerRadius + 14) * cos;
+  const my = cy + (outerRadius + 14) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 16;
+  const ey = my;
+  
+  // Label text position and alignment
+  const textAnchor = cos >= 0 ? 'start' : 'end';
+  const tx = ex + (cos >= 0 ? 1 : -1) * 6;
+  const ty = ey;
+
+  return (
+    <g>
+      {/* Glow Sector on hover */}
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius - 2}
+        outerRadius={outerRadius + 5}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+        style={{
+          filter: `drop-shadow(0 0 6px ${fill}55)`,
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+      />
+      
+      {/* Animated leader line path */}
+      <path
+        className="leader-line"
+        d={`M${sx},${sy}L${mx},${my}H${ex}`}
+        stroke={fill}
+        strokeWidth={1.5}
+        fill="none"
+      />
+      
+      {/* Animated Callout Label */}
+      <g className="callout-text-group">
+        <text
+          x={tx}
+          y={ty - 5}
+          textAnchor={textAnchor}
+          fill="var(--text-main)"
+          fontSize={10.5}
+          fontWeight={600}
+          fontFamily="Hubot Sans Variable"
+        >
+          {payload.name}
+        </text>
+        <text
+          x={tx}
+          y={ty + 10}
+          textAnchor={textAnchor}
+          fill="var(--text-muted)"
+          fontSize={9.5}
+          fontWeight={500}
+          fontFamily="Mona Sans Variable"
+        >
+          {`৳${value.toLocaleString('en-IN')} (${(percent * 100).toFixed(1)}%)`}
+        </text>
+      </g>
+    </g>
+  );
+};
 
 const ExpenseChart = () => {
   const { currentMonthTransactions } = useAppContext();
   const [chartType, setChartType] = useState('donut'); // 'donut' or 'bar'
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   const data = useMemo(() => {
     const expenses = currentMonthTransactions.filter(tx => tx.type === 'expense');
@@ -28,6 +107,25 @@ const ExpenseChart = () => {
 
   return (
     <div className="glass-card flex-col gap-6">
+      <style>{`
+        @keyframes drawLeaderLine {
+          from { stroke-dashoffset: 50; }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes fadeInCalloutText {
+          from { opacity: 0; transform: translateY(3px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .leader-line {
+          stroke-dasharray: 50;
+          stroke-dashoffset: 50;
+          animation: drawLeaderLine 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .callout-text-group {
+          opacity: 0;
+          animation: fadeInCalloutText 0.18s cubic-bezier(0.16, 1, 0.3, 1) 0.20s forwards;
+        }
+      `}</style>
       <div className="flex items-center justify-between">
         <h2 style={{ fontSize: '1.25rem', lineHeight: '1.4', paddingTop: '2px' }}>Expenses by Category</h2>
         {data.length > 0 && (
@@ -131,20 +229,19 @@ const ExpenseChart = () => {
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={65}
-                  outerRadius={85}
+                  innerRadius={50}
+                  outerRadius={68}
                   paddingAngle={4}
                   dataKey="value"
+                  activeIndex={activeIndex}
+                  activeShape={renderActiveShape}
+                  onMouseEnter={(event, index) => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(-1)}
                 >
                   {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} style={{ outline: 'none' }} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}
-                  itemStyle={{ color: 'var(--text-main)' }}
-                  formatter={(val) => `৳${val.toLocaleString('en-IN')}`}
-                />
               </PieChart>
             )}
           </ResponsiveContainer>
