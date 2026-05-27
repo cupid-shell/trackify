@@ -248,4 +248,80 @@ input:focus, select:focus, textarea:focus {
   font-weight: 600;
 }
 
+/* --- Smooth Animations & Transitions --- */
+
+/* Keyframes */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(88, 166, 255, 0.1);
+    border-color: var(--border-color);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(88, 166, 255, 0.25);
+    border-color: rgba(88, 166, 255, 0.3);
+  }
+}
+
+/* Page & Element Transition Entry */
+.animate-fade-in {
+  opacity: 0;
+  animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Staggered load delays */
+.stagger-1 { animation-delay: 0.04s; }
+.stagger-2 { animation-delay: 0.08s; }
+.stagger-3 { animation-delay: 0.12s; }
+.stagger-4 { animation-delay: 0.16s; }
+
+/* Interactive Hover underline for text links */
+a:not(.nav-link) {
+  position: relative;
+}
+a:not(.nav-link)::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background-color: var(--primary-hover);
+  transform-origin: bottom right;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+a:not(.nav-link):hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* Universal Button Click Feedback */
+button {
+  transition: var(--transition);
+}
+
+button:not(.nav-link):hover {
+  transform: translateY(-1px) scale(1.015);
+}
+
+button:not(.nav-link):active {
+  transform: translateY(1px) scale(0.985);
+}
+
+/* Pulse animation utility */
+.pulse-glow {
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
 

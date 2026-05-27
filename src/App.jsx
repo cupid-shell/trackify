@@ -26,17 +26,21 @@ import PWAUpdateToast from './components/PWAUpdateToast';
 const Dashboard = () => (
   <>
     <Header />
-    <main className="container" style={{ flex: 1 }}>
-      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+    <main className="container animate-fade-in" style={{ flex: 1 }}>
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }} className="animate-fade-in stagger-1">
         <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Dashboard</h2>
         <p>Track your daily, monthly, and yearly expenses. Build your savings.</p>
       </div>
 
-      <MonthSelector />
+      <div className="animate-fade-in stagger-2">
+        <MonthSelector />
+      </div>
       
-      <OverviewCards />
+      <div className="animate-fade-in stagger-3">
+        <OverviewCards />
+      </div>
 
-      <div className="dashboard-grid">
+      <div className="dashboard-grid animate-fade-in stagger-4">
         {/* Left Column: Transaction Input */}
         <div style={{ width: '100%' }}>
           <TransactionForm />
@@ -59,13 +63,15 @@ const HistoryPage = () => {
   return (
     <>
       <Header />
-      <main className="container" style={{ flex: 1 }}>
-        <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+      <main className="container animate-fade-in" style={{ flex: 1 }}>
+        <div style={{ marginBottom: '2rem', textAlign: 'center' }} className="animate-fade-in stagger-1">
           <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Expense Log</h2>
           <p>View your complete transaction history.</p>
         </div>
         
-        <MonthSelector />
+        <div className="animate-fade-in stagger-2">
+          <MonthSelector />
+        </div>
 
         {/* View Toggle */}
         <div style={{ 
@@ -73,7 +79,7 @@ const HistoryPage = () => {
           justifyContent: 'center', 
           marginBottom: '2rem',
           gap: '0.5rem'
-        }}>
+        }} className="animate-fade-in stagger-3">
           <div style={{
             background: 'var(--bg-card)',
             padding: '4px',
@@ -87,7 +93,7 @@ const HistoryPage = () => {
                 padding: '0.5rem 1.25rem',
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: viewMode === 'list' ? 'var(--primary)' : 'transparent',
-                color: viewMode === 'list' ? '#ffffff' : 'var(--text-muted)',
+                color: viewMode === 'list' ? '#07090e' : 'var(--text-muted)',
                 fontWeight: 600,
                 fontSize: '0.875rem',
                 transition: 'all 0.2s ease'
@@ -101,7 +107,7 @@ const HistoryPage = () => {
                 padding: '0.5rem 1.25rem',
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: viewMode === 'calendar' ? 'var(--primary)' : 'transparent',
-                color: viewMode === 'calendar' ? '#ffffff' : 'var(--text-muted)',
+                color: viewMode === 'calendar' ? '#07090e' : 'var(--text-muted)',
                 fontWeight: 600,
                 fontSize: '0.875rem',
                 transition: 'all 0.2s ease'
@@ -112,7 +118,7 @@ const HistoryPage = () => {
           </div>
         </div>
         
-        <div style={{ maxWidth: viewMode === 'calendar' ? '900px' : '800px', margin: '0 auto' }}>
+        <div style={{ maxWidth: viewMode === 'calendar' ? '900px' : '800px', margin: '0 auto' }} className="animate-fade-in stagger-4">
           {viewMode === 'list' ? (
             <RecentTransactions />
           ) : (
@@ -128,15 +134,17 @@ const HistoryPage = () => {
 const AnalyticsPage = () => (
   <>
     <Header />
-    <main className="container" style={{ flex: 1 }}>
-      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+    <main className="container animate-fade-in" style={{ flex: 1 }}>
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }} className="animate-fade-in stagger-1">
         <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Analytics & Prediction</h2>
         <p>Analyze your spending and track your savings goals.</p>
       </div>
       
-      <MonthSelector />
+      <div className="animate-fade-in stagger-2">
+        <MonthSelector />
+      </div>
 
-      <div className="analytics-grid">
+      <div className="analytics-grid animate-fade-in stagger-3">
         {/* Left Column: Insights & Prediction */}
         <div className="flex-col gap-6" style={{ width: '100%' }}>
           <PredictionEngine />
