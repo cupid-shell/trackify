@@ -43,15 +43,15 @@ const Dashboard = () => (
       </div>
 
       <div className="dashboard-grid animate-fade-in stagger-4">
-        {/* Left Column: Transaction Input */}
-        <div style={{ width: '100%' }}>
+        {/* Left Column: Add transactions + Recurring Bills */}
+        <div className="flex-col gap-6" style={{ width: '100%' }}>
           <TransactionForm />
+          <RecurringTracker />
         </div>
 
-        {/* Right Column: Status & Checklists */}
-        <div className="flex-col gap-6" style={{ width: '100%' }}>
+        {/* Right Column: Budget progress */}
+        <div style={{ width: '100%' }}>
           <BudgetProgress />
-          <RecurringTracker />
         </div>
       </div>
     </main>
@@ -151,27 +151,29 @@ const AnalyticsPage = () => (
     <main className="container animate-fade-in" style={{ flex: 1 }}>
       <div style={{ marginBottom: '2rem', textAlign: 'center' }} className="animate-fade-in stagger-1">
         <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Analytics & Prediction</h2>
-        <p>Analyze your spending and track your savings goals.</p>
+        <p>Analyze your spending patterns, forecast your month, and track your savings goals.</p>
       </div>
-      
+
       <div className="animate-fade-in stagger-2">
         <MonthSelector />
       </div>
 
-      <div className="analytics-grid animate-fade-in stagger-3">
-        {/* Left Column: Insights & Prediction */}
-        <div className="flex-col gap-6" style={{ width: '100%' }}>
-          <PredictionEngine />
-          <FinancialInsights />
-          <HealthScore />
-        </div>
+      {/* Zone 1 — Snapshot: side-by-side prediction + health score */}
+      <div className="analytics-snapshot-grid animate-fade-in stagger-3">
+        <PredictionEngine />
+        <HealthScore />
+      </div>
 
-        {/* Right Column: Charts & Trends */}
-        <div className="flex-col gap-6" style={{ width: '100%' }}>
-          <SavingsGoals />
-          <ExpenseChart />
-          <TrendChart />
-        </div>
+      {/* Zone 2 — Charts: expense breakdown + trend over time */}
+      <div className="analytics-charts-grid animate-fade-in stagger-4">
+        <ExpenseChart />
+        <TrendChart />
+      </div>
+
+      {/* Zone 3 — Deep-dive: insights + savings goals side by side */}
+      <div className="analytics-deep-grid animate-fade-in stagger-4">
+        <FinancialInsights />
+        <SavingsGoals />
       </div>
     </main>
     <Footer />
