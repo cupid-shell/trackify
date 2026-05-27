@@ -121,11 +121,20 @@ const nameToLucide = {
   "flight": Plane,
 };
 
-export const CategoryIcon = ({ category, size = 20, className = '' }) => {
+export const CategoryIcon = ({ category, emoji: directEmoji, color: directColor, size = 20, className = '' }) => {
   const { getCategoryStyle } = useAppContext();
-  const style = getCategoryStyle(category);
-  const emoji = style.emoji || '🏷️';
-  const color = style.color || '#94a3b8';
+  
+  let emoji = '🏷️';
+  let color = '#94a3b8';
+
+  if (category) {
+    const style = getCategoryStyle(category);
+    emoji = style.emoji || '🏷️';
+    color = style.color || '#94a3b8';
+  } else if (directEmoji) {
+    emoji = directEmoji;
+    color = directColor || '#94a3b8';
+  }
 
   const cleanName = category ? category.toLowerCase().trim() : '';
   const LucideIcon = nameToLucide[cleanName] || emojiToLucide[emoji] || null;

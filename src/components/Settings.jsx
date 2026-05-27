@@ -475,21 +475,27 @@ const SettingsPage = () => {
                       <div className="flex-col gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
                         {/* Emojis Selector */}
                         <div className="flex-col gap-1.5">
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Select Emoji</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Select Emoji / Icon</span>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                            {['🍔', '🏠', '⚡', '🚗', '🛒', '🎓', '🤖', '🎁', '🎮', '🩺', '✈️', '💵', '🛍️', '❓'].map(emoji => (
+                            {['🍔', '🏠', '⚡', '🚗', '🛒', '🎓', '🤖', '🎁', '🎮', '🩺', '✈️', '💵', '🛍️', '❓'].map(emojiChoice => (
                               <button
-                                key={emoji}
-                                onClick={() => updateCategoryMetadata(cat, { emoji })}
+                                key={emojiChoice}
+                                type="button"
+                                onClick={() => updateCategoryMetadata(cat, { emoji: emojiChoice })}
                                 style={{
-                                  padding: '0.35rem',
-                                  fontSize: '1.2rem',
-                                  backgroundColor: style.emoji === emoji ? 'rgba(255,255,255,0.08)' : 'transparent',
+                                  padding: '0.4rem',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  backgroundColor: style.emoji === emojiChoice ? 'rgba(255,255,255,0.08)' : 'transparent',
                                   borderRadius: 'var(--radius-sm)',
-                                  border: style.emoji === emoji ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
+                                  border: style.emoji === emojiChoice ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
+                                  transition: 'transform 0.15s ease, background-color 0.15s ease'
                                 }}
+                                onMouseOver={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                                onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
                               >
-                                {emoji}
+                                <CategoryIcon emoji={emojiChoice} color={style.color} size={20} />
                               </button>
                             ))}
                           </div>
@@ -527,10 +533,16 @@ const SettingsPage = () => {
                         {/* Colors Selector */}
                         <div className="flex-col gap-1.5" style={{ marginTop: '0.25rem' }}>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Select Color Accent</span>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                            {['#f43f5e', '#ff6b6b', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#a855f7', '#ec4899'].map(color => (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                            {[
+                              '#f43f5e', '#ff6b6b', '#f97316', '#f59e0b', 
+                              '#e3b341', '#84cc16', '#10b981', '#39d353', 
+                              '#06b6d4', '#14b8a6', '#58a6ff', '#38bdf8', 
+                              '#6366f1', '#8b5cf6', '#a855f7', '#ec4899'
+                            ].map(color => (
                               <button
                                 key={color}
+                                type="button"
                                 onClick={() => updateCategoryMetadata(cat, { color })}
                                 style={{
                                   width: '24px',
@@ -539,10 +551,34 @@ const SettingsPage = () => {
                                   backgroundColor: color,
                                   border: style.color === color ? '2px solid white' : '1px solid transparent',
                                   boxShadow: style.color === color ? `0 0 8px ${color}` : 'none',
-                                  padding: 0
+                                  padding: 0,
+                                  transition: 'transform 0.15s ease'
                                 }}
+                                onMouseOver={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                                onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
                               />
                             ))}
+                            
+                            {/* Native Hex Color Picker */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginLeft: '0.5rem' }}>
+                              <input 
+                                type="color" 
+                                value={style.color} 
+                                onChange={e => updateCategoryMetadata(cat, { color: e.target.value })} 
+                                style={{ 
+                                  width: '28px', 
+                                  height: '28px', 
+                                  borderRadius: 'var(--radius-full)', 
+                                  border: '1px solid rgba(255,255,255,0.2)',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  backgroundColor: 'transparent',
+                                  outline: 'none'
+                                }} 
+                                title="Choose custom color"
+                              />
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Custom</span>
+                            </div>
                           </div>
                         </div>
                       </div>

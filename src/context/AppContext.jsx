@@ -838,14 +838,38 @@ export const AppProvider = ({ children }) => {
       "Other / Unexpected": { emoji: "❓", color: "#f43f5e" },
       "Other / Miscellaneous": { emoji: "❓", color: "#f43f5e" }
     };
+    
+    const getHashColor = (name) => {
+      const palette = [
+        '#f43f5e', '#ff6b6b', '#f97316', '#f59e0b', 
+        '#e3b341', '#84cc16', '#10b981', '#39d353', 
+        '#06b6d4', '#14b8a6', '#58a6ff', '#38bdf8', 
+        '#6366f1', '#8b5cf6', '#a855f7', '#ec4899'
+      ];
+      let hash = 0;
+      const clean = name ? name.toString().trim() : '';
+      for (let i = 0; i < clean.length; i++) {
+        hash = clean.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return palette[Math.abs(hash) % palette.length];
+    };
+
     const metadata = userSettings.category_metadata || {};
     if (metadata[catName]) {
       return {
         emoji: metadata[catName].emoji || "🏷️",
-        color: metadata[catName].color || "#94a3b8"
+        color: metadata[catName].color || getHashColor(catName)
       };
     }
-    return defaults[catName] || { emoji: "🏷️", color: "#94a3b8" };
+    
+    if (defaults[catName]) {
+      return defaults[catName];
+    }
+    
+    return { 
+      emoji: "🏷️", 
+      color: getHashColor(catName) 
+    };
   };
 
   const testNativeNotification = async () => {
