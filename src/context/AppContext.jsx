@@ -860,6 +860,47 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const addTransactions = async (transactionList) => {
+    if (!session?.user || !transactionList || transactionList.length === 0) return;
+
+    // Optimistic UI: generate temp IDs and push all rows at once
+    const tempRows = transactionList.map((tx, i) => ({
+      ...tx,
+      id: `temp-${Date.now()}-${i}`,
+      user_id: session.user.id
+    }));
+    setTransactions(prev => [...tempRows, ...prev]);
+
+    const insertPayload = transactionList.map(tx => ({
+      user_id: session.user.id,
+      type: tx.type,
+      amount: tx.amount,
+      category: tx.category,
+      date: tx.date,
+      note: tx.note || '',
+      payment_method: tx.payment_method || 'Cash',
+      debt_id: tx.debt_id || null
+    }));
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert(insertPayload)
+      .select();
+
+    if (!error && data) {
+      // Replace temp rows with real rows
+      setTransactions(prev => {
+        const withoutTemps = prev.filter(tx => !tempRows.some(t => t.id === tx.id));
+        return [...data, ...withoutTemps];
+      });
+      data.forEach(tx => checkTransactionAlerts(tx));
+    } else {
+      // Rollback optimistic rows
+      setTransactions(prev => prev.filter(tx => !tempRows.some(t => t.id === tx.id)));
+      showToast('Error adding transactions: ' + (error?.message || 'Unknown error'), 'error');
+    }
+  };
+
   const deleteTransaction = async (id) => {
     const originalTransactions = [...transactions];
     setTransactions(prev => prev.filter(tx => tx.id !== id));
@@ -1422,6 +1463,7 @@ export const AppProvider = ({ children }) => {
     savingsGoal: Number(userSettings.savings_goal),
     loading,
     addTransaction,
+    addTransactions,
     deleteTransaction,
     updateTransaction,
     renameCategory,

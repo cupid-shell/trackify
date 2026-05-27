@@ -1,113 +1,234 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2, Plus } from 'lucide-react';
 
+// --- Helpers ---
+
+const evaluateMath = (str) => {
+  const safe = String(str).replace(/[^0-9+\-*/().\s]/g, '');
+  if (!safe.trim()) return '';
+  try {
+    // eslint-disable-next-line no-new-func
+    const result = new Function(`return (${safe})`)();
+    if (typeof result === 'number' && isFinite(result)) {
+      return Math.round(result * 100) / 100;
+    }
+  } catch { /* ignore */ }
+  return str;
+};
+
+const createRow = (defaults = {}) => ({
+  id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  amount: '',
+  note: '',
+  category: defaults.category || '',
+  date: new Date().toISOString().split('T')[0],
+  paymentMethod: defaults.paymentMethod || 'Cash',
+  ...defaults
+});
+
+// --- Sub-component: a single row in the grid ---
+const GridRow = ({
+  row,
+  index,
+  showDelete,
+  categories,
+  paymentMethods,
+  onUpdate,
+  onRemove,
+  getCategoryStyle
+}) => {
+  const handleAmountBlur = () => {
+    const result = evaluateMath(row.amount);
+    if (result !== row.amount) onUpdate(index, 'amount', String(result));
+  };
+
+  return (
+    <div className="grid-item-row">
+      {/* Row header: index badge + delete */}
+      <div className="grid-row-line" style={{ justifyContent: 'space-between' }}>
+        <span className="grid-row-index">{index + 1}</span>
+        {showDelete && (
+          <button
+            type="button"
+            className="grid-row-delete-btn"
+            onClick={() => onRemove(index)}
+            title="Remove this item"
+          >
+            <Trash2 size={15} />
+          </button>
+        )}
+      </div>
+
+      {/* Line 1: Note  |  Amount */}
+      <div className="grid-row-line">
+        <input
+          type="text"
+          className="grid-note-input"
+          value={row.note}
+          onChange={e => onUpdate(index, 'note', e.target.value)}
+          placeholder="Description (optional)"
+        />
+        <input
+          type="text"
+          className="grid-amount-input"
+          value={row.amount}
+          onChange={e => onUpdate(index, 'amount', e.target.value)}
+          onBlur={handleAmountBlur}
+          placeholder="Amount"
+          required
+        />
+      </div>
+
+      {/* Line 2: Category  |  Payment */}
+      <div className="grid-row-line">
+        <select
+          className="grid-category-select"
+          value={row.category}
+          onChange={e => onUpdate(index, 'category', e.target.value)}
+        >
+          {categories.map(cat => {
+            const style = getCategoryStyle(cat);
+            return (
+              <option key={cat} value={cat}>
+                {style.emoji} {cat}
+              </option>
+            );
+          })}
+        </select>
+        <select
+          className="grid-payment-select"
+          value={row.paymentMethod}
+          onChange={e => onUpdate(index, 'paymentMethod', e.target.value)}
+        >
+          {paymentMethods.map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Line 3: Date */}
+      <div className="grid-row-line">
+        <input
+          type="date"
+          className="grid-date-input"
+          value={row.date}
+          onChange={e => onUpdate(index, 'date', e.target.value)}
+          required
+          style={{ flex: 1 }}
+        />
+      </div>
+    </div>
+  );
+};
+
+// --- Main Component ---
 const TransactionForm = () => {
-  const { addTransaction, userSettings, presets, getCategoryStyle, showToast } = useAppContext();
+  const {
+    addTransactions,
+    userSettings,
+    presets,
+    getCategoryStyle,
+    showToast
+  } = useAppContext();
+
   const [type, setType] = useState('expense');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState(userSettings.expense_categories[0] || 'Expense');
-  const [note, setNote] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [paymentMethod, setPaymentMethod] = useState('Cash');
-  const [isMultiAdd, setIsMultiAdd] = useState(false);
-  const [multiAddText, setMultiAddText] = useState('');
+  const [rows, setRows] = useState([]);
 
   const expenseCategories = userSettings.expense_categories || [];
   const incomeCategories = userSettings.income_categories || [];
   const paymentMethods = ['Cash', 'bKash', 'Bank'];
 
-  const activePresets = useMemo(() => {
-    return presets.filter(p => expenseCategories.includes(p.category));
-  }, [presets, expenseCategories]);
+  const activeCategories = type === 'expense' ? expenseCategories : incomeCategories;
 
-  const handleLogPreset = (preset) => {
-    addTransaction({
-      type: 'expense',
-      amount: preset.amount,
-      category: preset.category,
-      note: preset.note,
-      date: new Date().toISOString().split('T')[0],
-      payment_method: preset.payment
-    });
-    showToast(`Logged preset transaction: ${preset.label}!`, 'success');
-  };
+  const activePresets = useMemo(
+    () => presets.filter(p => expenseCategories.includes(p.category)),
+    [presets, expenseCategories]
+  );
 
+  // Initialise with one blank row when categories are ready
   useEffect(() => {
-    setCategory(type === 'expense' ? expenseCategories[0] : incomeCategories[0]);
-  }, [type, userSettings]);
-
-  const evaluateMathExpression = (str) => {
-    // Remove all characters except digits, +, -, *, /, ., and parentheses
-    const safeString = str.replace(/[^0-9+\-*/().\s]/g, '');
-    if (!safeString.trim()) return '';
-    try {
-      // Safe evaluation of simple math expression
-      const result = new Function(`return (${safeString})`)();
-      if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
-        return Math.round(result * 100) / 100;
-      }
-    } catch {
-      // Return original on error
+    if (activeCategories.length > 0 && rows.length === 0) {
+      setRows([createRow({ category: activeCategories[0] })]);
     }
-    return str;
-  };
+  }, [activeCategories]);
 
-  const handleAmountBlur = () => {
-    if (amount) {
-      const parsed = evaluateMathExpression(amount.toString());
-      setAmount(parsed.toString());
-    }
-  };
+  // When type changes, reset categories on existing rows to first valid one
+  useEffect(() => {
+    if (activeCategories.length === 0) return;
+    setRows(prev =>
+      prev.map(r => ({
+        ...r,
+        category: activeCategories.includes(r.category) ? r.category : activeCategories[0]
+      }))
+    );
+  }, [type]);
 
+  // --- Row management ---
+  const addRow = useCallback(() => {
+    setRows(prev => [
+      ...prev,
+      createRow({ category: activeCategories[0] || '' })
+    ]);
+  }, [activeCategories]);
+
+  const removeRow = useCallback((index) => {
+    setRows(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const updateRow = useCallback((index, field, value) => {
+    setRows(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r));
+  }, []);
+
+  // --- Preset: append pre-filled row ---
+  const handlePresetClick = useCallback((preset) => {
+    setRows(prev => [
+      ...prev,
+      createRow({
+        category: preset.category,
+        amount: String(preset.amount),
+        note: preset.note || '',
+        paymentMethod: preset.payment || 'Cash'
+      })
+    ]);
+    showToast(`Preset "${preset.label}" added to the list`, 'info');
+  }, [showToast]);
+
+  // --- Submit ---
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (isMultiAdd) {
-      if (!multiAddText.trim()) return;
-      const lines = multiAddText.split('\n').filter(line => line.trim());
-      
-      lines.forEach(line => {
-        // Extract the first contiguous number
-        const numMatch = line.match(/\d+(\.\d+)?/);
-        if (numMatch) {
-          const parsedAmount = parseFloat(numMatch[0]);
-          // Remove the number and trim dangling hyphens, colons, or spaces
-          const parsedNote = line.replace(numMatch[0], '').replace(/^[\s:-]+|[\s:-]+$/g, '').trim() || 'Bulk Add Item';
-          
-          addTransaction({
-            type,
-            amount: parsedAmount,
-            category,
-            note: parsedNote,
-            date,
-            payment_method: paymentMethod
-          });
-        }
-      });
-      
-      setMultiAddText('');
-      showToast(`Successfully added ${lines.length} transactions!`, 'success');
-      return;
-    }
 
-    const evaluated = evaluateMathExpression(amount.toString());
-    if (!evaluated || isNaN(evaluated)) {
-      showToast('Please enter a valid amount or math expression.', 'warning');
-      return;
-    }
-
-    addTransaction({
-      type,
-      amount: parseFloat(evaluated),
-      category,
-      note,
-      date,
-      payment_method: paymentMethod
+    const invalids = rows.filter(r => {
+      const val = evaluateMath(r.amount);
+      return !val || isNaN(Number(val)) || Number(val) <= 0;
     });
 
-    setAmount('');
-    setNote('');
+    if (invalids.length > 0) {
+      showToast(`${invalids.length} row(s) have an invalid amount. Please fix them.`, 'warning');
+      return;
+    }
+
+    const payload = rows.map(r => ({
+      type,
+      amount: Number(evaluateMath(r.amount)),
+      category: r.category,
+      note: r.note,
+      date: r.date,
+      payment_method: r.paymentMethod
+    }));
+
+    addTransactions(payload);
+
+    const count = payload.length;
+    showToast(
+      count === 1
+        ? `${type === 'expense' ? 'Expense' : 'Income'} of ৳${payload[0].amount} added!`
+        : `${count} transactions added successfully!`,
+      'success'
+    );
+
+    // Reset to a single blank row
+    setRows([createRow({ category: activeCategories[0] || '' })]);
   };
 
   const btnStyle = (btnType) => ({
@@ -115,56 +236,63 @@ const TransactionForm = () => {
     padding: '0.75rem',
     borderRadius: 'var(--radius-md)',
     fontWeight: 600,
-    backgroundColor: type === btnType 
-      ? (btnType === 'income' ? 'var(--success-bg)' : 'var(--danger-bg)') 
+    backgroundColor: type === btnType
+      ? (btnType === 'income' ? 'var(--success-bg)' : 'var(--danger-bg)')
       : 'var(--bg-input)',
-    color: type === btnType 
-      ? (btnType === 'income' ? 'var(--success)' : 'var(--danger)') 
+    color: type === btnType
+      ? (btnType === 'income' ? 'var(--success)' : 'var(--danger)')
       : 'var(--text-muted)',
-    border: `1px solid ${type === btnType ? (btnType === 'income' ? 'var(--success)' : 'var(--danger)') : 'transparent'}`
+    border: `1px solid ${type === btnType
+      ? (btnType === 'income' ? 'var(--success)' : 'var(--danger)')
+      : 'transparent'}`
   });
+
+  const totalAmount = rows.reduce((sum, r) => {
+    const v = Number(evaluateMath(r.amount));
+    return sum + (isNaN(v) ? 0 : v);
+  }, 0);
 
   return (
     <div className="glass-card flex-col gap-6" style={{ height: 'fit-content' }}>
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 style={{ fontSize: '1.25rem' }}>Add Transaction</h2>
-        <div style={{ display: 'flex', gap: '0.5rem', backgroundColor: 'var(--bg-main)', padding: '0.25rem', borderRadius: 'var(--radius-full)' }}>
-          <button 
-            onClick={() => setIsMultiAdd(false)}
-            style={{ 
-              padding: '0.25rem 0.75rem', 
-              fontSize: '0.75rem', 
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: !isMultiAdd ? 'var(--bg-card)' : 'transparent',
-              color: !isMultiAdd ? 'var(--text-main)' : 'var(--text-muted)'
-            }}
-          >
-            Standard
-          </button>
-          <button 
-            onClick={() => setIsMultiAdd(true)}
-            style={{ 
-              padding: '0.25rem 0.75rem', 
-              fontSize: '0.75rem', 
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: isMultiAdd ? 'var(--primary)' : 'transparent',
-              color: isMultiAdd ? 'white' : 'var(--text-muted)'
-            }}
-          >
-            Quick Multi-Add
-          </button>
-        </div>
+        {rows.length > 1 && (
+          <span style={{
+            fontSize: '0.8rem',
+            color: 'var(--text-muted)',
+            background: 'var(--bg-input)',
+            padding: '0.2rem 0.6rem',
+            borderRadius: 'var(--radius-full)',
+            border: '1px solid var(--border-color)'
+          }}>
+            Total: ৳{totalAmount.toFixed(2)}
+          </span>
+        )}
       </div>
-      
+
+      {/* Type Toggle */}
+      <div className="flex gap-4">
+        <button style={btnStyle('expense')} onClick={() => setType('expense')} type="button">
+          Expense
+        </button>
+        <button style={btnStyle('income')} onClick={() => setType('income')} type="button">
+          Income
+        </button>
+      </div>
+
+      {/* Quick Presets (expense mode only) */}
       {type === 'expense' && activePresets.length > 0 && (
         <div className="flex-col gap-2" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Quick Presets (One-Tap Log)</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+            Quick Presets — click to add a row
+          </span>
           <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
             {activePresets.map((preset, idx) => (
               <button
                 key={idx}
                 type="button"
-                onClick={() => handleLogPreset(preset)}
+                onClick={() => handlePresetClick(preset)}
                 style={{
                   fontSize: '0.75rem',
                   padding: '0.4rem 0.6rem',
@@ -175,11 +303,11 @@ const TransactionForm = () => {
                   fontWeight: 500,
                   transition: 'var(--transition)'
                 }}
-                onMouseOver={(e) => {
+                onMouseOver={e => {
                   e.currentTarget.style.borderColor = 'var(--primary)';
                   e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
                 }}
-                onMouseOut={(e) => {
+                onMouseOut={e => {
                   e.currentTarget.style.borderColor = 'var(--border-color)';
                   e.currentTarget.style.backgroundColor = 'var(--bg-input)';
                 }}
@@ -190,122 +318,39 @@ const TransactionForm = () => {
           </div>
         </div>
       )}
-      
-      <div className="flex gap-4">
-        <button 
-          style={btnStyle('expense')} 
-          onClick={() => setType('expense')}
-        >
-          Expense
-        </button>
-        <button 
-          style={btnStyle('income')} 
-          onClick={() => setType('income')}
-        >
-          Income
-        </button>
-      </div>
 
-      <form onSubmit={handleSubmit} className="flex-col gap-4">
-        {isMultiAdd ? (
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-              Paste or type items (e.g., "Snacks 150" or "100 Lunch")
-            </label>
-            <textarea 
-              value={multiAddText}
-              onChange={(e) => setMultiAddText(e.target.value)}
-              placeholder="C 50&#10;Snacks 150&#10;Lunch 120"
-              required
-              rows={4}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-input)',
-                color: 'var(--text-main)',
-                resize: 'vertical'
-              }}
-            />
-          </div>
-        ) : (
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Amount (BDT)</label>
-            <input 
-              type="text" 
-              value={amount} 
-              onChange={(e) => setAmount(e.target.value)}
-              onBlur={handleAmountBlur}
-              placeholder="e.g. 100+50 or 500"
-              required={!isMultiAdd}
-            />
-          </div>
-        )}
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Category</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            {(type === 'expense' ? expenseCategories : incomeCategories).map(cat => {
-              const style = getCategoryStyle(cat);
-              return (
-                <option key={cat} value={cat}>
-                  {style.emoji} {cat}
-                </option>
-              );
-            })}
-          </select>
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Date</label>
-          <input 
-            type="date" 
-            value={date} 
-            onChange={(e) => setDate(e.target.value)}
-            required
+      {/* Multi-Item Grid Form */}
+      <form onSubmit={handleSubmit} className="flex-col gap-3">
+        {rows.map((row, index) => (
+          <GridRow
+            key={row.id}
+            row={row}
+            index={index}
+            showDelete={rows.length > 1}
+            categories={activeCategories}
+            paymentMethods={paymentMethods}
+            onUpdate={updateRow}
+            onRemove={removeRow}
+            getCategoryStyle={getCategoryStyle}
           />
-        </div>
+        ))}
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Payment Method</label>
-          <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-            {paymentMethods.map(method => (
-              <option key={method} value={method}>{method}</option>
-            ))}
-          </select>
-        </div>
-
-        {!isMultiAdd && (
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Note (Optional)</label>
-            <input 
-              type="text" 
-              value={note} 
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="What was this for?"
-            />
-          </div>
-        )}
-
-        <button 
-          type="submit"
-          style={{
-            backgroundColor: 'var(--primary)',
-            color: 'white',
-            padding: '1rem',
-            borderRadius: 'var(--radius-md)',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            marginTop: '0.5rem',
-            boxShadow: 'var(--shadow-glow)'
-          }}
+        {/* Add Row Button */}
+        <button
+          type="button"
+          className="grid-add-btn"
+          onClick={addRow}
         >
+          <Plus size={16} />
+          Add another item
+        </button>
+
+        {/* Submit Button */}
+        <button type="submit" className="grid-submit-btn">
           <PlusCircle size={20} />
-          {isMultiAdd ? `Add ${multiAddText.split('\n').filter(l => l.trim()).length || 'Bulk'} Items` : `Add ${type === 'expense' ? 'Expense' : 'Income'}`}
+          {rows.length === 1
+            ? `Add ${type === 'expense' ? 'Expense' : 'Income'}`
+            : `Add ${rows.length} Items`}
         </button>
       </form>
     </div>
