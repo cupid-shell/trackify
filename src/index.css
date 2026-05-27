@@ -274,24 +274,142 @@ input:focus, select:focus, textarea:focus {
   flex: 1;
 }
 
-/* --- Analytics: explicit 2-column masonry via grid-column placement --- */
-.analytics-masonry {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
+/* ─────────────────────────────────────────────────────────────
+   Analytics Carousel
+   ───────────────────────────────────────────────────────────── */
+.ac-wrapper {
   margin-top: 2rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-@media (min-width: 768px) {
-  .analytics-masonry {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  /* Explicit column assignment — cards flow independently, no mismatched pairing */
-  .analytics-masonry .acol-left  { grid-column: 1; }
-  .analytics-masonry .acol-right { grid-column: 2; }
+/* Header: arrow + pills + arrow */
+.ac-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 0.5rem 0.75rem;
 }
+
+/* Arrow buttons */
+.ac-arrow {
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.ac-arrow:hover:not(:disabled) {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 12px var(--primary-glow);
+  transform: scale(1.08);
+}
+
+.ac-arrow:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Scrollable pills track */
+.ac-pills-track {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0.1rem 0;
+}
+.ac-pills-track::-webkit-scrollbar { display: none; }
+
+/* Individual pill */
+.ac-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.ac-pill:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+
+.ac-pill.active {
+  background: var(--primary-glow);
+  color: var(--primary);
+  border-color: rgba(88, 166, 255, 0.35);
+  font-weight: 700;
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.ac-pill-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.ac-pill-label {
+  font-family: 'Mona Sans Variable', sans-serif;
+}
+
+/* Dot indicator row */
+.ac-counter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ac-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-color);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0;
+}
+
+.ac-dot.active {
+  width: 22px;
+  border-radius: 3px;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
+/* Slide stage — the visible window */
+.ac-stage {
+  width: 100%;
+  transition: opacity 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 
 @media (max-width: 640px) {
   .container {

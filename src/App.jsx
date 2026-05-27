@@ -22,6 +22,7 @@ import HealthScore from './components/HealthScore';
 import SavingsGoals from './components/SavingsGoals';
 import LedgerPage from './components/Ledger';
 import PWAUpdateToast from './components/PWAUpdateToast';
+import AnalyticsCarousel from './components/AnalyticsCarousel';
 
 
 
@@ -145,6 +146,39 @@ const HistoryPage = () => {
   );
 };
 
+const ANALYTICS_SLIDES = [
+  {
+    label: 'AI Prediction',
+    icon: '🔮',
+    content: <PredictionEngine />,
+  },
+  {
+    label: 'Health Score',
+    icon: '❤️',
+    content: <HealthScore />,
+  },
+  {
+    label: 'Expense Chart',
+    icon: '🍩',
+    content: <ExpenseChart />,
+  },
+  {
+    label: '6-Month Trend',
+    icon: '📈',
+    content: <TrendChart />,
+  },
+  {
+    label: 'Insights',
+    icon: '💡',
+    content: <FinancialInsights />,
+  },
+  {
+    label: 'Savings Goals',
+    icon: '🎯',
+    content: <SavingsGoals />,
+  },
+];
+
 const AnalyticsPage = () => (
   <>
     <Header />
@@ -158,18 +192,8 @@ const AnalyticsPage = () => (
         <MonthSelector />
       </div>
 
-      {/*
-        Masonry-style 2-column grid using explicit grid-column placement.
-        Left col:  PredictionEngine → ExpenseChart → FinancialInsights
-        Right col: HealthScore (tall anchor) → TrendChart → SavingsGoals
-      */}
-      <div className="analytics-masonry animate-fade-in stagger-3">
-        <div className="acol-left"><PredictionEngine /></div>
-        <div className="acol-right"><HealthScore /></div>
-        <div className="acol-left"><ExpenseChart /></div>
-        <div className="acol-right"><TrendChart /></div>
-        <div className="acol-left"><FinancialInsights /></div>
-        <div className="acol-right"><SavingsGoals /></div>
+      <div className="animate-fade-in stagger-3">
+        <AnalyticsCarousel slides={ANALYTICS_SLIDES} />
       </div>
     </main>
     <Footer />
