@@ -259,11 +259,23 @@ input:focus, select:focus, textarea:focus {
 
 @media (min-width: 768px) {
   .dashboard-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1.1fr 1fr;
   }
 }
 
-.analytics-snapshot-grid {
+/* --- Dashboard left column: stretch to match right column height --- */
+.dashboard-left-col {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-left-col > * {
+  flex: 1;
+}
+
+/* --- Analytics: explicit 2-column masonry via grid-column placement --- */
+.analytics-masonry {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
@@ -271,32 +283,14 @@ input:focus, select:focus, textarea:focus {
   align-items: start;
 }
 
-.analytics-charts-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-  align-items: start;
-}
-
-.analytics-deep-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-  align-items: start;
-}
-
 @media (min-width: 768px) {
-  .analytics-snapshot-grid {
+  .analytics-masonry {
     grid-template-columns: 1fr 1fr;
   }
-  .analytics-charts-grid {
-    grid-template-columns: 1.2fr 1fr;
-  }
-  .analytics-deep-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+
+  /* Explicit column assignment — cards flow independently, no mismatched pairing */
+  .analytics-masonry .acol-left  { grid-column: 1; }
+  .analytics-masonry .acol-right { grid-column: 2; }
 }
 
 @media (max-width: 640px) {

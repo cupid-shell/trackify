@@ -253,7 +253,7 @@ const TransactionForm = () => {
   }, 0);
 
   return (
-    <div className="glass-card flex-col gap-6" style={{ height: 'fit-content' }}>
+    <div className="glass-card flex-col gap-6" style={{ height: '100%' }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 style={{ fontSize: '1.25rem' }}>Add Transaction</h2>

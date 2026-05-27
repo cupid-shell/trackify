@@ -37,21 +37,21 @@ const Dashboard = () => (
       <div className="animate-fade-in stagger-2">
         <MonthSelector />
       </div>
-      
+
       <div className="animate-fade-in stagger-3">
         <OverviewCards />
       </div>
 
       <div className="dashboard-grid animate-fade-in stagger-4">
-        {/* Left Column: Add transactions + Recurring Bills */}
-        <div className="flex-col gap-6" style={{ width: '100%' }}>
+        {/* Left: form stretches to fill column height */}
+        <div className="dashboard-left-col">
           <TransactionForm />
-          <RecurringTracker />
         </div>
 
-        {/* Right Column: Budget progress */}
-        <div style={{ width: '100%' }}>
+        {/* Right: Budget + Recurring stacked */}
+        <div className="flex-col gap-6" style={{ width: '100%' }}>
           <BudgetProgress />
+          <RecurringTracker />
         </div>
       </div>
     </main>
@@ -158,22 +158,18 @@ const AnalyticsPage = () => (
         <MonthSelector />
       </div>
 
-      {/* Zone 1 — Snapshot: side-by-side prediction + health score */}
-      <div className="analytics-snapshot-grid animate-fade-in stagger-3">
-        <PredictionEngine />
-        <HealthScore />
-      </div>
-
-      {/* Zone 2 — Charts: expense breakdown + trend over time */}
-      <div className="analytics-charts-grid animate-fade-in stagger-4">
-        <ExpenseChart />
-        <TrendChart />
-      </div>
-
-      {/* Zone 3 — Deep-dive: insights + savings goals side by side */}
-      <div className="analytics-deep-grid animate-fade-in stagger-4">
-        <FinancialInsights />
-        <SavingsGoals />
+      {/*
+        Masonry-style 2-column grid using explicit grid-column placement.
+        Left col:  PredictionEngine → ExpenseChart → FinancialInsights
+        Right col: HealthScore (tall anchor) → TrendChart → SavingsGoals
+      */}
+      <div className="analytics-masonry animate-fade-in stagger-3">
+        <div className="acol-left"><PredictionEngine /></div>
+        <div className="acol-right"><HealthScore /></div>
+        <div className="acol-left"><ExpenseChart /></div>
+        <div className="acol-right"><TrendChart /></div>
+        <div className="acol-left"><FinancialInsights /></div>
+        <div className="acol-right"><SavingsGoals /></div>
       </div>
     </main>
     <Footer />
