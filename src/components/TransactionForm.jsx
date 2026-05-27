@@ -18,18 +18,7 @@ const TransactionForm = () => {
   const paymentMethods = ['Cash', 'bKash', 'Bank'];
 
   const activePresets = useMemo(() => {
-    let filtered = presets.filter(p => expenseCategories.includes(p.category));
-    
-    if (filtered.length === 0 && expenseCategories.length > 0) {
-      filtered = expenseCategories.slice(0, 3).map(cat => ({
-        label: `৳100 ${cat}`,
-        amount: 100,
-        category: cat,
-        note: `Quick ${cat}`,
-        payment: 'Cash'
-      }));
-    }
-    return filtered;
+    return presets.filter(p => expenseCategories.includes(p.category));
   }, [presets, expenseCategories]);
 
   const handleLogPreset = (preset) => {
