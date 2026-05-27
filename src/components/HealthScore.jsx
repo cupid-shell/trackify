@@ -320,7 +320,7 @@ const HealthScore = () => {
       {/* Badges and Achievements */}
       <div className="flex-col gap-2">
         <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)' }}>
-          Gamified Achievements & Badges
+          Achievements & Badges
         </span>
         <div className="badge-grid">
           {metrics.achievements.map(ach => (
