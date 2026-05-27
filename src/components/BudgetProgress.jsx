@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { AlertTriangle } from 'lucide-react';
+import CategoryIcon from './CategoryIcon';
 
 const BudgetProgress = () => {
   const { userSettings, currentMonthTransactions, getCategoryStyle } = useAppContext();
@@ -40,7 +41,7 @@ const BudgetProgress = () => {
             <div key={cat} style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
               <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '1rem' }}>{getCategoryStyle(cat).emoji}</span>
+                  <CategoryIcon category={cat} size={16} />
                   <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{cat}</span>
                 </div>
                 <div className="flex items-center gap-2">

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { PlusCircle } from 'lucide-react';
 
 const TransactionForm = () => {
-  const { addTransaction, userSettings, presets } = useAppContext();
+  const { addTransaction, userSettings, presets, getCategoryStyle } = useAppContext();
   const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(userSettings.expense_categories[0] || 'Expense');
@@ -58,7 +58,7 @@ const TransactionForm = () => {
       if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
         return Math.round(result * 100) / 100;
       }
-    } catch (e) {
+    } catch {
       // Return original on error
     }
     return str;
@@ -257,9 +257,14 @@ const TransactionForm = () => {
         <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Category</label>
           <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            {(type === 'expense' ? expenseCategories : incomeCategories).map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
+            {(type === 'expense' ? expenseCategories : incomeCategories).map(cat => {
+              const style = getCategoryStyle(cat);
+              return (
+                <option key={cat} value={cat}>
+                  {style.emoji} {cat}
+                </option>
+              );
+            })}
           </select>
         </div>
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { format } from 'date-fns';
 import { Trash2, TrendingDown, TrendingUp, Download, Edit2 } from 'lucide-react';
+import CategoryIcon from './CategoryIcon';
 
 const RecentTransactions = () => {
   const { currentMonthTransactions, deleteTransaction, updateTransaction, userSettings, getCategoryStyle } = useAppContext();
@@ -358,7 +359,7 @@ const RecentTransactions = () => {
                     fontSize: tx.type === 'income' ? '1rem' : '1.25rem',
                     flexShrink: 0
                   }}>
-                    {tx.type === 'income' ? <TrendingUp size={20} style={{ color: 'var(--success)' }} /> : <span>{getCategoryStyle(tx.category).emoji}</span>}
+                    {tx.type === 'income' ? <TrendingUp size={20} style={{ color: 'var(--success)' }} /> : <CategoryIcon category={tx.category} size={20} />}
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <h4 style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.category}</h4>

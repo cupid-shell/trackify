@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { X, TrendingUp, TrendingDown, Calendar as CalendarIcon, Info } from 'lucide-react';
+import CategoryIcon from './CategoryIcon';
 
 const ExpenseCalendar = () => {
   const { 
@@ -374,16 +375,20 @@ const ExpenseCalendar = () => {
                             fontSize: isExpense ? '1.125rem' : '0.9rem',
                             flexShrink: 0
                           }}>
-                            {isExpense ? <span>{getCategoryStyle(tx.category).emoji}</span> : <TrendingUp size={18} style={{ color: 'var(--success)' }} />}
+                            {isExpense ? <CategoryIcon category={tx.category} size={18} /> : <TrendingUp size={18} style={{ color: 'var(--success)' }} />}
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{tx.note || tx.category}</span>
                             <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)', alignItems: 'center' }}>
                               <span style={{ 
                                 color: isExpense ? getCategoryStyle(tx.category).color : 'var(--success)', 
-                                fontWeight: 500 
+                                fontWeight: 500,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem'
                               }}>
-                                {isExpense ? `${getCategoryStyle(tx.category).emoji} ${tx.category}` : tx.category}
+                                {isExpense && <CategoryIcon category={tx.category} size={12} />}
+                                {tx.category}
                               </span>
                               <span>•</span>
                               <span>{tx.payment_method || 'Cash'}</span>

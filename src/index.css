@@ -460,4 +460,47 @@ div[style*="position: relative"]:focus-within svg {
   transform: translateY(-50%) scale(1.1);
 }
 
+/* Premium Category Emoji and Icon Badge Customizations */
+.category-emoji {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, filter;
+}
+
+/* Custom interactive animation for when hovering cards or items containing CategoryIcon/emoji */
+div:hover > .category-emoji,
+button:hover > .category-emoji,
+.category-emoji:hover {
+  transform: scale(1.22) rotate(-3deg);
+  filter: saturate(1.4) drop-shadow(0 2px 8px currentColor) !important;
+}
+
+/* Interactive Category Badge hover transformations */
+div[style*="width: 40px"][style*="height: 40px"],
+div[style*="width: 36px"][style*="height: 36px"],
+div[style*="width: 32px"][style*="height: 32px"] {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+div:hover > div[style*="width: 40px"][style*="height: 40px"],
+div:hover > div[style*="width: 36px"][style*="height: 36px"],
+div:hover > div[style*="width: 32px"][style*="height: 32px"],
+div[style*="width: 40px"][style*="height: 40px"]:hover,
+div[style*="width: 36px"][style*="height: 36px"]:hover,
+div[style*="width: 32px"][style*="height: 32px"]:hover {
+  transform: scale(1.08) translateY(-1px);
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+/* Subtle spin and scaling effect for Lucide icons inside badges on hover */
+div:hover > div[style*="width: 40px"] svg,
+div:hover > div[style*="width: 36px"] svg,
+div:hover > div[style*="width: 32px"] svg {
+  transform: scale(1.15) rotate(5deg);
+}
+
 

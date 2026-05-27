@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import CategoryIcon from './CategoryIcon';
 import { Capacitor } from '@capacitor/core';
 import Header from './Header';
 import Footer from './Footer';
@@ -447,7 +448,7 @@ const SettingsPage = () => {
                           border: `1px solid ${style.color}33`,
                           boxShadow: `0 0 8px ${style.color}22`
                         }}>
-                          {style.emoji}
+                          <CategoryIcon category={cat} size={18} />
                         </span>
                         <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{cat}</span>
                       </div>
