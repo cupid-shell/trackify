@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
@@ -6,6 +6,7 @@ import { version as currentVersion } from '../../package.json';
 
 const AppContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAppContext = () => useContext(AppContext);
 
 export const AppProvider = ({ children }) => {
@@ -46,7 +47,7 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch (e) {
+      } catch {
         // use default
       }
     }
@@ -68,7 +69,7 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch (e) {
+      } catch {
         // use default
       }
     }
@@ -86,24 +87,74 @@ export const AppProvider = ({ children }) => {
   // Notifications state & persistence
   const [notifications, setNotifications] = useState([]);
 
+  async function fetchSettings(userId) {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (!error && data) {
+      setUserSettings({
+        base_income: data.base_income || 15000,
+        savings_goal: data.savings_goal || 3000,
+        expense_categories: data.expense_categories || ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
+        income_categories: data.income_categories || ["Allowance", "Bonus", "Other"],
+        category_budgets: data.category_budgets || {},
+        savings_goals: data.savings_goals || [],
+        category_metadata: data.category_metadata || {}
+      });
+    }
+  }
+
+  async function fetchTransactions(userId, background = false) {
+    if (!background) setLoading(true);
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('date', { ascending: false });
+
+    if (!error && data) {
+      setTransactions(data);
+    }
+    if (!background) setLoading(false);
+  }
+
+  async function fetchDebts(userId, background = false) {
+    if (!background) setLoading(true);
+    const { data, error } = await supabase
+      .from('debts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setDebts(data);
+    }
+    if (!background) setLoading(false);
+  }
+
   useEffect(() => {
-    if (session?.user?.id) {
-      const saved = localStorage.getItem(`trackify_notifications_${session.user.id}`);
-      if (saved) {
-        try {
-          setNotifications(JSON.parse(saved));
-        } catch (e) {
+    setTimeout(() => {
+      if (session?.user?.id) {
+        const saved = localStorage.getItem(`trackify_notifications_${session.user.id}`);
+        if (saved) {
+          try {
+            setNotifications(JSON.parse(saved));
+          } catch {
+            setNotifications([]);
+          }
+        } else {
           setNotifications([]);
         }
       } else {
         setNotifications([]);
       }
-    } else {
-      setNotifications([]);
-    }
+    }, 0);
   }, [session]);
 
-  const addNotification = (title, message, type = 'info', customId = null) => {
+  const addNotification = useCallback((title, message, type = 'info', customId = null) => {
     const newNotif = {
       id: customId || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title,
@@ -122,7 +173,7 @@ export const AppProvider = ({ children }) => {
       }
       return updated;
     });
-  };
+  }, [session]);
 
   const markAllNotificationsRead = () => {
     setNotifications(prev => {
@@ -146,7 +197,7 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch (e) {
+      } catch {
         return [];
       }
     }
@@ -223,7 +274,7 @@ export const AppProvider = ({ children }) => {
         }
       });
     }
-  }, [debts, session, notifications]);
+  }, [debts, session, notifications, addNotification]);
 
   // Auth state listener
   useEffect(() => {
@@ -420,25 +471,6 @@ export const AppProvider = ({ children }) => {
     };
   }, []);
 
-  const fetchSettings = async (userId) => {
-    const { data, error } = await supabase
-      .from('user_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (!error && data) {
-      setUserSettings({
-        base_income: data.base_income || 15000,
-        savings_goal: data.savings_goal || 3000,
-        expense_categories: data.expense_categories || ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
-        income_categories: data.income_categories || ["Allowance", "Bonus", "Other"],
-        category_budgets: data.category_budgets || {},
-        savings_goals: data.savings_goals || [],
-        category_metadata: data.category_metadata || {}
-      });
-    }
-  };
 
   const updateSettings = async (newSettings) => {
     if (!session?.user) return;
@@ -459,37 +491,10 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const fetchTransactions = async (userId, background = false) => {
-    if (!background) setLoading(true);
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false });
-
-    if (!error && data) {
-      setTransactions(data);
-    }
-    if (!background) setLoading(false);
-  };
-
-  const fetchDebts = async (userId, background = false) => {
-    if (!background) setLoading(true);
-    const { data, error } = await supabase
-      .from('debts')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setDebts(data);
-    }
-    if (!background) setLoading(false);
-  };
-
   const addDebt = async (debt, logAsTransaction) => {
     if (!session?.user) return;
 
+    // eslint-disable-next-line react-hooks/purity
     const tempId = `temp-${Date.now()}`;
     const newDebt = { 
       ...debt, 
@@ -629,6 +634,7 @@ export const AppProvider = ({ children }) => {
     if (!session?.user) return;
 
     // Optimistic UI update
+    // eslint-disable-next-line react-hooks/purity
     const tempId = `temp-${Date.now()}`;
     const newTx = { ...transaction, id: tempId, user_id: session.user.id };
     setTransactions(prev => [newTx, ...prev]);
@@ -652,6 +658,7 @@ export const AppProvider = ({ children }) => {
 
     if (!error && data) {
       setTransactions(prev => prev.map(tx => tx.id === tempId ? data : tx));
+      checkTransactionAlerts(data);
     } else {
       setTransactions(prev => prev.filter(tx => tx.id !== tempId));
       alert('Error adding transaction: ' + error.message);
@@ -800,6 +807,10 @@ export const AppProvider = ({ children }) => {
         const change = Number(amount);
         const current = Number(g.current_amount || 0);
         const next = isContribution ? current + change : Math.max(0, current - change);
+        
+        // Trigger local milestone alerts
+        checkSavingsMilestone(g, next);
+
         return { ...g, current_amount: next };
       }
       return g;
@@ -872,36 +883,314 @@ export const AppProvider = ({ children }) => {
     };
   };
 
-  const testNativeNotification = async () => {
-    if (!Capacitor.isNativePlatform()) {
-      alert("Native notifications can only be tested inside the Android app (APK).");
-      return;
-    }
+  const rescheduleNotifications = useCallback(async () => {
+    if (!Capacitor.isNativePlatform()) return;
+
     try {
-      let perm = await LocalNotifications.checkPermissions();
-      if (perm.display !== 'granted') {
-        perm = await LocalNotifications.requestPermissions();
+      // 1. Cancel existing scheduled local notifications
+      const pending = await LocalNotifications.getPending();
+      if (pending.notifications && pending.notifications.length > 0) {
+        await LocalNotifications.cancel({ notifications: pending.notifications });
       }
-      if (perm.display === 'granted') {
+
+      // 2. Fetch preferences from localStorage
+      const dailyEnabled = localStorage.getItem('trackify_daily_reminder') !== 'false';
+      const dailyTime = localStorage.getItem('trackify_daily_reminder_time') || '21:30';
+      const weeklyEnabled = localStorage.getItem('trackify_weekly_digest') !== 'false';
+      const weeklyDay = localStorage.getItem('trackify_weekly_digest_day') || 'Saturday';
+      const billsEnabled = localStorage.getItem('trackify_bill_reminders') !== 'false';
+      
+      const monthlyReviewEnabled = localStorage.getItem('trackify_monthly_review') !== 'false';
+      const zeroSpendEnabled = localStorage.getItem('trackify_zero_spend_streak') !== 'false';
+      const weeklySavingsEnabled = localStorage.getItem('trackify_weekly_savings_motivation') !== 'false';
+
+      const notificationsToSchedule = [];
+
+      // 3. Daily Activity Reminder & Zero-Spend Day (ID: 1001)
+      if (dailyEnabled) {
+        const [hour, minute] = dailyTime.split(':').map(Number);
+        const now = new Date();
+        const todayDateStr = now.toISOString().split('T')[0];
+        
+        const todayTransactions = transactions.filter(tx => tx.date === todayDateStr);
+        const hasLogsToday = todayTransactions.length > 0;
+        const hasExpensesToday = todayTransactions.some(tx => tx.type === 'expense');
+        
+        const scheduleTime = new Date();
+        scheduleTime.setHours(hour, minute, 0, 0);
+
+        let title = 'Forgot to log today? 💸';
+        let body = 'Open Trackify to log your expenses and keep your budget on track!';
+        let shouldSchedule = true;
+
+        if (hasLogsToday) {
+          if (!hasExpensesToday && zeroSpendEnabled) {
+            title = 'Zero-Spend Day! 🎉';
+            body = 'Awesome job! You didn\'t log any expenses today. Keep up the great savings streak!';
+            if (scheduleTime <= now) {
+              shouldSchedule = false;
+            }
+          } else {
+            // Already logged an expense today, schedule "forgot to log" reminder for tomorrow
+            scheduleTime.setDate(scheduleTime.getDate() + 1);
+          }
+        } else {
+          if (scheduleTime <= now) {
+            scheduleTime.setDate(scheduleTime.getDate() + 1);
+          }
+        }
+
+        if (shouldSchedule) {
+          notificationsToSchedule.push({
+            title,
+            body,
+            id: 1001,
+            schedule: { at: scheduleTime }
+          });
+        }
+      }
+
+      // 4. Weekly Spending Digest (ID: 1002)
+      if (weeklyEnabled) {
+        const dayMap = {
+          'Sunday': 1, 'Monday': 2, 'Tuesday': 3, 'Wednesday': 4,
+          'Thursday': 5, 'Friday': 6, 'Saturday': 7
+        };
+        const targetDay = dayMap[weeklyDay] || 7; // Default Saturday
+        
+        // Schedule weekly recurring digest
+        notificationsToSchedule.push({
+          title: 'Your Weekly Spend Summary 📊',
+          body: 'A new week has started! Tap to open Trackify and review your budget progress.',
+          id: 1002,
+          schedule: {
+            every: 'week',
+            on: {
+              weekday: targetDay,
+              hour: 11,
+              minute: 0
+            }
+          }
+        });
+      }
+
+      // 5. Monthly Financial Review (ID: 1003)
+      if (monthlyReviewEnabled) {
+        const now = new Date();
+        let nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 9, 0, 0, 0);
+        notificationsToSchedule.push({
+          title: 'Monthly Financial Review 📊',
+          body: 'A new month has started! Tap to review your complete spending and savings for the past month.',
+          id: 1003,
+          schedule: { at: nextMonth }
+        });
+      }
+
+      // 6. Weekly Savings Goal Motivation (ID: 1005)
+      if (weeklySavingsEnabled) {
+        notificationsToSchedule.push({
+          title: 'Keep Saving! 🎯',
+          body: 'Review your savings goals this weekend. Small additions add up to big achievements!',
+          id: 1005,
+          schedule: {
+            every: 'week',
+            on: {
+              weekday: 1, // Sunday
+              hour: 10,
+              minute: 0
+            }
+          }
+        });
+      }
+
+      // 7. Recurring Bill Reminders (IDs: 2000+)
+      if (billsEnabled && recurringBills && recurringBills.length > 0) {
+        recurringBills.forEach((bill, idx) => {
+          const now = new Date();
+          const dueDay = Number(bill.dueDate);
+          
+          let scheduleTime = new Date();
+          scheduleTime.setDate(dueDay);
+          scheduleTime.setHours(9, 0, 0, 0);
+
+          if (scheduleTime <= now) {
+            // Schedule for next month
+            scheduleTime.setMonth(scheduleTime.getMonth() + 1);
+          }
+
+          notificationsToSchedule.push({
+            title: `Bill Due Today: ${bill.name} 🏠`,
+            body: `Your payment of ৳${bill.amount} for ${bill.category} is due. Tap to record it!`,
+            id: 2000 + idx,
+            schedule: { at: scheduleTime }
+          });
+        });
+      }
+
+      if (notificationsToSchedule.length > 0) {
+        await LocalNotifications.schedule({
+          notifications: notificationsToSchedule
+        });
+      }
+    } catch (error) {
+      console.error('Error rescheduling notifications:', error);
+    }
+  }, [transactions, recurringBills]);
+
+  const checkTransactionAlerts = async (newTx) => {
+    if (!Capacitor.isNativePlatform() || newTx.type !== 'expense') return;
+    
+    // 1. Budget Alerts & Exhaustion Warnings
+    const budgetAlertsEnabled = localStorage.getItem('trackify_budget_alerts') !== 'false';
+    const budgetExhaustionEnabled = localStorage.getItem('trackify_budget_exhaustion') !== 'false';
+
+    if (budgetAlertsEnabled || budgetExhaustionEnabled) {
+      const thresholdPercent = Number(localStorage.getItem('trackify_budget_threshold') || '85');
+      const budgets = userSettings.category_budgets || {};
+      const cat = newTx.category;
+      const limit = budgets[cat];
+
+      if (limit && limit > 0) {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const currentMonthTxs = transactions.filter(tx => {
+          const txDate = new Date(tx.date);
+          return tx.type === 'expense' && 
+                 tx.category === cat && 
+                 txDate.getMonth() === currentMonth && 
+                 txDate.getFullYear() === currentYear;
+        });
+
+        const totalSpent = currentMonthTxs.reduce((sum, tx) => sum + Number(tx.amount), 0) + Number(newTx.amount);
+        const currentMonthStr = `${currentYear}-${currentMonth + 1}`;
+
+        if (budgetExhaustionEnabled && totalSpent >= limit) {
+          const notifyKey = `trackify_notified_budget_exhaust_${cat}_${currentMonthStr}`;
+          
+          if (localStorage.getItem(notifyKey) !== 'true') {
+            try {
+              await LocalNotifications.schedule({
+                notifications: [
+                  {
+                    title: `Budget Exhausted! 🛑`,
+                    body: `You have spent ৳${totalSpent.toLocaleString('en-IN')} out of your ৳${limit.toLocaleString('en-IN')} budget limit for ${cat}.`,
+                    id: 3500 + Math.floor(Math.random() * 1000),
+                  }
+                ]
+              });
+              localStorage.setItem(notifyKey, 'true');
+            } catch (e) {
+              console.error('Error scheduling budget exhaustion alert:', e);
+            }
+          }
+        } else if (budgetAlertsEnabled && totalSpent >= (limit * thresholdPercent) / 100) {
+          const notifyKey = `trackify_notified_budget_${cat}_${currentMonthStr}`;
+          
+          if (localStorage.getItem(notifyKey) !== 'true') {
+            try {
+              await LocalNotifications.schedule({
+                notifications: [
+                  {
+                    title: `Budget Warning: ${cat} ⚠️`,
+                    body: `You have spent ৳${totalSpent.toLocaleString('en-IN')} out of your ৳${limit.toLocaleString('en-IN')} budget limit for ${cat} (${Math.round((totalSpent / limit) * 100)}%).`,
+                    id: 3000 + Math.floor(Math.random() * 1000),
+                  }
+                ]
+              });
+              localStorage.setItem(notifyKey, 'true');
+            } catch (e) {
+              console.error('Error scheduling budget warning:', e);
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Spend Spike Alerts
+    const spendSpikeEnabled = localStorage.getItem('trackify_spend_spike_alerts') !== 'false';
+    if (spendSpikeEnabled) {
+      const cat = newTx.category;
+      const categoryTxs = transactions.filter(tx => tx.type === 'expense' && tx.category === cat);
+      if (categoryTxs.length >= 3) {
+        const total = categoryTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
+        const average = total / categoryTxs.length;
+        if (Number(newTx.amount) > 3 * average) {
+          try {
+            await LocalNotifications.schedule({
+              notifications: [
+                {
+                  title: 'Unusual Spending Spike 🚨',
+                  body: `You just logged a ৳${Number(newTx.amount).toLocaleString('en-IN')} expense for ${cat}, which is significantly higher than your typical average (৳${Math.round(average).toLocaleString('en-IN')}).`,
+                  id: 5000 + Math.floor(Math.random() * 1000)
+                }
+              ]
+            });
+          } catch (e) {
+            console.error('Error scheduling spend spike notification:', e);
+          }
+        }
+      }
+    }
+  };
+
+  const checkSavingsMilestone = async (goal, nextAmount) => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const milestonesEnabled = localStorage.getItem('trackify_savings_milestones') !== 'false';
+    if (!milestonesEnabled) return;
+
+    const target = Number(goal.target_amount);
+    if (!target || target <= 0) return;
+
+    const currentPercent = Math.round(((goal.current_amount || 0) / target) * 100);
+    const nextPercent = Math.round((nextAmount / target) * 100);
+
+    let milestoneCrossed = null;
+
+    if (currentPercent < 50 && nextPercent >= 50) {
+      milestoneCrossed = 50;
+    } else if (currentPercent < 75 && nextPercent >= 75) {
+      milestoneCrossed = 75;
+    } else if (currentPercent < 100 && nextPercent >= 100) {
+      milestoneCrossed = 100;
+    }
+
+    if (milestoneCrossed) {
+      const titleMap = {
+        50: 'Halfway there! 🎯',
+        75: 'Almost completed! 🚀',
+        100: 'Goal Achieved! 🎉'
+      };
+      
+      const bodyMap = {
+        50: `Your savings goal "${goal.name}" is now 50% complete (৳${nextAmount.toLocaleString('en-IN')}/${target.toLocaleString('en-IN')}).`,
+        75: `Your savings goal "${goal.name}" is now 75% complete (৳${nextAmount.toLocaleString('en-IN')}/${target.toLocaleString('en-IN')}).`,
+        100: `Congratulations! You have fully achieved your "${goal.name}" savings goal!`
+      };
+
+      try {
         await LocalNotifications.schedule({
           notifications: [
             {
-              title: 'Trackify Notification Test 🔔',
-              body: 'If you can read this, your native Android notifications are working perfectly!',
-              id: 8888,
-              extra: {
-                url: 'https://github.com/cupid-shell/trackify/releases'
-              }
+              title: titleMap[milestoneCrossed],
+              body: bodyMap[milestoneCrossed],
+              id: 4000 + milestoneCrossed + (Number(goal.id.slice(-4)) || 0)
             }
           ]
         });
-      } else {
-        alert("Notification permissions were denied.");
+      } catch (e) {
+        console.error('Error scheduling milestone notification:', e);
       }
-    } catch (e) {
-      alert("Error triggering notification: " + e.message);
     }
   };
+
+  useEffect(() => {
+    if (session) {
+      rescheduleNotifications();
+    }
+  }, [session, rescheduleNotifications]);
 
   const currentRealDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentRealDate.getMonth());
@@ -964,7 +1253,7 @@ export const AppProvider = ({ children }) => {
     skippedBills,
     skipBillForMonth,
     unskipBillForMonth,
-    testNativeNotification
+    rescheduleNotifications
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

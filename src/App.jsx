@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { useAppContext } from './context/AppContext';
 import Header from './components/Header';
 import OverviewCards from './components/OverviewCards';
@@ -195,6 +197,24 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
+  React.useEffect(() => {
+    const askPermissionOnFirstLaunch = async () => {
+      if (Capacitor.isNativePlatform()) {
+        const asked = localStorage.getItem('trackify_asked_notification_permission');
+        if (!asked) {
+          try {
+            await LocalNotifications.requestPermissions();
+          } catch (e) {
+            console.error('Error requesting notification permissions:', e);
+          } finally {
+            localStorage.setItem('trackify_asked_notification_permission', 'true');
+          }
+        }
+      }
+    };
+    askPermissionOnFirstLaunch();
+  }, []);
+
   React.useEffect(() => {
     const handleMouseMove = (e) => {
       // Set global mouse position relative to viewport
