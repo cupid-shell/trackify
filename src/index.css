@@ -374,21 +374,32 @@ button:not(.nav-link):active {
 
 /* --- View Transitions API Custom Animations (React Router & state transitions) --- */
 
-/* Root transition fade and scale morph */
-::view-transition-old(root) {
-  animation: 220ms cubic-bezier(0.16, 1, 0.3, 1) both fadeOut;
+/* Persistent Layout elements (locks header and footer in place during transitions) */
+.site-header {
+  view-transition-name: site-header;
 }
-::view-transition-new(root) {
-  animation: 320ms cubic-bezier(0.16, 1, 0.3, 1) both fadeIn;
+.premium-footer {
+  view-transition-name: site-footer;
+}
+.container {
+  view-transition-name: page-content;
 }
 
-@keyframes fadeOut {
-  from { opacity: 1; transform: scale(1); }
-  to { opacity: 0; transform: scale(0.985); filter: blur(2px); }
+/* Slide Page Transition (Applies only to the main content container) */
+::view-transition-old(page-content) {
+  animation: 280ms cubic-bezier(0.76, 0, 0.24, 1) both slideOut;
 }
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(1.015); filter: blur(2px); }
-  to { opacity: 1; transform: scale(1); filter: blur(0); }
+::view-transition-new(page-content) {
+  animation: 380ms cubic-bezier(0.76, 0, 0.24, 1) both slideIn;
+}
+
+@keyframes slideOut {
+  from { transform: translateX(0); opacity: 1; filter: blur(0px); }
+  to { transform: translateX(-120px); opacity: 0; filter: blur(4px); }
+}
+@keyframes slideIn {
+  from { transform: translateX(120px); opacity: 0; filter: blur(4px); }
+  to { transform: translateX(0); opacity: 1; filter: blur(0px); }
 }
 
 /* Fluid active navigation pill and toggle pill gliding */
