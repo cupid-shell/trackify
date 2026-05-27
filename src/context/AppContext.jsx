@@ -9,6 +9,47 @@ const AppContext = createContext();
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAppContext = () => useContext(AppContext);
 
+const defaultPresets = [
+  { label: '৳15 Bus', amount: 15, category: 'Transport', note: 'Bus fare', payment: 'Cash' },
+  { label: '৳50 Snack', amount: 50, category: 'Food & Dining', note: 'Snacks', payment: 'Cash' },
+  { label: '৳120 Lunch', amount: 120, category: 'Food & Dining', note: 'Lunch', payment: 'Cash' },
+  { label: '৳100 Mobile', amount: 100, category: 'Utilities & Bills', note: 'Mobile recharge', payment: 'bKash' }
+];
+
+const defaultRecurringBills = [
+  { name: 'Home WiFi Bill', amount: 525, category: 'Utilities & Bills', dueDate: 20, payment: 'bKash' },
+  { name: 'Seat Rent', amount: 3000, category: 'Rent', dueDate: 5, payment: 'Cash' }
+];
+
+const defaultNotificationPrefs = {
+  daily_reminder: true,
+  daily_reminder_time: '21:30',
+  weekly_digest: true,
+  weekly_digest_day: 'Saturday',
+  budget_alerts: true,
+  budget_threshold: '85',
+  savings_milestones: true,
+  bill_reminders: true,
+  spend_spike_alerts: true,
+  monthly_review: true,
+  zero_spend_streak: true,
+  budget_exhaustion: true,
+  weekly_savings_motivation: true
+};
+
+const defaultSettings = {
+  base_income: 15000,
+  savings_goal: 3000,
+  expense_categories: ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
+  income_categories: ["Allowance", "Bonus", "Other"],
+  category_budgets: {},
+  savings_goals: [],
+  category_metadata: {},
+  presets: defaultPresets,
+  recurring_bills: defaultRecurringBills,
+  notification_preferences: defaultNotificationPrefs
+};
+
 export const AppProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -32,15 +73,7 @@ export const AppProvider = ({ children }) => {
   }, []);
   
   // Settings state
-  const [userSettings, setUserSettings] = useState({
-    base_income: 15000,
-    savings_goal: 3000,
-    expense_categories: ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
-    income_categories: ["Allowance", "Bonus", "Other"],
-    category_budgets: {},
-    savings_goals: [],
-    category_metadata: {}
-  });
+  const [userSettings, setUserSettings] = useState(defaultSettings);
 
   const [presets, setPresets] = useState(() => {
     const saved = localStorage.getItem('trackify_presets');
@@ -51,17 +84,13 @@ export const AppProvider = ({ children }) => {
         // use default
       }
     }
-    return [
-      { label: '৳15 Bus', amount: 15, category: 'Transport', note: 'Bus fare', payment: 'Cash' },
-      { label: '৳50 Snack', amount: 50, category: 'Food & Dining', note: 'Snacks', payment: 'Cash' },
-      { label: '৳120 Lunch', amount: 120, category: 'Food & Dining', note: 'Lunch', payment: 'Cash' },
-      { label: '৳100 Mobile', amount: 100, category: 'Utilities & Bills', note: 'Mobile recharge', payment: 'bKash' }
-    ];
+    return defaultPresets;
   });
 
-  const updatePresets = (newPresets) => {
+  const updatePresets = async (newPresets) => {
     setPresets(newPresets);
     localStorage.setItem('trackify_presets', JSON.stringify(newPresets));
+    await updateSettings({ presets: newPresets });
   };
 
   const [recurringBills, setRecurringBills] = useState(() => {
@@ -73,19 +102,47 @@ export const AppProvider = ({ children }) => {
         // use default
       }
     }
-    return [
-      { name: 'Home WiFi Bill', amount: 525, category: 'Utilities & Bills', dueDate: 20, payment: 'bKash' },
-      { name: 'Seat Rent', amount: 3000, category: 'Rent', dueDate: 5, payment: 'Cash' }
-    ];
+    return defaultRecurringBills;
   });
 
-  const updateRecurringBills = (newBills) => {
+  const updateRecurringBills = async (newBills) => {
     setRecurringBills(newBills);
     localStorage.setItem('trackify_recurring_bills', JSON.stringify(newBills));
+    await updateSettings({ recurring_bills: newBills });
   };
 
   // Notifications state & persistence
   const [notifications, setNotifications] = useState([]);
+
+  const resetStateToDefaults = useCallback(() => {
+    setUserSettings(defaultSettings);
+    setPresets(defaultPresets);
+    setRecurringBills(defaultRecurringBills);
+    setNotifications([]);
+    setSkippedBills([]);
+
+    localStorage.removeItem('trackify_presets');
+    localStorage.removeItem('trackify_recurring_bills');
+    localStorage.removeItem('trackify_skipped_bills');
+    
+    const notificationKeys = [
+      'daily_reminder', 'daily_reminder_time', 'weekly_digest', 'weekly_digest_day',
+      'budget_alerts', 'budget_threshold', 'savings_milestones', 'bill_reminders',
+      'spend_spike_alerts', 'monthly_review', 'zero_spend_streak', 'budget_exhaustion',
+      'weekly_savings_motivation'
+    ];
+    notificationKeys.forEach(key => {
+      localStorage.removeItem(`trackify_${key}`);
+    });
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('trackify_notifications_')) {
+        localStorage.removeItem(key);
+        i--;
+      }
+    }
+  }, []);
 
   async function fetchSettings(userId) {
     const { data, error } = await supabase
@@ -102,8 +159,26 @@ export const AppProvider = ({ children }) => {
         income_categories: data.income_categories || ["Allowance", "Bonus", "Other"],
         category_budgets: data.category_budgets || {},
         savings_goals: data.savings_goals || [],
-        category_metadata: data.category_metadata || {}
+        category_metadata: data.category_metadata || {},
+        presets: data.presets != null ? data.presets : defaultPresets,
+        recurring_bills: data.recurring_bills != null ? data.recurring_bills : defaultRecurringBills,
+        notification_preferences: data.notification_preferences != null ? data.notification_preferences : defaultNotificationPrefs
       });
+
+      if (data.presets != null) {
+        setPresets(data.presets);
+        localStorage.setItem('trackify_presets', JSON.stringify(data.presets));
+      }
+      if (data.recurring_bills != null) {
+        setRecurringBills(data.recurring_bills);
+        localStorage.setItem('trackify_recurring_bills', JSON.stringify(data.recurring_bills));
+      }
+      if (data.notification_preferences != null) {
+        const prefs = { ...defaultNotificationPrefs, ...data.notification_preferences };
+        Object.keys(prefs).forEach(key => {
+          localStorage.setItem(`trackify_${key}`, prefs[key].toString());
+        });
+      }
     }
   }
 
@@ -285,6 +360,7 @@ export const AppProvider = ({ children }) => {
         fetchSettings(session.user.id);
         fetchDebts(session.user.id);
       } else {
+        resetStateToDefaults();
         setLoading(false);
       }
     });
@@ -298,12 +374,13 @@ export const AppProvider = ({ children }) => {
       } else {
         setTransactions([]);
         setDebts([]);
+        resetStateToDefaults();
         setLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [resetStateToDefaults]);
 
   // Realtime database subscription listener
   useEffect(() => {
@@ -478,16 +555,49 @@ export const AppProvider = ({ children }) => {
     // Optimistic UI update
     setUserSettings(prev => ({ ...prev, ...newSettings }));
 
+    if (newSettings.presets != null) {
+      setPresets(newSettings.presets);
+      localStorage.setItem('trackify_presets', JSON.stringify(newSettings.presets));
+    }
+    if (newSettings.recurring_bills != null) {
+      setRecurringBills(newSettings.recurring_bills);
+      localStorage.setItem('trackify_recurring_bills', JSON.stringify(newSettings.recurring_bills));
+    }
+    if (newSettings.notification_preferences != null) {
+      const prefs = newSettings.notification_preferences;
+      Object.keys(prefs).forEach(key => {
+        localStorage.setItem(`trackify_${key}`, prefs[key].toString());
+      });
+    }
+
+    const payload = {
+      user_id: session.user.id,
+      ...newSettings,
+      updated_at: new Date().toISOString()
+    };
+
     const { error } = await supabase
       .from('user_settings')
-      .upsert({
-        user_id: session.user.id,
-        ...newSettings,
-        updated_at: new Date().toISOString()
-      });
+      .upsert(payload);
 
     if (error) {
-      alert('Error saving settings: ' + error.message);
+      if (error.code === 'PGRST204' || error.message?.includes('column') || error.message?.includes('does not exist')) {
+        console.warn('Supabase schema does not have presets, recurring_bills, or notification_preferences yet. Falling back to standard settings upsert.', error);
+        const { presets, recurring_bills, notification_preferences, ...fallbackSettings } = newSettings;
+        const fallbackPayload = {
+          user_id: session.user.id,
+          ...fallbackSettings,
+          updated_at: new Date().toISOString()
+        };
+        const { error: fallbackError } = await supabase
+          .from('user_settings')
+          .upsert(fallbackPayload);
+        if (fallbackError) {
+          alert('Error saving settings (fallback): ' + fallbackError.message);
+        }
+      } else {
+        alert('Error saving settings: ' + error.message);
+      }
     }
   };
 

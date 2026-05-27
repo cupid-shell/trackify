@@ -55,10 +55,53 @@ INSERT INTO transactions (user_id, type, amount, category, date, note, payment_m
 ('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-05-02', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
 ('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 86, 'Food & Dining', '2026-05-02', 'Snacks', 'Cash', '2026-05-14 09:53:41.902735+00'),
 ('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-05-03', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
-('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 120, 'Food & Dining', '2026-05-03', 'Snacks', 'Cash', '2026-05-14 09:53:41.902735+00'),
-('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-04-17', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
-('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 62, 'Daily Living', '2026-04-17', 'bathroom brush', 'Cash', '2026-05-14 09:53:41.902735+00'),
-('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-04-12', 'C', 'bKash', '2026-05-14 09:53:41.902735+00'),
-('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 30, 'Food & Dining', '2026-04-12', 'Porota 3x', 'bKash', '2026-05-14 09:53:41.902735+00'),
-('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-05-04', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
-('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 110, 'Food & Dining', '2026-05-04', 'Snacks', 'Cash', '2026-05-14 09:53:41.902735+00');
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 15, 'Transport', '2026-04-04', 'Metro', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 15, 'Transport', '2026-04-04', 'Leguna', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 15, 'Transport', '2026-04-04', 'Bus', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-05-10', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 30, 'Daily Living', '2026-05-10', 'Lichie Drink', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 135, 'Daily Living', '2026-04-24', 'Khata 2x', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 135, 'Daily Living', '2026-04-24', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-05-09', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 100, 'Food & Dining', '2026-05-09', 'Snacks', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 160, 'Food & Dining', '2026-05-09', 'lunch', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 75, 'Daily Living', '2026-04-24', 'Soap', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 75, 'Daily Living', '2026-04-24', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-04-27', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 30, 'Food & Dining', '2026-04-27', 'Biscuit 2x', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-04-13', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 180, 'Food & Dining', '2026-04-13', 'Biscuit', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 100, 'Food & Dining', '2026-04-07', 'Snacks', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 110, 'Daily Living', '2026-04-07', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-04-11', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 90, 'Food & Dining', '2026-04-11', 'Cup Doi 2x', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 100, 'Daily Living', '2026-04-18', 'Saral Visit', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 100, 'Daily Living', '2026-04-18', 'Multiplug', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 100, 'Daily Living', '2026-04-18', 'Hanger', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 100, 'Daily Living', '2026-04-18', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-04-29', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 60, 'Daily Living', '2026-04-29', 'travel', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 120, 'Daily Living', '2026-04-29', 'screwdriver', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-04-30', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 115, 'Daily Living', '2026-04-30', 'Chapata', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 115, 'Daily Living', '2026-04-30', 'DiplomaPowder', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 190, 'Daily Living', '2026-04-30', 'Harpick', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-04-28', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 60, 'Daily Living', '2026-04-28', 'travel', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 100, 'Food & Dining', '2026-04-04', 'Snacks', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 220, 'Daily Living', '2026-04-04', 'Ornaments for prapti', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-05-02', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 86, 'Food & Dining', '2026-05-02', 'Snacks', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-05-03', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 120, 'Food & Dining', '2026-05-03', 'Snacks', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-04-17', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 62, 'Daily Living', '2026-04-17', 'bathroom brush', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-04-12', 'C', 'bKash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 30, 'Food & Dining', '2026-04-12', 'Porota 3x', 'bKash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 40, 'Daily Living', '2026-05-04', 'C', 'Cash', '2026-05-14 09:53:41.902735+00'),
+('2f9ec212-22f9-40b0-a56e-ed67400fb467', 'expense', 110, 'Food & Dining', '2026-05-04', 'Snacks', 'Cash', '2026-05-14 09:53:41.902735+00');
+
+-- 4. Persist Presets, Recurring Bills, and Notification Preferences in user_settings
+ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS presets JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS recurring_bills JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS notification_preferences JSONB DEFAULT '{}'::jsonb;
