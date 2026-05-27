@@ -368,8 +368,32 @@ button:not(.nav-link):active {
 }
 
 /* Pulse animation utility */
-.pulse-glow {
-  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+/* --- View Transitions API Custom Animations (React Router & state transitions) --- */
+
+/* Root transition fade and scale morph */
+::view-transition-old(root) {
+  animation: 220ms cubic-bezier(0.16, 1, 0.3, 1) both fadeOut;
+}
+::view-transition-new(root) {
+  animation: 320ms cubic-bezier(0.16, 1, 0.3, 1) both fadeIn;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.985); filter: blur(2px); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(1.015); filter: blur(2px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+/* Fluid active navigation pill and toggle pill gliding */
+::view-transition-group(active-tab-pill),
+::view-transition-group(history-toggle-pill) {
+  animation-duration: 380ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 

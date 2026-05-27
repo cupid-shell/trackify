@@ -31,6 +31,7 @@ const Header = () => {
     return (
       <Link 
         to={to} 
+        viewTransition
         className={`nav-link ${isActive ? 'active' : ''}`}
         style={{
           display: 'flex',
@@ -71,6 +72,7 @@ const Header = () => {
           transition: var(--transition);
         }
         .nav-link.active {
+          view-transition-name: active-tab-pill;
           background-color: var(--bg-hover);
           border-color: var(--border-color);
           color: var(--primary);

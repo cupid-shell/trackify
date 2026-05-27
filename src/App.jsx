@@ -60,6 +60,16 @@ const Dashboard = () => (
 const HistoryPage = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
 
+  const handleToggle = (mode) => {
+    if (document.startViewTransition) {
+      document.startViewTransition(() => {
+        setViewMode(mode);
+      });
+    } else {
+      setViewMode(mode);
+    }
+  };
+
   return (
     <>
       <Header />
@@ -88,7 +98,7 @@ const HistoryPage = () => {
             display: 'flex'
           }}>
             <button 
-              onClick={() => setViewMode('list')}
+              onClick={() => handleToggle('list')}
               style={{
                 padding: '0.5rem 1.25rem',
                 borderRadius: 'var(--radius-sm)',
@@ -96,13 +106,14 @@ const HistoryPage = () => {
                 color: viewMode === 'list' ? '#07090e' : 'var(--text-muted)',
                 fontWeight: 600,
                 fontSize: '0.875rem',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                viewTransitionName: viewMode === 'list' ? 'history-toggle-pill' : 'none'
               }}
             >
               List View
             </button>
             <button 
-              onClick={() => setViewMode('calendar')}
+              onClick={() => handleToggle('calendar')}
               style={{
                 padding: '0.5rem 1.25rem',
                 borderRadius: 'var(--radius-sm)',
@@ -110,7 +121,8 @@ const HistoryPage = () => {
                 color: viewMode === 'calendar' ? '#07090e' : 'var(--text-muted)',
                 fontWeight: 600,
                 fontSize: '0.875rem',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                viewTransitionName: viewMode === 'calendar' ? 'history-toggle-pill' : 'none'
               }}
             >
               Calendar Heatmap
