@@ -137,7 +137,13 @@ export const CategoryIcon = ({ category, emoji: directEmoji, color: directColor,
   }
 
   const cleanName = category ? category.toLowerCase().trim() : '';
-  const LucideIcon = nameToLucide[cleanName] || emojiToLucide[emoji] || null;
+  const { userSettings } = useAppContext();
+  const metadata = userSettings?.category_metadata || {};
+  const hasCustomEmoji = category && metadata[category] && metadata[category].emoji;
+
+  const LucideIcon = hasCustomEmoji 
+    ? (emojiToLucide[emoji] || null)
+    : (nameToLucide[cleanName] || emojiToLucide[emoji] || null);
 
   if (LucideIcon) {
     return (

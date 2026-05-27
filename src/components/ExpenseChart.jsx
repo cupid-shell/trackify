@@ -16,14 +16,14 @@ const renderActiveShape = (props) => {
   // Coordinates for the leader line (start, elbow, end)
   const sx = cx + (outerRadius + 2) * cos;
   const sy = cy + (outerRadius + 2) * sin;
-  const mx = cx + (outerRadius + 14) * cos;
-  const my = cy + (outerRadius + 14) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 16;
+  const mx = cx + (outerRadius + 10) * cos;
+  const my = cy + (outerRadius + 10) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
   const ey = my;
   
   // Label text position and alignment
   const textAnchor = cos >= 0 ? 'start' : 'end';
-  const tx = ex + (cos >= 0 ? 1 : -1) * 6;
+  const tx = ex + (cos >= 0 ? 1 : -1) * 5;
   const ty = ey;
 
   return (
@@ -32,13 +32,13 @@ const renderActiveShape = (props) => {
       <Sector
         cx={cx}
         cy={cy}
-        innerRadius={innerRadius - 2}
-        outerRadius={outerRadius + 5}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 4}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
         style={{
-          filter: `drop-shadow(0 0 6px ${fill}55)`,
+          filter: `drop-shadow(0 0 5px ${fill}33)`,
           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       />
@@ -181,7 +181,8 @@ const ExpenseChart = () => {
               alignItems: 'center',
               justifyContent: 'center',
               whiteSpace: 'nowrap',
-              width: '120px'
+              width: '120px',
+              zIndex: 10
             }}>
               <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Total Expenses</span>
               <span style={{ fontSize: '1.4rem', fontFamily: 'Hubot Sans Variable', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.15rem' }}>৳{totalExpenseValue.toLocaleString('en-IN')}</span>
@@ -224,13 +225,13 @@ const ExpenseChart = () => {
                 </Bar>
               </BarChart>
             ) : (
-              <PieChart>
+              <PieChart margin={{ left: 30, right: 30, top: 10, bottom: 10 }}>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={68}
+                  innerRadius={70}
+                  outerRadius={90}
                   paddingAngle={4}
                   dataKey="value"
                   activeIndex={activeIndex}

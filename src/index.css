@@ -414,12 +414,12 @@ button:not(.nav-link):active {
 /* --- Premium Glowing Icon System --- */
 
 /* Card SVG elements with glowing filters matching their colors */
-.glass-card svg {
+.glass-card svg.lucide {
   filter: drop-shadow(0 0 3px currentColor);
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
 }
 
-.glass-card:hover svg {
+.glass-card:hover svg.lucide {
   transform: scale(1.18) rotate(3deg);
   filter: drop-shadow(0 0 7px currentColor);
 }
