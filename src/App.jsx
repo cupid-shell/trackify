@@ -183,6 +183,46 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
+  React.useEffect(() => {
+    const handleMouseMove = (e) => {
+      // Set global mouse position relative to viewport
+      document.documentElement.style.setProperty('--mx', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--my', `${e.clientY}px`);
+      
+      // Update coordinates relative to each card for the localized spotlight effect
+      const cards = document.querySelectorAll('.glass-card');
+      cards.forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--card-mx', `${x}px`);
+        card.style.setProperty('--card-my', `${y}px`);
+      });
+    };
+
+    let lastScrollTop = 0;
+    let scrollTimeout;
+    const handleScroll = () => {
+      const st = window.pageYOffset || document.documentElement.scrollTop;
+      const diff = Math.min(Math.abs(st - lastScrollTop) * 2.5, 60); // Amplify stretching
+      document.documentElement.style.setProperty('--scroll-stretch', `${100 + diff}%`);
+      lastScrollTop = st <= 0 ? 0 : st;
+      
+      // Reset font stretch back to normal when scroll stops
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        document.documentElement.style.setProperty('--scroll-stretch', '100%');
+      }, 120);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
