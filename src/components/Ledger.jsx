@@ -448,8 +448,7 @@ const LedgerPage = () => {
                   style={{
                     border: '1px solid var(--border-color)',
                     padding: '1.25rem',
-                    transition: 'all 0.2s ease',
-                    position: 'relative'
+                    transition: 'all 0.2s ease'
                   }}
                 >
                   {/* Top line: Contact, Type Badge, Due Alerts */}

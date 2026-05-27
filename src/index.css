@@ -452,6 +452,10 @@ button:not(.nav-link):active {
 }
 
 /* Form input prefix icons dynamic animations */
+.input-icon-wrapper {
+  position: relative;
+}
+
 .input-icon-wrapper svg {
   transition: color 0.2s ease, filter 0.2s ease, transform 0.2s ease;
 }
@@ -460,6 +464,10 @@ button:not(.nav-link):active {
   color: var(--primary) !important;
   filter: drop-shadow(0 0 6px var(--primary-glow));
   transform: translateY(-50%) scale(1.1);
+}
+
+.relative-container {
+  position: relative;
 }
 
 /* Premium Category Emoji and Icon Badge Customizations */

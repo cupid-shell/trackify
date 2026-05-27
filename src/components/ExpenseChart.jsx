@@ -167,7 +167,7 @@ const ExpenseChart = () => {
           <p>No expenses to analyze yet.</p>
         </div>
       ) : (
-        <div style={{ height: '300px', width: '100%', position: 'relative' }}>
+        <div className="relative-container" style={{ height: '300px', width: '100%' }}>
           {chartType === 'donut' && (
             <div style={{
               position: 'absolute',

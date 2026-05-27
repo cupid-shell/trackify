@@ -129,7 +129,7 @@ const Header = () => {
         {session && (
           <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
             {/* Notification Bell Dropdown */}
-            <div style={{ position: 'relative' }} ref={dropdownRef}>
+            <div className="relative-container" ref={dropdownRef}>
               <button 
                 onClick={() => {
                   setIsOpen(!isOpen);
@@ -137,6 +137,7 @@ const Header = () => {
                     markAllNotificationsRead();
                   }
                 }}
+                className="relative-container"
                 style={{
                   width: '36px',
                   height: '36px',
@@ -147,7 +148,6 @@ const Header = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  position: 'relative',
                   border: unreadCount > 0 ? '1px solid var(--primary)' : '1px solid transparent',
                   boxShadow: unreadCount > 0 ? 'var(--shadow-glow)' : 'none'
                 }}

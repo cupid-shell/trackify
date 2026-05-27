@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Mail, Lock } from 'lucide-react';
 
@@ -110,7 +110,7 @@ const Login = () => {
             }}>
               EMAIL ADDRESS
             </label>
-            <div className="input-icon-wrapper" style={{ position: 'relative' }}>
+            <div className="input-icon-wrapper">
               <Mail size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input 
                 type="email" 
@@ -141,7 +141,7 @@ const Login = () => {
             }}>
               PASSWORD
             </label>
-            <div className="input-icon-wrapper" style={{ position: 'relative' }}>
+            <div className="input-icon-wrapper">
               <Lock size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input 
                 type="password" 

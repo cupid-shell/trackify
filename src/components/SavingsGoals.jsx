@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Plus, Trash2, Calendar, Target, PlusCircle, MinusCircle, PiggyBank } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -219,7 +219,7 @@ const SavingsGoals = () => {
             if (goal.target_date) {
               try {
                 formattedDate = format(parseISO(goal.target_date), 'MMM dd, yyyy');
-              } catch (e) {
+              } catch {
                 formattedDate = goal.target_date;
               }
             }
@@ -239,7 +239,7 @@ const SavingsGoals = () => {
                 }}
               >
                 {/* SVG Progress Ring */}
-                <div style={{ position: 'relative', width: '76px', height: '76px', flexShrink: 0 }}>
+                <div className="relative-container" style={{ width: '76px', height: '76px', flexShrink: 0 }}>
                   <svg width="76" height="76" style={{ transform: 'rotate(-90deg)' }}>
                     <circle
                       stroke="rgba(255, 255, 255, 0.05)"

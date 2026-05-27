@@ -140,7 +140,7 @@ const ExpenseCalendar = () => {
     : '';
 
   return (
-    <div className="glass-card" style={{ padding: '1.5rem', position: 'relative' }}>
+    <div className="glass-card" style={{ padding: '1.5rem' }}>
       <style>{`
         .calendar-scroll-container {
           width: 100%;
