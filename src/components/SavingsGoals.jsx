@@ -4,7 +4,7 @@ import { Plus, Trash2, Calendar, Target, PlusCircle, MinusCircle, PiggyBank } fr
 import { format, parseISO } from 'date-fns';
 
 const SavingsGoals = () => {
-  const { userSettings, addSavingsGoal, deleteSavingsGoal, updateSavingsGoalProgress } = useAppContext();
+  const { userSettings, addSavingsGoal, deleteSavingsGoal, updateSavingsGoalProgress, showToast } = useAppContext();
   const goals = userSettings.savings_goals || [];
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -29,7 +29,7 @@ const SavingsGoals = () => {
   const handleAddGoal = async (e) => {
     e.preventDefault();
     if (!goalName.trim() || !targetAmount || isNaN(targetAmount) || Number(targetAmount) <= 0) {
-      alert('Please fill in all details with valid numbers.');
+      showToast('Please fill in all details with valid numbers.', 'warning');
       return;
     }
 
@@ -56,7 +56,7 @@ const SavingsGoals = () => {
   const handleContribution = async (goalId, isContribution) => {
     const amount = Number(contribAmounts[goalId]);
     if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid amount.');
+      showToast('Please enter a valid amount.', 'warning');
       return;
     }
 

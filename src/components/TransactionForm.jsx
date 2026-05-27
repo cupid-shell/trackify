@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { PlusCircle } from 'lucide-react';
 
 const TransactionForm = () => {
-  const { addTransaction, userSettings, presets, getCategoryStyle } = useAppContext();
+  const { addTransaction, userSettings, presets, getCategoryStyle, showToast } = useAppContext();
   const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(userSettings.expense_categories[0] || 'Expense');
@@ -41,7 +41,7 @@ const TransactionForm = () => {
       date: new Date().toISOString().split('T')[0],
       payment_method: preset.payment
     });
-    alert(`Logged preset transaction: ${preset.label}!`);
+    showToast(`Logged preset transaction: ${preset.label}!`, 'success');
   };
 
   useEffect(() => {
@@ -98,13 +98,13 @@ const TransactionForm = () => {
       });
       
       setMultiAddText('');
-      alert(`Successfully added ${lines.length} transactions!`);
+      showToast(`Successfully added ${lines.length} transactions!`, 'success');
       return;
     }
 
     const evaluated = evaluateMathExpression(amount.toString());
     if (!evaluated || isNaN(evaluated)) {
-      alert('Please enter a valid amount or math expression.');
+      showToast('Please enter a valid amount or math expression.', 'warning');
       return;
     }
 

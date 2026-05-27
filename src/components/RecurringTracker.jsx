@@ -12,7 +12,8 @@ const RecurringTracker = () => {
     selectedYear,
     skippedBills,
     skipBillForMonth,
-    unskipBillForMonth
+    unskipBillForMonth,
+    showToast
   } = useAppContext();
 
   // Helper to check if a bill is paid in the currently selected month
@@ -22,7 +23,7 @@ const RecurringTracker = () => {
       tx.type === 'expense' && 
       (tx.category === bill.category || tx.note?.toLowerCase().includes(billNameLower)) &&
       (tx.note?.toLowerCase().includes(billNameLower) || 
-       (tx.note?.toLowerCase().includes('recurring') && Number(tx.amount) === Number(bill.amount)))
+      (tx.note?.toLowerCase().includes('recurring') && Number(tx.amount) === Number(bill.amount)))
     );
   };
 
@@ -35,7 +36,7 @@ const RecurringTracker = () => {
       date: new Date().toISOString().split('T')[0],
       payment_method: bill.payment || 'Cash'
     });
-    alert(`Logged payment for: ${bill.name}!`);
+    showToast(`Logged payment for: ${bill.name}!`, 'success');
   };
 
   const handleSkipBill = (bill) => {

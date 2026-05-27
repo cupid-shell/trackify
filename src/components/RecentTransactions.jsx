@@ -5,7 +5,7 @@ import { Trash2, TrendingDown, TrendingUp, Download, Edit2 } from 'lucide-react'
 import CategoryIcon from './CategoryIcon';
 
 const RecentTransactions = () => {
-  const { currentMonthTransactions, deleteTransaction, updateTransaction, userSettings, getCategoryStyle } = useAppContext();
+  const { currentMonthTransactions, deleteTransaction, updateTransaction, userSettings, getCategoryStyle, showToast } = useAppContext();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedCategory, setSelectedCategory] = React.useState('All');
   const [startDate, setStartDate] = React.useState('');
@@ -30,7 +30,7 @@ const RecentTransactions = () => {
 
   const saveEdit = async (txId) => {
     if (!editAmount || isNaN(Number(editAmount)) || Number(editAmount) <= 0) {
-      alert('Please enter a valid amount');
+      showToast('Please enter a valid amount', 'warning');
       return;
     }
     const success = await updateTransaction(txId, {

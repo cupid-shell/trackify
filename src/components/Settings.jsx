@@ -20,7 +20,8 @@ const SettingsPage = () => {
     updateRecurringBills,
     updateCategoryMetadata,
     getCategoryStyle,
-    rescheduleNotifications
+    rescheduleNotifications,
+    showToast
   } = useAppContext();
 
   const [activeTab, setActiveTab] = useState(0);
@@ -252,7 +253,7 @@ const SettingsPage = () => {
         { name: 'Home WiFi Bill', amount: 525, category: 'Utilities & Bills', dueDate: 20, payment: 'bKash' },
         { name: 'Seat Rent', amount: 3000, category: 'Rent', dueDate: 5, payment: 'Cash' }
       ]);
-      alert('Settings reset to defaults. Click "Save All Settings" to commit the changes.');
+      showToast('Settings reset to defaults. Click "Save All Settings" to commit the changes.', 'info');
     }
   };
 
@@ -319,7 +320,7 @@ const SettingsPage = () => {
     }
 
     setSaving(false);
-    alert('Settings saved successfully!');
+    showToast('Settings saved successfully!', 'success');
   };
 
   const addExpenseCat = () => {

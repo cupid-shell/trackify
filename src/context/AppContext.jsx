@@ -55,6 +55,15 @@ export const AppProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message, type = 'success') => {
+    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3500);
+  }, []);
   
   // Initialize dynamic theme accent on mount
   useEffect(() => {
@@ -152,6 +161,20 @@ export const AppProvider = ({ children }) => {
       .single();
 
     if (!error && data) {
+      const categoryMetadata = data.category_metadata || {};
+      
+      const loadedPresets = data.presets !== undefined && data.presets !== null
+        ? data.presets
+        : (categoryMetadata._presets !== undefined ? categoryMetadata._presets : defaultPresets);
+
+      const loadedRecurringBills = data.recurring_bills !== undefined && data.recurring_bills !== null
+        ? data.recurring_bills
+        : (categoryMetadata._recurring_bills !== undefined ? categoryMetadata._recurring_bills : defaultRecurringBills);
+
+      const loadedNotificationPrefs = data.notification_preferences !== undefined && data.notification_preferences !== null
+        ? data.notification_preferences
+        : (categoryMetadata._notification_preferences !== undefined ? categoryMetadata._notification_preferences : defaultNotificationPrefs);
+
       setUserSettings({
         base_income: data.base_income || 15000,
         savings_goal: data.savings_goal || 3000,
@@ -159,28 +182,29 @@ export const AppProvider = ({ children }) => {
         income_categories: data.income_categories || ["Allowance", "Bonus", "Other"],
         category_budgets: data.category_budgets || {},
         savings_goals: data.savings_goals || [],
-        category_metadata: data.category_metadata || {},
-        presets: data.presets != null ? data.presets : defaultPresets,
-        recurring_bills: data.recurring_bills != null ? data.recurring_bills : defaultRecurringBills,
-        notification_preferences: data.notification_preferences != null ? data.notification_preferences : defaultNotificationPrefs
+        category_metadata: categoryMetadata,
+        presets: loadedPresets,
+        recurring_bills: loadedRecurringBills,
+        notification_preferences: loadedNotificationPrefs
       });
 
-      if (data.presets != null) {
-        setPresets(data.presets);
-        localStorage.setItem('trackify_presets', JSON.stringify(data.presets));
+      if (loadedPresets != null) {
+        setPresets(loadedPresets);
+        localStorage.setItem('trackify_presets', JSON.stringify(loadedPresets));
       }
-      if (data.recurring_bills != null) {
-        setRecurringBills(data.recurring_bills);
-        localStorage.setItem('trackify_recurring_bills', JSON.stringify(data.recurring_bills));
+      if (loadedRecurringBills != null) {
+        setRecurringBills(loadedRecurringBills);
+        localStorage.setItem('trackify_recurring_bills', JSON.stringify(loadedRecurringBills));
       }
-      if (data.notification_preferences != null) {
-        const prefs = { ...defaultNotificationPrefs, ...data.notification_preferences };
+      if (loadedNotificationPrefs != null) {
+        const prefs = { ...defaultNotificationPrefs, ...loadedNotificationPrefs };
         Object.keys(prefs).forEach(key => {
           localStorage.setItem(`trackify_${key}`, prefs[key].toString());
         });
       }
     }
   }
+
 
   async function fetchTransactions(userId, background = false) {
     if (!background) setLoading(true);
@@ -450,6 +474,20 @@ export const AppProvider = ({ children }) => {
         { event: '*', schema: 'public', table: 'user_settings' },
         (payload) => {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const categoryMetadata = payload.new.category_metadata || {};
+            
+            const loadedPresets = payload.new.presets !== undefined && payload.new.presets !== null
+              ? payload.new.presets
+              : (categoryMetadata._presets !== undefined ? categoryMetadata._presets : defaultPresets);
+
+            const loadedRecurringBills = payload.new.recurring_bills !== undefined && payload.new.recurring_bills !== null
+              ? payload.new.recurring_bills
+              : (categoryMetadata._recurring_bills !== undefined ? categoryMetadata._recurring_bills : defaultRecurringBills);
+
+            const loadedNotificationPrefs = payload.new.notification_preferences !== undefined && payload.new.notification_preferences !== null
+              ? payload.new.notification_preferences
+              : (categoryMetadata._notification_preferences !== undefined ? categoryMetadata._notification_preferences : defaultNotificationPrefs);
+
             setUserSettings({
               base_income: payload.new.base_income || 15000,
               savings_goal: payload.new.savings_goal || 3000,
@@ -457,8 +495,26 @@ export const AppProvider = ({ children }) => {
               income_categories: payload.new.income_categories || ["Allowance", "Bonus", "Other"],
               category_budgets: payload.new.category_budgets || {},
               savings_goals: payload.new.savings_goals || [],
-              category_metadata: payload.new.category_metadata || {}
+              category_metadata: categoryMetadata,
+              presets: loadedPresets,
+              recurring_bills: loadedRecurringBills,
+              notification_preferences: loadedNotificationPrefs
             });
+
+            if (loadedPresets != null) {
+              setPresets(loadedPresets);
+              localStorage.setItem('trackify_presets', JSON.stringify(loadedPresets));
+            }
+            if (loadedRecurringBills != null) {
+              setRecurringBills(loadedRecurringBills);
+              localStorage.setItem('trackify_recurring_bills', JSON.stringify(loadedRecurringBills));
+            }
+            if (loadedNotificationPrefs != null) {
+              const prefs = { ...defaultNotificationPrefs, ...loadedNotificationPrefs };
+              Object.keys(prefs).forEach(key => {
+                localStorage.setItem(`trackify_${key}`, prefs[key].toString());
+              });
+            }
           }
         }
       )
@@ -552,8 +608,35 @@ export const AppProvider = ({ children }) => {
   const updateSettings = async (newSettings) => {
     if (!session?.user) return;
     
+    // Construct the updated category_metadata that holds fallback settings
+    const currentMetadata = { ...(newSettings.category_metadata || userSettings.category_metadata || {}) };
+    
+    const updatedPresets = newSettings.presets !== undefined ? newSettings.presets : presets;
+    const updatedBills = newSettings.recurring_bills !== undefined ? newSettings.recurring_bills : recurringBills;
+    
+    let updatedPrefs = newSettings.notification_preferences;
+    if (!updatedPrefs) {
+      updatedPrefs = {};
+      Object.keys(defaultNotificationPrefs).forEach(key => {
+        const val = localStorage.getItem(`trackify_${key}`);
+        if (val !== null) {
+          updatedPrefs[key] = val === 'true' || (val !== 'false' && val);
+        } else {
+          updatedPrefs[key] = defaultNotificationPrefs[key];
+        }
+      });
+    }
+
+    currentMetadata._presets = updatedPresets;
+    currentMetadata._recurring_bills = updatedBills;
+    currentMetadata._notification_preferences = updatedPrefs;
+
     // Optimistic UI update
-    setUserSettings(prev => ({ ...prev, ...newSettings }));
+    setUserSettings(prev => ({ 
+      ...prev, 
+      ...newSettings,
+      category_metadata: currentMetadata
+    }));
 
     if (newSettings.presets != null) {
       setPresets(newSettings.presets);
@@ -573,6 +656,7 @@ export const AppProvider = ({ children }) => {
     const payload = {
       user_id: session.user.id,
       ...newSettings,
+      category_metadata: currentMetadata,
       updated_at: new Date().toISOString()
     };
 
@@ -587,16 +671,17 @@ export const AppProvider = ({ children }) => {
         const fallbackPayload = {
           user_id: session.user.id,
           ...fallbackSettings,
+          category_metadata: currentMetadata,
           updated_at: new Date().toISOString()
         };
         const { error: fallbackError } = await supabase
           .from('user_settings')
           .upsert(fallbackPayload);
         if (fallbackError) {
-          alert('Error saving settings (fallback): ' + fallbackError.message);
+          showToast('Error saving settings (fallback): ' + fallbackError.message, 'error');
         }
       } else {
-        alert('Error saving settings: ' + error.message);
+        showToast('Error saving settings: ' + error.message, 'error');
       }
     }
   };
@@ -655,7 +740,7 @@ export const AppProvider = ({ children }) => {
       }
     } else {
       setDebts(prev => prev.filter(d => d.id !== tempId));
-      alert('Error adding debt record: ' + error?.message);
+      showToast('Error adding debt record: ' + error?.message, 'error');
     }
   };
 
@@ -696,7 +781,7 @@ export const AppProvider = ({ children }) => {
 
     if (error || !data || data.length === 0) {
       setDebts(originalDebts);
-      alert('Error updating debt repayment: ' + (error?.message || 'Update failed'));
+      showToast('Error updating debt repayment: ' + (error?.message || 'Update failed'), 'error');
       return;
     }
 
@@ -736,7 +821,7 @@ export const AppProvider = ({ children }) => {
     if (error) {
       setDebts(originalDebts);
       setTransactions(originalTransactions);
-      alert('Error deleting debt record: ' + error.message);
+      showToast('Error deleting debt record: ' + error.message, 'error');
     }
   };
 
@@ -771,7 +856,7 @@ export const AppProvider = ({ children }) => {
       checkTransactionAlerts(data);
     } else {
       setTransactions(prev => prev.filter(tx => tx.id !== tempId));
-      alert('Error adding transaction: ' + error.message);
+      showToast('Error adding transaction: ' + error.message, 'error');
     }
   };
 
@@ -786,7 +871,7 @@ export const AppProvider = ({ children }) => {
 
     if (error) {
       setTransactions(originalTransactions);
-      alert('Error deleting transaction: ' + error.message);
+      showToast('Error deleting transaction: ' + error.message, 'error');
     }
   };
 
@@ -806,14 +891,14 @@ export const AppProvider = ({ children }) => {
 
     if (error) {
       setTransactions(originalTransactions);
-      alert('Error updating transaction: ' + error.message);
+      showToast('Error updating transaction: ' + error.message, 'error');
       return false;
     }
 
     // If no rows came back, the DB silently rejected the update (e.g. missing UPDATE policy)
     if (!data || data.length === 0) {
       setTransactions(originalTransactions);
-      alert('Update failed: the change was not saved to the database. Please run the missing UPDATE policy SQL in your Supabase dashboard:\n\nCREATE POLICY "Users can update own transactions" ON transactions FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);');
+      showToast('Update failed: the change was not saved to the database. Please run the missing UPDATE policy SQL in your Supabase dashboard:\n\nCREATE POLICY "Users can update own transactions" ON transactions FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);', 'error');
       return false;
     }
 
@@ -857,7 +942,7 @@ export const AppProvider = ({ children }) => {
       });
 
     if (settingsError) {
-      alert('Error saving renamed category setting: ' + settingsError.message);
+      showToast('Error saving renamed category setting: ' + settingsError.message, 'error');
     }
 
     // 4. Update transactions in DB (Preserve old category in note!)
@@ -884,7 +969,7 @@ export const AppProvider = ({ children }) => {
         .upsert(updatedTxs);
 
       if (txError) {
-        alert('Error migrating past transactions: ' + txError.message);
+        showToast('Error migrating past transactions: ' + txError.message, 'error');
       } else {
         // Also update local state notes so UI reflects it immediately
         setTransactions(prev => prev.map(tx => {
@@ -1363,8 +1448,29 @@ export const AppProvider = ({ children }) => {
     skippedBills,
     skipBillForMonth,
     unskipBillForMonth,
-    rescheduleNotifications
+    rescheduleNotifications,
+    showToast
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+      <div className="toast-container">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast-alert toast-${t.type}`}>
+            <div className="toast-icon">
+              {t.type === 'success' && '✨'}
+              {t.type === 'error' && '🛑'}
+              {t.type === 'warning' && '⚠️'}
+              {t.type === 'info' && 'ℹ️'}
+            </div>
+            <div className="toast-message">{t.message}</div>
+            <button className="toast-close" onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))}>
+              &times;
+            </button>
+          </div>
+        ))}
+      </div>
+    </AppContext.Provider>
+  );
 };

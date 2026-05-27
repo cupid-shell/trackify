@@ -9,7 +9,7 @@ import Footer from './Footer';
 import { format, parseISO } from 'date-fns';
 
 const LedgerPage = () => {
-  const { debts, addDebt, recordDebtRepayment, deleteDebt } = useAppContext();
+  const { debts, addDebt, recordDebtRepayment, deleteDebt, showToast } = useAppContext();
 
   // Tab State: 'active' or 'settled'
   const [tab, setTab] = useState('active');
@@ -74,7 +74,7 @@ const LedgerPage = () => {
   const handleAddDebtSubmit = async (e) => {
     e.preventDefault();
     if (!person.trim() || !amount || isNaN(amount) || Number(amount) <= 0) {
-      alert('Please enter a valid person and positive amount.');
+      showToast('Please enter a valid person and positive amount.', 'warning');
       return;
     }
 
@@ -102,7 +102,7 @@ const LedgerPage = () => {
   const handleRepaymentSubmit = async (debtId) => {
     const amt = Number(repayAmount[debtId]);
     if (isNaN(amt) || amt <= 0) {
-      alert('Please enter a valid payment amount.');
+      showToast('Please enter a valid payment amount.', 'warning');
       return;
     }
 

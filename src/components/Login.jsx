@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Mail, Lock } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 
 const Login = () => {
+  const { showToast } = useAppContext();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
@@ -30,7 +32,7 @@ const Login = () => {
           }
         });
         if (error) throw error;
-        alert('Check your email for the confirmation link!');
+        showToast('Check your email for the confirmation link!', 'info');
       }
     } catch (err) {
       setError(err.message);
