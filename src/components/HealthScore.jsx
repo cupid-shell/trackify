@@ -303,7 +303,7 @@ const HealthScore = () => {
           {/* Centered Grade / Score info */}
           <div style={{
             position: 'absolute',
-            top: '45%',
+            top: '65%',
             left: 0,
             right: 0,
             transform: 'translateY(-50%)',
