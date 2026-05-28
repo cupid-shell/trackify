@@ -38,8 +38,8 @@ const Footer = () => {
         .premium-footer {
           padding: 0.6rem 2rem;
           margin-top: auto;
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
-          background: linear-gradient(180deg, rgba(28, 31, 38, 0.7) 0%, rgba(15, 17, 21, 0.9) 100%);
+          border-top: 1px solid var(--border-color);
+          background: var(--bg-header);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           display: flex;
@@ -59,7 +59,8 @@ const Footer = () => {
           left: 10%;
           right: 10%;
           height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.25) 50%, transparent);
+          background: linear-gradient(90deg, transparent, var(--primary) 50%, transparent);
+          opacity: 0.35;
         }
         .footer-left {
           display: flex;
@@ -75,13 +76,11 @@ const Footer = () => {
         .footer-brand {
           font-weight: 700;
           letter-spacing: 0.03em;
-          background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          color: var(--text-main);
           font-size: 0.85rem;
         }
         .footer-separator {
-          color: rgba(255, 255, 255, 0.12);
+          color: var(--border-color);
           user-select: none;
           font-size: 0.65rem;
         }
@@ -89,13 +88,13 @@ const Footer = () => {
           display: inline-flex;
           align-items: center;
           gap: 0.35rem;
-          background-color: rgba(99, 102, 241, 0.08);
-          border: 1px solid rgba(99, 102, 241, 0.18);
+          background-color: var(--primary-glow);
+          border: 1px solid var(--border-color);
           padding: 0.15rem 0.5rem;
           border-radius: var(--radius-full);
           font-size: 0.7rem;
           font-weight: 600;
-          color: #a5b4fc;
+          color: var(--primary);
         }
         .footer-right {
           display: flex;
@@ -107,7 +106,7 @@ const Footer = () => {
           display: inline-flex;
           align-items: center;
           gap: 0.35rem;
-          background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+          background: var(--primary);
           color: #ffffff !important;
           padding: 0.35rem 0.85rem;
           border-radius: var(--radius-sm);
@@ -115,20 +114,21 @@ const Footer = () => {
           font-weight: 600;
           font-size: 0.75rem;
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 2px 10px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+          box-shadow: var(--shadow-glow);
         }
         .footer-btn-primary:hover {
           transform: translateY(-1px);
-          box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+          background: var(--primary-hover);
+          box-shadow: var(--shadow-glow);
         }
         .footer-btn-primary:active { transform: translateY(0); }
         .footer-btn-secondary {
           display: inline-flex;
           align-items: center;
           gap: 0.35rem;
-          background: rgba(255, 255, 255, 0.03);
+          background: var(--bg-input);
           color: var(--text-main) !important;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--border-color);
           padding: 0.35rem 0.85rem;
           border-radius: var(--radius-sm);
           text-decoration: none;
@@ -138,8 +138,8 @@ const Footer = () => {
         }
         .footer-btn-secondary:hover {
           transform: translateY(-1px);
-          background: rgba(255, 255, 255, 0.06);
-          border-color: rgba(255, 255, 255, 0.15);
+          background: var(--bg-hover);
+          border-color: var(--border-color);
         }
         .footer-btn-secondary:active { transform: translateY(0); }
 
