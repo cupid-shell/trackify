@@ -57,6 +57,24 @@ export const AppProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
 
+  // Theme mode: dark or light
+  const [themeMode, setThemeMode] = useState(() => {
+    return localStorage.getItem('trackify_theme_mode') || 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('trackify_theme_mode', themeMode);
+    if (themeMode === 'light') {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+  }, [themeMode]);
+
+  const toggleThemeMode = useCallback(() => {
+    setThemeMode(prev => (prev === 'light' ? 'dark' : 'light'));
+  }, []);
+
   const showToast = useCallback((message, type = 'success') => {
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setToasts(prev => [...prev, { id, message, type }]);
@@ -1494,7 +1512,9 @@ export const AppProvider = ({ children }) => {
     skipBillForMonth,
     unskipBillForMonth,
     rescheduleNotifications,
-    showToast
+    showToast,
+    themeMode,
+    toggleThemeMode
   };
 
   return (

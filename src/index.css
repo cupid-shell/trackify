@@ -1,27 +1,28 @@
 :root {
-  /* Mona-Sans / Hubot-Sans Inspired Premium Cyber/Tech Theme */
-  --bg-main: #07090e;
-  --bg-grid: #0d1117;
-  --bg-card: #0f121b;
-  --bg-input: #151922;
-  --bg-hover: #1b202e;
+  /* Mint Dark Theme (Default) */
+  --bg-main: #070c0a;
+  --bg-grid: #0b1411;
+  --bg-card: #0d1915;
+  --bg-input: #12241f;
+  --bg-hover: #19332c;
+  --bg-header: rgba(7, 12, 10, 0.85);
   
-  --text-main: #f0f6fc;
-  --text-muted: #8b949e;
+  --text-main: #ecfdf5;
+  --text-muted: #829c90;
   
-  --primary: #58a6ff;
-  --primary-hover: #79c0ff;
-  --primary-glow: rgba(88, 166, 255, 0.15);
+  --primary: #8b5cf6;
+  --primary-hover: #a78bfa;
+  --primary-glow: rgba(139, 92, 246, 0.15);
   
-  --success: #39d353;
-  --success-bg: rgba(57, 211, 83, 0.1);
-  --danger: #ff7b72;
-  --danger-bg: rgba(255, 123, 114, 0.1);
-  --warning: #e3b341;
-  --warning-bg: rgba(227, 179, 65, 0.1);
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --danger: #f43f5e;
+  --danger-bg: rgba(244, 63, 94, 0.1);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.1);
   
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(88, 166, 255, 0.5);
+  --border-color: rgba(255, 255, 255, 0.06);
+  --border-focus: rgba(139, 92, 246, 0.5);
   
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -34,6 +35,38 @@
   --shadow-glow: 0 0 15px var(--primary-glow);
   
   --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Mint Light Theme Overrides */
+body.light-theme {
+  --bg-main: #e2f2e9;
+  --bg-grid: #f4f9f6;
+  --bg-card: #ffffff;
+  --bg-input: #f0f7f3;
+  --bg-hover: #e6f2eb;
+  --bg-header: rgba(226, 242, 233, 0.85);
+  
+  --text-main: #0b1a13;
+  --text-muted: #556c60;
+  
+  --primary: #4f2ee7;
+  --primary-hover: #3b11e6;
+  --primary-glow: rgba(79, 46, 231, 0.15);
+  
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.15);
+  --danger: #f43f5e;
+  --danger-bg: rgba(244, 63, 94, 0.15);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  
+  --border-color: rgba(11, 26, 19, 0.08);
+  --border-focus: rgba(79, 46, 231, 0.5);
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(11, 26, 19, 0.06);
+  --shadow-lg: 0 16px 32px rgba(11, 26, 19, 0.1);
+  --shadow-glow: 0 0 15px var(--primary-glow);
 }
 
 * {
@@ -68,6 +101,14 @@ body::before {
   z-index: -1;
   pointer-events: none;
   transition: background 0.1s ease-out;
+}
+
+body.light-theme {
+  background-image: linear-gradient(135deg, #e2f2e9 0%, #f4f9f6 100%);
+  background-size: auto;
+}
+body.light-theme::before {
+  background: radial-gradient(600px circle at var(--mx, 50vw) var(--my, 50vh), rgba(16, 185, 129, 0.08), transparent 75%);
 }
 
 #root {

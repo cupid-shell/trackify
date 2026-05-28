@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { LogOut, LayoutDashboard, History, PieChart, Settings, Bell, Trash2, Coins } from 'lucide-react';
+import { LogOut, LayoutDashboard, History, PieChart, Settings, Bell, Trash2, Coins, Sun, Moon } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { supabase } from '../supabaseClient';
 import { Link, useLocation } from 'react-router-dom';
@@ -28,7 +28,7 @@ const NavLink = ({ to, icon: Icon, label }) => {
 };
 
 const Header = () => {
-  const { session, notifications, markAllNotificationsRead, clearNotifications } = useAppContext();
+  const { session, notifications, markAllNotificationsRead, clearNotifications, themeMode, toggleThemeMode } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -51,7 +51,7 @@ const Header = () => {
   return (
     <header className="site-header" style={{
       borderBottom: '1px solid var(--border-color)',
-      backgroundColor: 'rgba(7, 9, 14, 0.8)',
+      backgroundColor: 'var(--bg-header)',
       backdropFilter: 'blur(16px)',
       position: 'sticky',
       top: 0,
@@ -182,7 +182,7 @@ const Header = () => {
                   right: 0,
                   top: 'calc(100% + 10px)',
                   width: '320px',
-                  backgroundColor: 'rgba(15, 18, 27, 0.98)',
+                  backgroundColor: 'var(--bg-card)',
                   backdropFilter: 'blur(16px)',
                   border: '1px solid var(--border-color)',
                   borderRadius: 'var(--radius-md)',
@@ -277,6 +277,26 @@ const Header = () => {
                 </div>
               )}
             </div>
+
+            <button 
+              onClick={toggleThemeMode}
+              style={{
+                width: '36px',
+                height: '36px',
+                padding: 0,
+                borderRadius: 'var(--radius-full)',
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid transparent',
+                transition: 'var(--transition)'
+              }}
+              title={themeMode === 'light' ? "Switch to Dark Mode" : "Switch to Light Mode"}
+            >
+              {themeMode === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
 
             <button 
               onClick={handleLogout}

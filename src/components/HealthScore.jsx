@@ -94,40 +94,50 @@ const HealthScore = () => {
         id: 'budget_shield',
         name: 'Budget Shield',
         desc: 'Keep all budgeted categories within their limits this month.',
-        icon: <Shield size={24} />,
+        icon: <Shield size={18} />,
         unlocked: budgetedCategories.length > 0 && exceededCount === 0,
+        progress: budgetedCategories.length > 0 ? Math.round(((budgetedCategories.length - exceededCount) / budgetedCategories.length) * 100) : 100,
+        statusLabel: budgetedCategories.length > 0 ? `${budgetedCategories.length - exceededCount}/${budgetedCategories.length} categories` : 'No active budgets',
         color: '#10b981'
       },
       {
         id: 'streak_star',
         name: 'Streak Star',
         desc: 'Log a streak of 3+ consecutive no-spend days.',
-        icon: <Flame size={24} />,
+        icon: <Flame size={18} />,
         unlocked: maxStreak >= 3,
+        progress: Math.min(100, Math.round((maxStreak / 3) * 100)),
+        statusLabel: `${maxStreak}/3 days streak`,
         color: '#f59e0b'
       },
       {
         id: 'super_saver',
         name: 'Super Saver',
         desc: 'Save more than 30% of your total income.',
-        icon: <Award size={24} />,
+        icon: <Award size={18} />,
         unlocked: savingsRate >= 0.3,
+        progress: Math.min(100, Math.round((savingsRate / 0.3) * 100)),
+        statusLabel: `${Math.round(savingsRate * 100)}% / 30% goal`,
         color: '#06b6d4'
       },
       {
         id: 'log_legend',
         name: 'Log Legend',
         desc: 'Log 15 or more transactions in a single month.',
-        icon: <Heart size={24} />,
+        icon: <Heart size={18} />,
         unlocked: currentMonthTransactions.length >= 15,
+        progress: Math.min(100, Math.round((currentMonthTransactions.length / 15) * 100)),
+        statusLabel: `${currentMonthTransactions.length}/15 transactions`,
         color: '#a855f7'
       },
       {
         id: 'recurring_master',
         name: 'Punctual Saver',
         desc: 'Have active recurring bills set up for automatic logging.',
-        icon: <Award size={24} />,
+        icon: <Award size={18} />,
         unlocked: recurringBills.length > 0,
+        progress: recurringBills.length > 0 ? 100 : 0,
+        statusLabel: recurringBills.length > 0 ? 'Active' : 'No bills configured',
         color: '#f43f5e'
       }
     ];
@@ -182,62 +192,47 @@ const HealthScore = () => {
     return 'var(--danger)';
   }, [metrics.overallScore]);
 
+  const indicatorCoords = useMemo(() => {
+    const score = metrics.overallScore;
+    const angleRad = (210 - (score / 100) * 240) * Math.PI / 180;
+    const x = 50 + 35 * Math.cos(angleRad);
+    const y = 50 - 35 * Math.sin(angleRad);
+    return { x, y };
+  }, [metrics.overallScore]);
+
   return (
     <div className="glass-card flex-col gap-0" style={{ height: '100%' }}>
       <style>{`
-        .badge-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-          gap: 0.75rem;
-          margin-top: 1rem;
-        }
-        .badge-card {
-          background-color: var(--bg-input);
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-md);
-          padding: 0.75rem;
+        .ach-list {
           display: flex;
           flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 0.5rem;
-          position: relative;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          cursor: pointer;
+          gap: 0.65rem;
         }
-        .badge-card:hover {
-          transform: translateY(-4px) scale(1.02);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-          border-color: rgba(255, 255, 255, 0.15);
-        }
-        .badge-card.locked {
-          opacity: 0.45;
-          filter: grayscale(1);
-        }
-        .badge-card.locked:hover {
-          filter: grayscale(0.5);
-          opacity: 0.65;
-        }
-        .badge-tooltip {
-          display: none;
-          position: absolute;
-          bottom: 110%;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(15, 17, 21, 0.95);
-          backdrop-filter: blur(8px);
+        .ach-row {
+          background: rgba(255, 255, 255, 0.015);
           border: 1px solid var(--border-color);
-          color: white;
-          padding: 0.5rem 0.75rem;
-          border-radius: var(--radius-sm);
-          font-size: 0.7rem;
-          width: 160px;
-          z-index: 10;
-          box-shadow: var(--shadow-lg);
-          pointer-events: none;
+          border-radius: var(--radius-md);
+          padding: 0.65rem 0.85rem;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .badge-card:hover .badge-tooltip {
-          display: block;
+        .ach-row:hover {
+          transform: translateY(-2px);
+          background: rgba(255, 255, 255, 0.03);
+          border-color: rgba(255, 255, 255, 0.15);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .ach-row.locked {
+          background: rgba(255, 255, 255, 0.005);
+          border-color: rgba(255, 255, 255, 0.03);
+          opacity: 0.55;
+        }
+        .ach-row.locked:hover {
+          opacity: 0.75;
+          background: rgba(255, 255, 255, 0.015);
+          border-color: var(--border-color);
         }
       `}</style>
 
@@ -256,38 +251,82 @@ const HealthScore = () => {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '1.5rem',
+        gap: '1.25rem',
         flexWrap: 'wrap',
         justifyContent: 'space-between'
       }}>
-        {/* Large Grade Circle */}
-        <div style={{
-          width: '96px',
-          height: '96px',
-          borderRadius: 'var(--radius-full)',
-          background: 'rgba(255, 255, 255, 0.02)',
-          border: `3px solid ${progressColor}`,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: `0 0 20px ${metrics.glowColor}`,
-          flexShrink: 0
-        }}>
-          <span style={{ fontSize: '2rem', fontWeight: 900, color: progressColor, lineHeight: 1 }}>
-            {metrics.grade}
-          </span>
-          <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-            Score: {metrics.overallScore}
-          </span>
+        {/* Large Semicircular Segmented Gauge */}
+        <div style={{ position: 'relative', width: '135px', height: '80px', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+          <svg viewBox="0 0 100 75" style={{ width: '100%', height: '100%' }}>
+            {/* Segment 1: Red/Orange (Low) */}
+            <path 
+              d="M 19.7 67.5 A 35 35 0 0 1 23.2 27.5" 
+              fill="none" 
+              stroke="#f43f5e" 
+              strokeWidth="7.5" 
+              strokeLinecap="round"
+              opacity={metrics.overallScore >= 0 ? 1 : 0.15}
+            />
+            {/* Segment 2: Cyan/Blue (Medium) */}
+            <path 
+              d="M 27.5 23.2 A 35 35 0 0 1 67.5 19.7" 
+              fill="none" 
+              stroke="#06b6d4" 
+              strokeWidth="7.5" 
+              strokeLinecap="round"
+              opacity={metrics.overallScore > 35 ? 1 : 0.15}
+            />
+            {/* Segment 3: Indigo/Purple (High) */}
+            <path 
+              d="M 72.5 23.2 A 35 35 0 0 1 80.3 67.5" 
+              fill="none" 
+              stroke="#6366f1" 
+              strokeWidth="7.5" 
+              strokeLinecap="round"
+              opacity={metrics.overallScore > 70 ? 1 : 0.15}
+            />
+            
+            {/* Indicator Dot */}
+            <circle 
+              cx={indicatorCoords.x} 
+              cy={indicatorCoords.y} 
+              r="4.5" 
+              fill="#ffffff" 
+              stroke={progressColor}
+              strokeWidth="2.5"
+              style={{
+                filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.95))',
+                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            />
+          </svg>
+          {/* Centered Grade / Score info */}
+          <div style={{
+            position: 'absolute',
+            bottom: '2px',
+            left: 0,
+            right: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none'
+          }}>
+            <span style={{ fontSize: '1.75rem', fontWeight: 900, color: '#ffffff', lineHeight: 1 }}>
+              {metrics.grade}
+            </span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>
+              Score: {metrics.overallScore}
+            </span>
+          </div>
         </div>
 
         {/* Breakdown details */}
-        <div style={{ flex: 1, minWidth: '200px' }} className="flex-col gap-2">
+        <div style={{ flex: 1, minWidth: '180px' }} className="flex-col gap-2">
           <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-main)', lineHeight: 1.4 }}>
             {metrics.feedback}
           </p>
-          <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.65rem', fontSize: '0.72rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
             <span>Savings Rate: <strong style={{ color: 'var(--text-main)' }}>{metrics.savingsRate}%</strong></span>
             <span>•</span>
             <span>No-Spend: <strong style={{ color: 'var(--text-main)' }}>{metrics.noSpendDays} days</strong></span>
@@ -299,13 +338,13 @@ const HealthScore = () => {
 
       {/* Progress meter */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
           <span>Financial Health Progress</span>
           <span>{metrics.overallScore}%</span>
         </div>
         <div style={{
           width: '100%',
-          height: '8px',
+          height: '7px',
           backgroundColor: 'rgba(255, 255, 255, 0.05)',
           borderRadius: 'var(--radius-full)',
           overflow: 'hidden'
@@ -321,53 +360,63 @@ const HealthScore = () => {
       </div>
 
       {/* Badges and Achievements */}
-      <div className="flex-col gap-2">
+      <div className="flex-col gap-2" style={{ marginTop: '0.25rem' }}>
         <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)' }}>
-          Achievements & Badges
+          Achievements &amp; Goals
         </span>
-        <div className="badge-grid">
+        <div className="ach-list">
           {metrics.achievements.map(ach => (
             <div 
               key={ach.id} 
-              className={`badge-card ${ach.unlocked ? '' : 'locked'}`}
-              style={{
-                boxShadow: ach.unlocked ? `0 4px 10px rgba(0, 0, 0, 0.2)` : 'none'
-              }}
+              className={`ach-row ${ach.unlocked ? '' : 'locked'}`}
             >
-              {/* Badge Icon wrapper */}
+              {/* Left Side: Glowing Icon */}
               <div style={{
-                padding: '0.5rem',
+                width: '36px',
+                height: '36px',
                 borderRadius: 'var(--radius-full)',
-                backgroundColor: ach.unlocked ? `${ach.color}18` : 'rgba(255, 255, 255, 0.03)',
+                backgroundColor: ach.unlocked ? `${ach.color}15` : 'rgba(255, 255, 255, 0.03)',
                 color: ach.unlocked ? ach.color : 'var(--text-muted)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: ach.unlocked ? `0 0 10px ${ach.color}22` : 'none'
               }}>
                 {ach.icon}
               </div>
 
-              {/* Badge Title */}
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: ach.unlocked ? 'var(--text-main)' : 'var(--text-muted)' }}>
-                {ach.name}
-              </span>
-              
-              {/* Badge Status indicator */}
-              <span style={{ 
-                fontSize: '0.6rem', 
-                fontWeight: 600, 
-                color: ach.unlocked ? 'var(--success)' : 'var(--text-muted)',
-                backgroundColor: ach.unlocked ? 'var(--success-bg)' : 'rgba(255, 255, 255, 0.05)',
-                padding: '2px 6px',
-                borderRadius: '4px'
-              }}>
-                {ach.unlocked ? 'Unlocked' : 'Locked'}
-              </span>
-
-              {/* Tooltip containing criteria */}
-              <div className="badge-tooltip">
-                <span style={{ fontWeight: 700, display: 'block', marginBottom: '2px' }}>{ach.name}</span>
-                {ach.desc}
+              {/* Middle: Title, Progress track, and Description */}
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.825rem', color: ach.unlocked ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                    {ach.name}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: ach.unlocked ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: 500 }}>
+                    {ach.statusLabel}
+                  </span>
+                </div>
+                
+                {/* Horizontal progress bar */}
+                <div style={{
+                  width: '100%',
+                  height: '5px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                  borderRadius: 'var(--radius-full)',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    width: `${ach.progress}%`,
+                    height: '100%',
+                    backgroundColor: ach.unlocked ? ach.color : 'var(--text-muted)',
+                    borderRadius: 'var(--radius-full)',
+                    transition: 'width 0.4s ease'
+                  }} />
+                </div>
+                
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {ach.desc}
+                </span>
               </div>
             </div>
           ))}
