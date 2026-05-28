@@ -482,17 +482,6 @@ input:focus, select:focus, textarea:focus {
 
 
 
-.ac-dot.active {
-  width: 22px;
-  border-radius: 3px;
-  background: var(--primary);
-  box-shadow: 0 0 8px var(--primary-glow);
-}
-
-
-/* ── Mobile: side cards hidden, only active shown ─────────── */
-@media (max-width: 640px) {
-
 @media (max-width: 640px) {
   .container {
     padding: 1.5rem 1rem;
@@ -784,6 +773,7 @@ div:hover > div[style*="width: 32px"] svg {
   white-space: nowrap;
   transition: var(--transition);
   width: auto;
+  flex-shrink: 0;
 }
 
 @media (min-width: 768px) {
