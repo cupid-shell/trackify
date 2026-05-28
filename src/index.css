@@ -275,7 +275,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Analytics Carousel  —  Cover-flow 3D style
+   Analytics Carousel  —  Flex-Track Cover-flow
    ───────────────────────────────────────────────────────────── */
 
 /* Root wrapper */
@@ -286,54 +286,42 @@ input:focus, select:focus, textarea:focus {
   gap: 1.25rem;
 }
 
-/* ── Stage (the clipping viewport) ───────────────────────── */
+/* ── Stage: clips side cards cleanly ─────────────────────── */
 .ac-stage {
-  position: relative;
   width: 100%;
-  /* overflow-x clips side cards; overflow-y shows full active card */
-  overflow-x: hidden;
-  overflow-y: visible;
-  /* Generous padding so top glow and scale aren't clipped */
+  overflow: hidden;
+  /* Extra vertical padding so the active card's glow isn't clipped */
   padding: 1.5rem 0 1rem;
   transition: height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: content-box; /* height = content, padding added on top */
 }
 
-/* ── Individual slide ─────────────────────────────────────── */
-.ac-slide {
-  position: absolute;
-  top: 1.5rem;           /* matches stage padding-top */
-  left: 50%;
-  width: 100%;
-  /* Center each card on the stage midpoint */
-  margin-left: -50%;
-  transform-origin: top center;
-  will-change: transform, opacity, filter;
+/* ── Flex track: all cards side by side ───────────────────── */
+.ac-track {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;   /* don't stretch cards to tallest height */
+  transition: transform 0.48s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
-/* Active card: neon glow border, lifted forward */
-.ac-slide.is-active {
-  position: relative;    /* back to flow so stage height follows it */
-  top: 0;
-  left: 0;
-  margin-left: 0;
-  transform: translateX(0) scale(1) !important;
-  opacity: 1 !important;
-  filter: none !important;
-  pointer-events: auto !important;
-  cursor: default !important;
+/* ── Individual card ──────────────────────────────────────── */
+.ac-card {
+  flex-shrink: 0;
+  /* width and margin-right are set via inline style from JS */
 }
 
-/* Glow on every glass-card inside the active slide */
-.ac-slide.is-active .glass-card {
+/* Active card: neon glow on its inner glass-card */
+.ac-card--active .glass-card {
   border-color: var(--primary) !important;
   box-shadow:
-    0 0 0 1px rgba(88, 166, 255, 0.5),
-    0 0 30px rgba(88, 166, 255, 0.35),
-    0 0 70px rgba(88, 166, 255, 0.12),
+    0 0 0 1px rgba(88, 166, 255, 0.45),
+    0 0 28px rgba(88, 166, 255, 0.32),
+    0 0 60px rgba(88, 166, 255, 0.10),
     var(--shadow-lg) !important;
 }
 
-/* ── Nav bar: [‹]  pills  [›] ────────────────────────────── */
+/* ── Nav bar: [‹]  pill tabs  [›] ────────────────────────── */
 .ac-nav-bar {
   display: flex;
   align-items: center;
@@ -359,7 +347,6 @@ input:focus, select:focus, textarea:focus {
   cursor: pointer;
   transition: var(--transition);
 }
-
 .ac-arrow-btn:hover {
   background: var(--primary);
   border-color: var(--primary);
@@ -367,10 +354,7 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 14px var(--primary-glow);
   transform: scale(1.1);
 }
-
-.ac-arrow-btn:active {
-  transform: scale(0.97);
-}
+.ac-arrow-btn:active { transform: scale(0.97); }
 
 /* Scrollable pill track */
 .ac-pills-scroll {
@@ -401,13 +385,11 @@ input:focus, select:focus, textarea:focus {
   flex-shrink: 0;
   transition: var(--transition);
 }
-
 .ac-pill:hover {
   background: var(--bg-hover);
   color: var(--text-main);
   border-color: var(--border-color);
 }
-
 .ac-pill.active {
   background: var(--primary-glow);
   color: var(--primary);
@@ -415,11 +397,7 @@ input:focus, select:focus, textarea:focus {
   font-weight: 700;
   box-shadow: 0 0 10px var(--primary-glow);
 }
-
-.ac-pill-icon {
-  font-size: 0.88rem;
-  line-height: 1;
-}
+.ac-pill-icon { font-size: 0.88rem; line-height: 1; }
 
 /* ── Dot indicators ───────────────────────────────────────── */
 .ac-dots-row {
@@ -428,7 +406,6 @@ input:focus, select:focus, textarea:focus {
   align-items: center;
   gap: 0.4rem;
 }
-
 .ac-dot {
   width: 6px;
   height: 6px;
@@ -439,6 +416,31 @@ input:focus, select:focus, textarea:focus {
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+.ac-dot.active {
+  width: 24px;
+  border-radius: 3px;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
+/* ── Mobile: full-width single card, no peek ─────────────── */
+@media (max-width: 640px) {
+  .ac-stage {
+    padding: 0.5rem 0;
+  }
+  .ac-card {
+    flex: 0 0 100% !important;
+    margin-right: 0 !important;
+    transform: scale(1) !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+  .ac-card:not(.ac-card--active) {
+    display: none;
+  }
+}
+
+
 
 .ac-dot.active {
   width: 22px;
@@ -450,26 +452,13 @@ input:focus, select:focus, textarea:focus {
 
 /* ── Mobile: side cards hidden, only active shown ─────────── */
 @media (max-width: 640px) {
-  .ac-stage {
-    overflow: hidden;
-    padding: 0;
-  }
-  .ac-slide:not(.is-active) {
-    display: none;
-  }
-  .ac-slide.is-active {
-    position: relative;
-    top: 0;
-    left: 0;
-    margin: 0;
-  }
-}
 
 @media (max-width: 640px) {
   .container {
     padding: 1.5rem 1rem;
   }
 }
+
 
 /* Premium active badge for technical data display */
 .tech-badge {
