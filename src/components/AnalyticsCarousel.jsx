@@ -1,40 +1,28 @@
 import { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-/**
- * Cover-flow carousel using a flex TRACK approach.
- *  • Track is a flex row containing all cards
- *  • Track translates left/right to center the active card
- *  • overflow:hidden on stage clips the side cards
- *  • Active card: scale(1) + neon glow
- *  • Adjacent: scale(0.84) + dimmed
- *  • Far: scale(0.70) + very dim
- */
 const AnalyticsCarousel = ({ slides }) => {
   const [current, setCurrent] = useState(0);
   const [trackOffset, setTrackOffset] = useState(0);
   const [stageH, setStageH] = useState('auto');
 
-  const stageRef   = useRef(null);
-  const trackRef   = useRef(null);
-  const activeRef  = useRef(null);
-  const total      = slides.length;
+  const stageRef  = useRef(null);
+  const trackRef  = useRef(null);
+  const activeRef = useRef(null);
+  const total     = slides.length;
 
-  // --- constants (fraction of stage width) ---
-  const CARD_FRAC = 0.78;   // active card takes 78% of stage width
-  const GAP_FRAC  = 0.025;  // 2.5% gap between cards
+  const CARD_FRAC = 0.78;
+  const GAP_FRAC  = 0.025;
 
-  // --- recalculate track offset whenever current or stage resizes ---
   const calcOffset = useCallback(() => {
     if (!stageRef.current) return;
     const stageW = stageRef.current.offsetWidth;
     const cardW  = stageW * CARD_FRAC;
     const gap    = stageW * GAP_FRAC;
-    const peek   = (stageW - cardW) / 2;          // centering margin
+    const peek   = (stageW - cardW) / 2;
     setTrackOffset(peek - current * (cardW + gap));
   }, [current]);
 
-  // --- sync stage height to active card height ---
   const syncHeight = useCallback(() => {
     if (!activeRef.current) return;
     setStageH(activeRef.current.offsetHeight);
@@ -45,7 +33,6 @@ const AnalyticsCarousel = ({ slides }) => {
     syncHeight();
   }, [current, calcOffset, syncHeight]);
 
-  // Watch stage width (e.g. window resize)
   useEffect(() => {
     if (!stageRef.current) return;
     const ro = new ResizeObserver(() => { calcOffset(); syncHeight(); });
@@ -53,7 +40,6 @@ const AnalyticsCarousel = ({ slides }) => {
     return () => ro.disconnect();
   }, [calcOffset, syncHeight]);
 
-  // Watch active card height
   useEffect(() => {
     if (!activeRef.current) return;
     const ro = new ResizeObserver(syncHeight);
@@ -61,7 +47,6 @@ const AnalyticsCarousel = ({ slides }) => {
     return () => ro.disconnect();
   }, [current, syncHeight]);
 
-  // --- navigation ---
   const go = useCallback((dir) => {
     setCurrent(c => (c + dir + total) % total);
   }, [total]);
@@ -75,67 +60,83 @@ const AnalyticsCarousel = ({ slides }) => {
     return () => window.removeEventListener('keydown', h);
   }, [go]);
 
-  // --- per-card visual style ---
   const cardStyle = (diff) => {
     const abs = Math.abs(diff);
-    if (abs === 0) return { transform: 'scale(1)',    opacity: 1,    filter: 'none',               zIndex: 10, cursor: 'default'  };
-    if (abs === 1) return { transform: 'scale(0.86)', opacity: 0.42, filter: 'brightness(0.35)',    zIndex: 6,  cursor: 'pointer'  };
-    if (abs === 2) return { transform: 'scale(0.74)', opacity: 0.22, filter: 'brightness(0.18)',    zIndex: 3,  cursor: 'default'  };
-    return              { transform: 'scale(0.64)', opacity: 0,    filter: 'brightness(0.1)',     zIndex: 1,  cursor: 'default'  };
+    if (abs === 0) return { transform: 'scale(1)',    opacity: 1,    filter: 'none',            zIndex: 10, cursor: 'default' };
+    if (abs === 1) return { transform: 'scale(0.86)', opacity: 0.42, filter: 'brightness(0.35)', zIndex: 6,  cursor: 'pointer' };
+    if (abs === 2) return { transform: 'scale(0.74)', opacity: 0.22, filter: 'brightness(0.18)', zIndex: 3,  cursor: 'default' };
+    return              { transform: 'scale(0.64)', opacity: 0,    filter: 'brightness(0.1)',  zIndex: 1,  cursor: 'default' };
   };
 
   return (
     <div className="ac-root">
 
-      {/* ── Coverflow stage ──────────────────────────────────── */}
-      <div
-        ref={stageRef}
-        className="ac-stage"
-        style={{ height: stageH !== 'auto' ? `${stageH}px` : 'auto' }}
-      >
-        {/* Flex track — translates left/right */}
-        <div
-          ref={trackRef}
-          className="ac-track"
-          style={{ transform: `translateX(${trackOffset}px)` }}
+      {/* ── Stage with STATIC side arrows overlaid ───────────── */}
+      <div className="ac-stage-wrap">
+
+        {/* Left floating arrow */}
+        <button
+          className="ac-float-arrow ac-float-arrow--left"
+          onClick={() => go(-1)}
+          aria-label="Previous card"
         >
-          {slides.map((slide, i) => {
-            const diff     = i - current;
-            const isActive = diff === 0;
-            const vstyle   = cardStyle(diff);
-            const stageW   = stageRef.current ? stageRef.current.offsetWidth : 0;
-            const cardW    = stageW * CARD_FRAC || '78%';
-            const gap      = stageW * GAP_FRAC  || '2.5%';
-
-            return (
-              <div
-                key={i}
-                ref={isActive ? activeRef : null}
-                className={`ac-card${isActive ? ' ac-card--active' : ''}`}
-                style={{
-                  flex:           `0 0 ${typeof cardW === 'number' ? cardW + 'px' : cardW}`,
-                  marginRight:    i < total - 1
-                                    ? (typeof gap === 'number' ? `${gap}px` : gap)
-                                    : 0,
-                  ...vstyle,
-                  transition:     'transform 0.48s cubic-bezier(0.4,0,0.2,1), opacity 0.48s ease, filter 0.48s ease',
-                  transformOrigin: 'top center',
-                }}
-                onClick={() => { if (Math.abs(diff) === 1) go(diff > 0 ? 1 : -1); }}
-              >
-                {slide.content}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Nav bar: [‹]  pill tabs  [›] ─────────────────────── */}
-      <div className="ac-nav-bar">
-        <button className="ac-arrow-btn" onClick={() => go(-1)} aria-label="Previous">
-          <ChevronLeft size={20} strokeWidth={2.5} />
+          <ChevronLeft size={22} strokeWidth={2.5} />
         </button>
 
+        {/* Coverflow stage */}
+        <div
+          ref={stageRef}
+          className="ac-stage"
+          style={{ height: stageH !== 'auto' ? `${stageH}px` : 'auto' }}
+        >
+          <div
+            ref={trackRef}
+            className="ac-track"
+            style={{ transform: `translateX(${trackOffset}px)` }}
+          >
+            {slides.map((slide, i) => {
+              const diff     = i - current;
+              const isActive = diff === 0;
+              const vstyle   = cardStyle(diff);
+              const stageW   = stageRef.current ? stageRef.current.offsetWidth : 0;
+              const cardW    = stageW * CARD_FRAC || '78%';
+              const gap      = stageW * GAP_FRAC  || '2.5%';
+
+              return (
+                <div
+                  key={i}
+                  ref={isActive ? activeRef : null}
+                  className={`ac-card${isActive ? ' ac-card--active' : ''}`}
+                  style={{
+                    flex:            `0 0 ${typeof cardW === 'number' ? cardW + 'px' : cardW}`,
+                    marginRight:     i < total - 1
+                                       ? (typeof gap === 'number' ? `${gap}px` : gap)
+                                       : 0,
+                    ...vstyle,
+                    transition:      'transform 0.48s cubic-bezier(0.4,0,0.2,1), opacity 0.48s ease, filter 0.48s ease',
+                    transformOrigin: 'top center',
+                  }}
+                  onClick={() => { if (Math.abs(diff) === 1) go(diff > 0 ? 1 : -1); }}
+                >
+                  {slide.content}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right floating arrow */}
+        <button
+          className="ac-float-arrow ac-float-arrow--right"
+          onClick={() => go(1)}
+          aria-label="Next card"
+        >
+          <ChevronRight size={22} strokeWidth={2.5} />
+        </button>
+      </div>
+
+      {/* ── Pill tab nav (no arrows here) ────────────────────── */}
+      <div className="ac-nav-bar">
         <div className="ac-pills-scroll">
           {slides.map((s, i) => (
             <button
@@ -148,10 +149,6 @@ const AnalyticsCarousel = ({ slides }) => {
             </button>
           ))}
         </div>
-
-        <button className="ac-arrow-btn" onClick={() => go(1)} aria-label="Next">
-          <ChevronRight size={20} strokeWidth={2.5} />
-        </button>
       </div>
 
       {/* ── Dot indicators ───────────────────────────────────── */}
