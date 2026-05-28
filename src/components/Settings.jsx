@@ -992,7 +992,7 @@ const SettingsPage = () => {
                 
                 <div className="flex-col gap-4" style={{ marginTop: '0.5rem' }}>
                   {/* Daily Activity Reminder */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '1rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Daily Log Reminder</span>
@@ -1033,7 +1033,7 @@ const SettingsPage = () => {
                   </div>
 
                   {/* Weekly Digest */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '1rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Weekly Spending Digest</span>
@@ -1067,7 +1067,7 @@ const SettingsPage = () => {
                   </div>
 
                   {/* Weekly Savings Motivation */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                     <div>
                       <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Weekly Savings Motivation</span>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Receive a weekend prompt to keep you motivated on active savings goals.</span>
@@ -1081,7 +1081,7 @@ const SettingsPage = () => {
                   </div>
 
                   {/* Monthly Financial Review */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                     <div>
                       <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Monthly Financial Review</span>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Get a summary reminder on the 1st of each month to review progress.</span>
@@ -1095,7 +1095,7 @@ const SettingsPage = () => {
                   </div>
 
                   {/* Budget Alerts */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '1rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Budget Limit Warnings</span>
@@ -1139,7 +1139,7 @@ const SettingsPage = () => {
                   </div>
 
                   {/* Unusual Spending Spike Alerts */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                     <div>
                       <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Unusual Spending Spike Alerts</span>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Notify if a single expense is 3x larger than typical for its category.</span>
@@ -1153,7 +1153,7 @@ const SettingsPage = () => {
                   </div>
 
                   {/* Savings Milestones */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                     <div>
                       <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Savings Goal Milestones</span>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Celebrate crossing 50%, 75%, and 100% of your goals.</span>

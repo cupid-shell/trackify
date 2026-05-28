@@ -22,7 +22,7 @@
   --warning-bg: rgba(245, 158, 11, 0.1);
   
   --border-color: rgba(255, 255, 255, 0.06);
-  --border-focus: rgba(139, 92, 246, 0.5);
+  --border-focus: var(--primary);
   
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -49,10 +49,6 @@ body.light-theme {
   --text-main: #0b1a13;
   --text-muted: #556c60;
   
-  --primary: #4f2ee7;
-  --primary-hover: #3b11e6;
-  --primary-glow: rgba(79, 46, 231, 0.15);
-  
   --success: #10b981;
   --success-bg: rgba(16, 185, 129, 0.15);
   --danger: #f43f5e;
@@ -61,7 +57,6 @@ body.light-theme {
   --warning-bg: rgba(245, 158, 11, 0.15);
   
   --border-color: rgba(11, 26, 19, 0.08);
-  --border-focus: rgba(79, 46, 231, 0.5);
   
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 16px rgba(11, 26, 19, 0.06);
@@ -133,7 +128,6 @@ h3 { font-size: 1.25rem; }
 
 h1:hover, h2:hover, h3:hover {
   font-stretch: 120% !important;
-  color: #ffffff;
 }
 
 p {
@@ -343,7 +337,7 @@ input:focus, select:focus, textarea:focus {
   height: 2.6rem;
   border-radius: 50%;
   border: 1px solid var(--border-color);
-  background: rgba(13, 17, 23, 0.85);
+  background: var(--bg-card);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: var(--text-main);
@@ -620,11 +614,11 @@ button {
   transition: var(--transition);
 }
 
-button:not(.nav-link):hover {
+button:not(.nav-link):not(.ac-float-arrow):hover {
   transform: translateY(-1px) scale(1.015);
 }
 
-button:not(.nav-link):active {
+button:not(.nav-link):not(.ac-float-arrow):active {
   transform: translateY(1px) scale(0.985);
 }
 
@@ -845,7 +839,7 @@ div:hover > div[style*="width: 32px"] svg {
 
 .settings-tab-btn.active {
   color: var(--primary);
-  background-color: rgba(88, 166, 255, 0.08);
+  background-color: var(--primary-glow);
   border-color: var(--border-focus);
   box-shadow: 0 0 12px var(--primary-glow);
 }

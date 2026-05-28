@@ -303,16 +303,17 @@ const HealthScore = () => {
           {/* Centered Grade / Score info */}
           <div style={{
             position: 'absolute',
-            bottom: '2px',
+            top: '45%',
             left: 0,
             right: 0,
+            transform: 'translateY(-50%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             pointerEvents: 'none'
           }}>
-            <span style={{ fontSize: '1.75rem', fontWeight: 900, color: '#ffffff', lineHeight: 1 }}>
+            <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-main)', lineHeight: 1 }}>
               {metrics.grade}
             </span>
             <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>
@@ -345,7 +346,7 @@ const HealthScore = () => {
         <div style={{
           width: '100%',
           height: '7px',
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          backgroundColor: 'var(--bg-input)',
           borderRadius: 'var(--radius-full)',
           overflow: 'hidden'
         }}>
@@ -375,7 +376,7 @@ const HealthScore = () => {
                 width: '36px',
                 height: '36px',
                 borderRadius: 'var(--radius-full)',
-                backgroundColor: ach.unlocked ? `${ach.color}15` : 'rgba(255, 255, 255, 0.03)',
+                backgroundColor: ach.unlocked ? `${ach.color}15` : 'var(--bg-input)',
                 color: ach.unlocked ? ach.color : 'var(--text-muted)',
                 display: 'flex',
                 alignItems: 'center',
@@ -401,7 +402,7 @@ const HealthScore = () => {
                 <div style={{
                   width: '100%',
                   height: '5px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                  backgroundColor: 'var(--bg-input)',
                   borderRadius: 'var(--radius-full)',
                   overflow: 'hidden'
                 }}>

@@ -78,7 +78,7 @@ const OverviewCards = () => {
               fontFamily: "'Hubot Sans Variable', sans-serif",
               letterSpacing: '-0.02em',
               fontStretch: '105%',
-              color: '#ffffff'
+              color: 'var(--text-main)'
             }}>
               ৳{card.amount.toLocaleString('en-IN')}
             </h2>
