@@ -1,14 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { PlusCircle, Trash2, Plus } from 'lucide-react';
 
 // --- Helpers ---
 
 const evaluateMath = (str) => {
-  const safe = String(str).replace(/[^0-9+\-*/().\s]/g, '');
+    const safe = String(str).replace(/[^0-9+\-*/().\s]/g, '');
   if (!safe.trim()) return '';
   try {
-    // eslint-disable-next-line no-new-func
     const result = new Function(`return (${safe})`)();
     if (typeof result === 'number' && isFinite(result)) {
       return Math.round(result * 100) / 100;
@@ -133,10 +132,15 @@ const TransactionForm = () => {
   } = useAppContext();
 
   const [type, setType] = useState('expense');
-  const [rows, setRows] = useState([]);
+  
+  const expenseCategories = useMemo(() => userSettings.expense_categories || [], [userSettings.expense_categories]);
+  const incomeCategories = useMemo(() => userSettings.income_categories || [], [userSettings.income_categories]);
+  
+  const [rows, setRows] = useState(() => {
+    const activeCats = userSettings.expense_categories || [];
+    return activeCats.length > 0 ? [createRow({ category: activeCats[0] })] : [];
+  });
 
-  const expenseCategories = userSettings.expense_categories || [];
-  const incomeCategories = userSettings.income_categories || [];
   const paymentMethods = ['Cash', 'bKash', 'Bank'];
 
   const activeCategories = type === 'expense' ? expenseCategories : incomeCategories;
@@ -146,23 +150,19 @@ const TransactionForm = () => {
     [presets, expenseCategories]
   );
 
-  // Initialise with one blank row when categories are ready
-  useEffect(() => {
-    if (activeCategories.length > 0 && rows.length === 0) {
-      setRows([createRow({ category: activeCategories[0] })]);
+  const handleTypeChange = (newType) => {
+    if (newType === type) return;
+    setType(newType);
+    const newActiveCategories = newType === 'expense' ? expenseCategories : incomeCategories;
+    if (newActiveCategories.length > 0) {
+      setRows(prev =>
+        prev.map(r => ({
+          ...r,
+          category: newActiveCategories.includes(r.category) ? r.category : newActiveCategories[0]
+        }))
+      );
     }
-  }, [activeCategories]);
-
-  // When type changes, reset categories on existing rows to first valid one
-  useEffect(() => {
-    if (activeCategories.length === 0) return;
-    setRows(prev =>
-      prev.map(r => ({
-        ...r,
-        category: activeCategories.includes(r.category) ? r.category : activeCategories[0]
-      }))
-    );
-  }, [type]);
+  };
 
   // --- Row management ---
   const addRow = useCallback(() => {
@@ -273,10 +273,10 @@ const TransactionForm = () => {
 
       {/* Type Toggle */}
       <div className="flex gap-4">
-        <button style={btnStyle('expense')} onClick={() => setType('expense')} type="button">
+        <button style={btnStyle('expense')} onClick={() => handleTypeChange('expense')} type="button">
           Expense
         </button>
-        <button style={btnStyle('income')} onClick={() => setType('income')} type="button">
+        <button style={btnStyle('income')} onClick={() => handleTypeChange('income')} type="button">
           Income
         </button>
       </div>

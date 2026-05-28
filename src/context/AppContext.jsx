@@ -123,6 +123,18 @@ export const AppProvider = ({ children }) => {
   // Notifications state & persistence
   const [notifications, setNotifications] = useState([]);
 
+  const [skippedBills, setSkippedBills] = useState(() => {
+    const saved = localStorage.getItem('trackify_skipped_bills');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+
   const resetStateToDefaults = useCallback(() => {
     setUserSettings(defaultSettings);
     setPresets(defaultPresets);
@@ -290,18 +302,6 @@ export const AppProvider = ({ children }) => {
       localStorage.removeItem(`trackify_notifications_${session.user.id}`);
     }
   };
-
-  const [skippedBills, setSkippedBills] = useState(() => {
-    const saved = localStorage.getItem('trackify_skipped_bills');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
 
   const skipBillForMonth = (billName, year, month) => {
     const key = `${year}-${month}-${billName}`;
@@ -667,7 +667,10 @@ export const AppProvider = ({ children }) => {
     if (error) {
       if (error.code === 'PGRST204' || error.message?.includes('column') || error.message?.includes('does not exist')) {
         console.warn('Supabase schema does not have presets, recurring_bills, or notification_preferences yet. Falling back to standard settings upsert.', error);
-        const { presets, recurring_bills, notification_preferences, ...fallbackSettings } = newSettings;
+        const fallbackSettings = { ...newSettings };
+        delete fallbackSettings.presets;
+        delete fallbackSettings.recurring_bills;
+        delete fallbackSettings.notification_preferences;
         const fallbackPayload = {
           user_id: session.user.id,
           ...fallbackSettings,

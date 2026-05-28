@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Sector } from 'recharts';
 import { BarChart2, PieChart as PieIcon } from 'lucide-react';
+import CategoryIcon from './CategoryIcon';
 
 const renderActiveShape = (props) => {
   const RADIAN = Math.PI / 180;
@@ -10,8 +11,9 @@ const renderActiveShape = (props) => {
     fill, payload, percent, value
   } = props;
   
-  const sin = Math.sin(-RADIAN * midAngle);
+  // Pre-calculate trigonometric values
   const cos = Math.cos(-RADIAN * midAngle);
+  const sin = Math.sin(-RADIAN * midAngle);
   
   // Coordinates for the leader line (start, elbow, end)
   const sx = cx + (outerRadius + 2) * cos;
@@ -82,7 +84,7 @@ const renderActiveShape = (props) => {
 };
 
 const ExpenseChart = () => {
-  const { currentMonthTransactions } = useAppContext();
+  const { currentMonthTransactions, getCategoryStyle } = useAppContext();
   const [chartType, setChartType] = useState('donut'); // 'donut' or 'bar'
   const [activeIndex, setActiveIndex] = useState(-1);
 
@@ -106,7 +108,7 @@ const ExpenseChart = () => {
   const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
   return (
-    <div className="glass-card flex-col gap-6">
+    <div className="glass-card flex-col gap-0" style={{ height: '100%' }}>
       <style>{`
         @keyframes drawLeaderLine {
           from { stroke-dashoffset: 50; }
@@ -126,8 +128,16 @@ const ExpenseChart = () => {
           animation: fadeInCalloutText 0.18s cubic-bezier(0.16, 1, 0.3, 1) 0.20s forwards;
         }
       `}</style>
-      <div className="flex items-center justify-between">
-        <h2 style={{ fontSize: '1.25rem', lineHeight: '1.4', paddingTop: '2px' }}>Expenses by Category</h2>
+      
+      {/* Header — pinned */}
+      <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Expenses by Category</h3>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Breakdown of your expenditures this month
+          </span>
+        </div>
+        
         {data.length > 0 && (
           <div className="flex gap-1" style={{ backgroundColor: 'var(--bg-input)', padding: '2px', borderRadius: 'var(--radius-sm)' }}>
             <button
@@ -138,11 +148,13 @@ const ExpenseChart = () => {
                 backgroundColor: chartType === 'donut' ? 'var(--bg-hover)' : 'transparent',
                 color: chartType === 'donut' ? 'var(--primary)' : 'var(--text-muted)',
                 display: 'flex',
-                alignItems: 'center'
+                alignItems: 'center',
+                border: 'none',
+                cursor: 'pointer'
               }}
               title="Donut Chart"
             >
-              <PieIcon size={16} />
+              <PieIcon size={14} />
             </button>
             <button
               onClick={() => setChartType('bar')}
@@ -152,102 +164,139 @@ const ExpenseChart = () => {
                 backgroundColor: chartType === 'bar' ? 'var(--bg-hover)' : 'transparent',
                 color: chartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)',
                 display: 'flex',
-                alignItems: 'center'
+                alignItems: 'center',
+                border: 'none',
+                cursor: 'pointer'
               }}
               title="Bar Chart"
             >
-              <BarChart2 size={16} />
+              <BarChart2 size={14} />
             </button>
           </div>
         )}
       </div>
-      
-      {data.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
-          <p>No expenses to analyze yet.</p>
-        </div>
-      ) : (
-        <div className="relative-container" style={{ height: '300px', width: '100%' }}>
-          {chartType === 'donut' && (
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              textAlign: 'center',
-              pointerEvents: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              whiteSpace: 'nowrap',
-              width: '120px',
-              zIndex: 10
-            }}>
-              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Total Expenses</span>
-              <span style={{ fontSize: '1.4rem', fontFamily: 'Hubot Sans Variable', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.15rem' }}>৳{totalExpenseValue.toLocaleString('en-IN')}</span>
+
+      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {data.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
+            <p>No expenses to analyze yet.</p>
+          </div>
+        ) : (
+          <>
+            <div className="relative-container" style={{ height: '220px', width: '100%', flexShrink: 0 }}>
+              {chartType === 'donut' && (
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                  pointerEvents: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  whiteSpace: 'nowrap',
+                  width: '120px',
+                  zIndex: 10
+                }}>
+                  <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Total Expenses</span>
+                  <span style={{ fontSize: '1.25rem', fontFamily: 'Hubot Sans Variable', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.15rem' }}>৳{totalExpenseValue.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              
+              <ResponsiveContainer width="100%" height="100%">
+                {chartType === 'bar' ? (
+                  <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                    <XAxis 
+                      dataKey="name" 
+                      stroke="var(--text-muted)" 
+                      fontSize={10} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      interval={0} 
+                      tickFormatter={(name) => name.length > 12 ? `${name.substring(0, 10)}...` : name} 
+                      angle={-30}
+                      textAnchor="end"
+                      height={40}
+                    />
+                    <YAxis 
+                      stroke="var(--text-muted)" 
+                      fontSize={10} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      width={55}
+                      tickFormatter={(val) => `৳${val.toLocaleString('en-IN')}`} 
+                    />
+                    <Tooltip 
+                      cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}
+                      itemStyle={{ color: 'var(--text-main)', fontSize: '0.75rem' }}
+                      formatter={(value) => [`৳${value.toLocaleString('en-IN')}`, 'Amount']}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {data.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                ) : (
+                  <PieChart margin={{ left: 10, right: 10, top: 0, bottom: 0 }}>
+                    <Pie
+                      data={data}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={65}
+                      outerRadius={82}
+                      paddingAngle={3}
+                      dataKey="value"
+                      activeIndex={activeIndex}
+                      activeShape={renderActiveShape}
+                      onMouseEnter={(event, index) => setActiveIndex(index)}
+                      onMouseLeave={() => setActiveIndex(-1)}
+                    >
+                      {data.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} style={{ outline: 'none' }} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                )}
+              </ResponsiveContainer>
             </div>
-          )}
-          
-          <ResponsiveContainer width="100%" height="100%">
-            {chartType === 'bar' ? (
-              <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 35 }}>
-                <XAxis 
-                  dataKey="name" 
-                  stroke="var(--text-muted)" 
-                  fontSize={11} 
-                  tickLine={false} 
-                  axisLine={false} 
-                  interval={0} 
-                  tickFormatter={(name) => name.length > 12 ? `${name.substring(0, 10)}...` : name} 
-                  angle={-35}
-                  textAnchor="end"
-                  height={60}
-                />
-                <YAxis 
-                  stroke="var(--text-muted)" 
-                  fontSize={12} 
-                  tickLine={false} 
-                  axisLine={false} 
-                  width={65}
-                  tickFormatter={(val) => `৳${val.toLocaleString('en-IN')}`} 
-                />
-                <Tooltip 
-                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
-                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}
-                  itemStyle={{ color: 'var(--text-main)' }}
-                  formatter={(value) => [`৳${value.toLocaleString('en-IN')}`, 'Amount']}
-                />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            ) : (
-              <PieChart margin={{ left: 30, right: 30, top: 10, bottom: 10 }}>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={70}
-                  outerRadius={90}
-                  paddingAngle={4}
-                  dataKey="value"
-                  activeIndex={activeIndex}
-                  activeShape={renderActiveShape}
-                  onMouseEnter={(event, index) => setActiveIndex(index)}
-                  onMouseLeave={() => setActiveIndex(-1)}
-                >
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} style={{ outline: 'none' }} />
-                  ))}
-                </Pie>
-              </PieChart>
-            )}
-          </ResponsiveContainer>
-        </div>
-      )}
+
+            {/* Category Breakdown List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Category Breakdown</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {data.map((item, idx) => {
+                  const pct = totalExpenseValue > 0 ? (item.value / totalExpenseValue) * 100 : 0;
+                  const color = colors[idx % colors.length];
+                  const style = getCategoryStyle(item.name);
+                  return (
+                    <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.35rem 0.5rem', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: `1px solid ${style.color || 'rgba(255,255,255,0.04)'}` }}>
+                        <CategoryIcon category={item.name} size={13} />
+                      </div>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.name}</span>
+                          <span style={{ fontWeight: 700, color: style.color || 'var(--text-main)' }}>
+                            ৳{item.value.toLocaleString('en-IN')}{' '}
+                            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 500 }}>({pct.toFixed(1)}%)</span>
+                          </span>
+                        </div>
+                        <div style={{ height: '3px', background: 'rgba(255,255,255,0.04)', borderRadius: '1.5px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${pct}%`, background: style.color || color, borderRadius: '1.5px' }} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+      </div>{/* end ac-card-body */}
     </div>
   );
 };

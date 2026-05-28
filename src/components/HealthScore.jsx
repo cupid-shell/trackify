@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Shield, Flame, Award, Heart, HelpCircle, AlertTriangle } from 'lucide-react';
+import { Shield, Flame, Award, Heart } from 'lucide-react';
 
 const HealthScore = () => {
   const { 
@@ -25,7 +25,7 @@ const HealthScore = () => {
     const budgets = userSettings.category_budgets || {};
     const budgetedCategories = Object.keys(budgets);
     
-    let budgetScore = 100;
+    let budgetScore;
     let exceededCount = 0;
 
     if (budgetedCategories.length > 0) {
@@ -133,9 +133,9 @@ const HealthScore = () => {
     ];
 
     // Grade and Feedback
-    let grade = 'F';
-    let feedback = '';
-    let glowColor = 'rgba(239, 68, 68, 0.4)';
+    let grade;
+    let feedback;
+    let glowColor;
 
     if (overallScore >= 95) {
       grade = 'A+';
@@ -183,7 +183,7 @@ const HealthScore = () => {
   }, [metrics.overallScore]);
 
   return (
-    <div className="glass-card flex-col gap-5">
+    <div className="glass-card flex-col gap-0">
       <style>{`
         .badge-grid {
           display: grid;
@@ -241,13 +241,16 @@ const HealthScore = () => {
         }
       `}</style>
 
-      {/* Header */}
-      <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+      {/* Header — pinned */}
+      <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexShrink: 0 }}>
         <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Financial Health Scorecard</h3>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          Real-time budget discipline & savings evaluation
+          Real-time budget discipline &amp; savings evaluation
         </span>
       </div>
+
+      {/* Scrollable body */}
+      <div className="ac-card-body" style={{ paddingTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
       {/* Score Dashboard */}
       <div style={{
@@ -370,6 +373,7 @@ const HealthScore = () => {
           ))}
         </div>
       </div>
+      </div>{/* end ac-card-body */}
     </div>
   );
 };

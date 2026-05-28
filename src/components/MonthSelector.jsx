@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, setMonth, setYear } from 'date-fns';

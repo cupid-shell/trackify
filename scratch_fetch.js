@@ -5,7 +5,7 @@ async function testColumn(col) {
   const dummyUserId = '00000000-0000-0000-0000-000000000000';
   const body = { user_id: dummyUserId };
   body[col] = [];
-  const { data, error } = await supabase.from('user_settings').upsert(body).select();
+  const { error } = await supabase.from('user_settings').upsert(body).select();
   if (error && error.code === 'PGRST204') {
     return false;
   }

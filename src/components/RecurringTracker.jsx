@@ -1,6 +1,5 @@
-import React from 'react';
 import { useAppContext } from '../context/AppContext';
-import { CheckCircle, AlertCircle, Calendar, PlusCircle, CreditCard, MinusCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, Calendar, MinusCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 const RecurringTracker = () => {

@@ -332,24 +332,47 @@ input:focus, select:focus, textarea:focus {
   width: 100%;
   overflow: hidden;
   padding: 1.5rem 0 1rem;
-  transition: height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-  box-sizing: content-box;
 }
 
-/* ── Flex track: all cards side by side ───────────────────── */
+/* ── Flex track: all cards side by side ─────────────────── */
 .ac-track {
   display: flex;
   flex-wrap: nowrap;
-  align-items: flex-start;   /* don't stretch cards to tallest height */
+  align-items: flex-start;
   transition: transform 0.48s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
 }
 
-/* ── Individual card ──────────────────────────────────────── */
+/* ── Individual card: uniform fixed height ─────────────────── */
 .ac-card {
   flex-shrink: 0;
-  /* width and margin-right are set via inline style from JS */
+  height: 560px;        /* every card is the SAME height */
 }
+
+/* Make the glass-card fill the fixed card height */
+.ac-card > .glass-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Scrollable inner body for tall cards (HealthScore, Insights, SavingsGoals) */
+.ac-card-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;          /* critical: allows flex child to shrink + scroll */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+.ac-card-body::-webkit-scrollbar { width: 4px; }
+.ac-card-body::-webkit-scrollbar-track { background: transparent; }
+.ac-card-body::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
 
 /* Active card: neon glow on its inner glass-card */
 .ac-card--active .glass-card {

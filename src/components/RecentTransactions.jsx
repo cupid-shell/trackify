@@ -1,23 +1,23 @@
-import React from 'react';
+import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { format } from 'date-fns';
-import { Trash2, TrendingDown, TrendingUp, Download, Edit2 } from 'lucide-react';
+import { Trash2, TrendingUp, Download, Edit2 } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 
 const RecentTransactions = () => {
   const { currentMonthTransactions, deleteTransaction, updateTransaction, userSettings, getCategoryStyle, showToast } = useAppContext();
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [selectedCategory, setSelectedCategory] = React.useState('All');
-  const [startDate, setStartDate] = React.useState('');
-  const [endDate, setEndDate] = React.useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // Edit mode states
-  const [editingId, setEditingId] = React.useState(null);
-  const [editAmount, setEditAmount] = React.useState('');
-  const [editCategory, setEditCategory] = React.useState('');
-  const [editNote, setEditNote] = React.useState('');
-  const [editPaymentMethod, setEditPaymentMethod] = React.useState('Cash');
-  const [editDate, setEditDate] = React.useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editAmount, setEditAmount] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editNote, setEditNote] = useState('');
+  const [editPaymentMethod, setEditPaymentMethod] = useState('Cash');
+  const [editDate, setEditDate] = useState('');
 
   const startEditing = (tx) => {
     setEditingId(tx.id);

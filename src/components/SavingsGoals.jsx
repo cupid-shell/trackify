@@ -71,7 +71,8 @@ const SavingsGoals = () => {
   };
 
   return (
-    <div className="glass-card flex-col gap-4">
+    <div className="glass-card flex-col gap-0">
+      {/* Header — pinned */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -104,13 +105,15 @@ const SavingsGoals = () => {
         </button>
       </div>
 
+      {/* Scrollable body: form + goals list */}
+      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
       {showAddForm && (
         <form onSubmit={handleAddGoal} className="flex-col gap-3" style={{
           padding: '1rem',
           backgroundColor: 'rgba(255, 255, 255, 0.02)',
           border: '1px solid var(--border-color)',
           borderRadius: 'var(--radius-md)',
-          marginTop: '0.5rem'
         }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Goal Name</label>
@@ -378,6 +381,7 @@ const SavingsGoals = () => {
           })}
         </div>
       )}
+      </div>{/* end ac-card-body */}
     </div>
   );
 };

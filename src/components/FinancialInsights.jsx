@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { TrendingUp, Sparkles, Calendar, Coffee, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Calendar, Coffee, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const FinancialInsights = () => {
   const { 
@@ -10,7 +10,6 @@ const FinancialInsights = () => {
     selectedYear, 
     totalExpenses, 
     userSettings, 
-    balance,
     savingsGoal,
     totalIncome
   } = useAppContext();
@@ -232,13 +231,15 @@ const FinancialInsights = () => {
   const paceColor = pacingData.velocity < 0 ? 'var(--success)' : pacingData.velocity > 0 ? 'var(--warning)' : 'var(--text-muted)';
 
   return (
-    <div className="glass-card flex-col gap-4">
-      <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+    <div className="glass-card flex-col gap-0">
+      <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexShrink: 0 }}>
         <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Financial Insights</h3>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           Automated spending analysis & key metrics
         </span>
       </div>
+
+      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
       <div style={{
         display: 'grid',
@@ -371,6 +372,7 @@ const FinancialInsights = () => {
           ))}
         </div>
       </div>
+      </div>{/* end ac-card-body */}
     </div>
   );
 };

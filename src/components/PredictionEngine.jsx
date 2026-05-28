@@ -1,105 +1,243 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Sparkles, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Sparkles, AlertTriangle, CheckCircle, TrendingUp, Zap, Target, Calendar } from 'lucide-react';
+import {
+  RadialBarChart, RadialBar, PolarAngleAxis,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer
+} from 'recharts';
+
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload?.length) {
+    return (
+      <div style={{
+        background: 'rgba(13,17,23,0.92)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: '8px',
+        padding: '0.4rem 0.7rem',
+        fontSize: '0.75rem',
+        color: '#fff',
+        backdropFilter: 'blur(8px)'
+      }}>
+        {payload[0].payload.name}: <strong>৳{payload[0].value.toLocaleString('en-IN')}</strong>
+      </div>
+    );
+  }
+  return null;
+};
 
 const PredictionEngine = () => {
-  const { totalIncome, totalExpenses, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear } = useAppContext();
+  const { totalIncome, totalExpenses, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear, balance } = useAppContext();
 
   const prediction = useMemo(() => {
     const today = new Date();
     const isCurrentMonth = selectedMonth === today.getMonth() && selectedYear === today.getFullYear();
     const isPastMonth = new Date(selectedYear, selectedMonth, 1) < new Date(today.getFullYear(), today.getMonth(), 1);
-    
     const totalDaysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
     const currentDay = isCurrentMonth ? today.getDate() : totalDaysInMonth;
     const daysRemaining = isCurrentMonth ? totalDaysInMonth - currentDay : 0;
 
     const knownFixed = ['Rent', 'Utilities & Bills', 'Education'];
     const knownVariable = ['Daily Living', 'Food & Dining', 'Transport'];
-    
     let variableExpensesSum = 0;
-    
+
     currentMonthTransactions.forEach(tx => {
       if (tx.type === 'expense') {
         if (knownFixed.includes(tx.category)) return;
-        
         if (knownVariable.includes(tx.category)) {
           variableExpensesSum += Number(tx.amount);
-        } else {
-          // Smart heuristic: Include custom categories in daily burn only if they are < 1000 BDT.
-          // Large purchases (like a 5000 BDT keyboard) shouldn't be extrapolated daily.
-          if (Number(tx.amount) < 1000) {
-            variableExpensesSum += Number(tx.amount);
-          }
+        } else if (Number(tx.amount) < 1000) {
+          variableExpensesSum += Number(tx.amount);
         }
       }
     });
 
-    // Avoid division by zero
     const dailyBurnRate = currentDay > 0 ? variableExpensesSum / currentDay : 0;
-    
-    // Project end balance based on daily burn rate for the REST of the month
     const projectedExpenses = totalExpenses + (dailyBurnRate * daysRemaining);
     const projectedBalance = totalIncome - projectedExpenses;
-    
     const isOnTrack = projectedBalance >= savingsGoal;
+    const spendPct = totalIncome > 0 ? Math.min(100, (totalExpenses / totalIncome) * 100) : 0;
+    const savingsPct = totalIncome > 0 ? Math.max(0, (balance / totalIncome) * 100) : 0;
+    const projectedSavingsPct = totalIncome > 0 ? Math.max(0, Math.min(100, (projectedBalance / totalIncome) * 100)) : 0;
+
+    // Category breakdown for bar chart
+    const catMap = {};
+    currentMonthTransactions.forEach(tx => {
+      if (tx.type === 'expense') {
+        catMap[tx.category] = (catMap[tx.category] || 0) + Number(tx.amount);
+      }
+    });
+    const topCats = Object.entries(catMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, val]) => ({ name: name.length > 12 ? name.slice(0, 12) + '…' : name, value: Math.round(val) }));
 
     return {
       dailyBurnRate,
       projectedBalance: isPastMonth ? (totalIncome - totalExpenses) : projectedBalance,
       isOnTrack,
       daysRemaining,
-      isPastMonth
+      isPastMonth,
+      spendPct: Math.round(spendPct),
+      savingsPct: Math.round(savingsPct),
+      projectedSavingsPct: Math.round(projectedSavingsPct),
+      currentDay,
+      totalDaysInMonth,
+      topCats,
     };
-  }, [totalExpenses, totalIncome, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear]);
+  }, [totalExpenses, totalIncome, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear, balance]);
+
+  const ringData = [{ value: prediction.spendPct, fill: prediction.isOnTrack ? '#58a6ff' : '#f85149' }];
+
+
+
 
   return (
-    <div className="glass-card flex-col gap-4" style={{ 
-      background: 'linear-gradient(145deg, var(--bg-card) 0%, rgba(99, 102, 241, 0.05) 100%)',
-      border: '1px solid rgba(99, 102, 241, 0.2)'
+    <div className="glass-card flex-col gap-0" style={{
+      background: 'linear-gradient(145deg, var(--bg-card) 0%, rgba(99,102,241,0.04) 100%)',
+      border: '1px solid rgba(99,102,241,0.18)',
     }}>
-      <div className="flex items-center gap-2">
+
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
         <Sparkles size={20} color="var(--primary)" />
-        <h2 style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>AI Prediction</h2>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         <div>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Average Daily Spend</p>
-          <p style={{ fontSize: '1.25rem', fontWeight: 600 }}>৳{prediction.dailyBurnRate.toFixed(0)}/day</p>
-        </div>
-        <div>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{prediction.isPastMonth ? 'Final Balance' : 'Projected End Balance'}</p>
-          <p style={{ 
-            fontSize: '1.25rem', 
-            fontWeight: 600,
-            color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)'
-          }}>
-            ৳{prediction.projectedBalance.toFixed(0)}
-          </p>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--primary)' }}>AI Prediction Engine</h2>
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Real-time burn rate & end-of-month forecast</span>
         </div>
       </div>
 
-      <div style={{
-        marginTop: '0.5rem',
-        padding: '0.75rem',
-        borderRadius: 'var(--radius-md)',
-        backgroundColor: prediction.isOnTrack ? 'var(--success-bg)' : 'var(--danger-bg)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '0.5rem'
-      }}>
-        {prediction.isOnTrack ? (
-          <CheckCircle size={18} color="var(--success)" style={{ marginTop: '2px' }} />
-        ) : (
-          <AlertTriangle size={18} color="var(--danger)" style={{ marginTop: '2px' }} />
+      {/* ── Scrollable body ─────────────────────────────── */}
+      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+
+        {/* Row 1: Radial gauge + key stats */}
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+
+          {/* Radial gauge */}
+          <div style={{ position: 'relative', width: 110, height: 110, flexShrink: 0 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart
+                cx="50%" cy="50%"
+                innerRadius="68%" outerRadius="100%"
+                startAngle={225} endAngle={-45}
+                data={ringData}
+              >
+                <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                <RadialBar
+                  background={{ fill: 'rgba(255,255,255,0.05)' }}
+                  dataKey="value"
+                  cornerRadius={8}
+                  clockWise
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            {/* Center label */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: prediction.isOnTrack ? 'var(--primary)' : 'var(--danger)', lineHeight: 1 }}>
+                {prediction.spendPct}%
+              </span>
+              <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>spent</span>
+            </div>
+          </div>
+
+          {/* Key stat tiles */}
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+            {[
+              { label: 'Daily Burn', value: `৳${Math.round(prediction.dailyBurnRate).toLocaleString('en-IN')}`, icon: <Zap size={13} />, color: 'var(--warning)' },
+              { label: 'Days Left', value: prediction.isPastMonth ? '—' : prediction.daysRemaining, icon: <Calendar size={13} />, color: 'var(--primary)' },
+              { label: 'Savings Rate', value: `${prediction.savingsPct}%`, icon: <TrendingUp size={13} />, color: 'var(--success)' },
+              { label: 'Projected Save', value: `${prediction.projectedSavingsPct}%`, icon: <Target size={13} />, color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)' },
+            ].map(stat => (
+              <div key={stat.label} style={{
+                padding: '0.55rem 0.7rem',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex', flexDirection: 'column', gap: '0.2rem',
+              }}>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span style={{ color: stat.color }}>{stat.icon}</span>{stat.label}
+                </span>
+                <span style={{ fontSize: '1.05rem', fontWeight: 700, color: stat.color, lineHeight: 1 }}>{stat.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Projected end balance banner */}
+        <div style={{
+          padding: '0.7rem 0.9rem',
+          borderRadius: 'var(--radius-md)',
+          background: prediction.isOnTrack ? 'var(--success-bg)' : 'var(--danger-bg)',
+          border: `1px solid ${prediction.isOnTrack ? 'rgba(16,185,129,0.25)' : 'rgba(248,81,73,0.25)'}`,
+          display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
+        }}>
+          {prediction.isOnTrack
+            ? <CheckCircle size={17} color="var(--success)" style={{ marginTop: 2, flexShrink: 0 }} />
+            : <AlertTriangle size={17} color="var(--danger)" style={{ marginTop: 2, flexShrink: 0 }} />}
+          <div style={{ flex: 1 }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)' }}>
+              {prediction.isPastMonth ? 'Final Balance: ' : 'Projected End Balance: '}
+              ৳{Math.round(prediction.projectedBalance).toLocaleString('en-IN')}
+            </span>
+            <p style={{ fontSize: '0.75rem', color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)', marginTop: '0.2rem', opacity: 0.85 }}>
+              {prediction.isPastMonth
+                ? (prediction.isOnTrack ? `Goal achieved! You saved at least ৳${savingsGoal.toLocaleString('en-IN')}.` : `You missed your ৳${savingsGoal.toLocaleString('en-IN')} savings goal.`)
+                : (prediction.isOnTrack ? `On track to save ৳${savingsGoal.toLocaleString('en-IN')}. Keep it up!` : `At this burn rate, you'll miss your ৳${savingsGoal.toLocaleString('en-IN')} goal. Cut variable spending.`)}
+            </p>
+          </div>
+        </div>
+
+        {/* Month progress bar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+            <span>Month Progress</span>
+            <span>Day {prediction.currentDay} / {prediction.totalDaysInMonth}</span>
+          </div>
+          <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', borderRadius: '4px',
+              width: `${(prediction.currentDay / prediction.totalDaysInMonth) * 100}%`,
+              background: 'linear-gradient(90deg, var(--primary), #a855f7)',
+              transition: 'width 0.5s ease',
+            }} />
+          </div>
+        </div>
+
+        {/* Top spending categories bar chart */}
+        {prediction.topCats.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-main)' }}>
+              Top Spending Categories
+            </span>
+            <div style={{ height: 140 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={prediction.topCats} margin={{ top: 0, right: 4, left: -18, bottom: 0 }} barSize={14}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: 'rgba(255,255,255,0.45)', fontSize: 9 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 9 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={v => `৳${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v}`}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                  <Bar dataKey="value" fill="#58a6ff" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         )}
-        <p style={{ fontSize: '0.875rem', color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)' }}>
-          {prediction.isPastMonth 
-            ? (prediction.isOnTrack ? `Goal achieved! You saved at least ৳${savingsGoal}.` : `You missed your minimum ৳${savingsGoal} savings goal.`)
-            : (prediction.isOnTrack ? `Great job! You are on track to save at least ৳${savingsGoal} this month.` : `Warning: At your current spending rate, you will miss your minimum ৳${savingsGoal} savings goal. Try to reduce daily spending.`)}
-        </p>
-      </div>
+
+      </div>{/* end ac-card-body */}
     </div>
   );
 };
