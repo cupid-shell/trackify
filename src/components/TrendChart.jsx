@@ -66,7 +66,11 @@ const TrendChart = () => {
         return txDate.getMonth() === month && txDate.getFullYear() === year;
       });
 
-      const income = baseIncome + monthTx
+      const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+      const hasExpense = monthTx.some(tx => tx.type === 'expense');
+      const shouldAddBaseIncome = isCurrentMonth || hasExpense;
+
+      const income = (shouldAddBaseIncome ? baseIncome : 0) + monthTx
         .filter(tx => tx.type === 'income')
         .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
