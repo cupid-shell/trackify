@@ -801,7 +801,7 @@ export const AppProvider = ({ children }) => {
         type: txType,
         amount: Number(amount),
         category: txCategory,
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString(),
         note: txNote,
         payment_method: 'Cash',
         debt_id: debtId

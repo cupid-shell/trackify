@@ -27,14 +27,40 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
   const [editNote, setEditNote] = useState('');
   const [editPaymentMethod, setEditPaymentMethod] = useState('Cash');
   const [editDate, setEditDate] = useState('');
+  const [editTime, setEditTime] = useState('');
+
+  const getLocalDateString = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getLocalTimeString = (d) => {
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  const combineDateTime = (dateStr, timeStr) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const localDate = new Date(year, month - 1, day, hours, minutes);
+    return localDate.toISOString();
+  };
 
   const startEditing = (tx) => {
+    const txDate = new Date(tx.date);
+    const dateStr = getLocalDateString(txDate);
+    const timeStr = getLocalTimeString(txDate);
+
     setEditingId(tx.id);
     setEditAmount(tx.amount.toString());
     setEditCategory(tx.category);
     setEditNote(tx.note || '');
     setEditPaymentMethod(tx.payment_method || 'Cash');
-    setEditDate(tx.date);
+    setEditDate(dateStr);
+    setEditTime(timeStr);
   };
 
   const saveEdit = async (txId) => {
@@ -42,12 +68,13 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
       showToast('Please enter a valid amount', 'warning');
       return;
     }
+    const combined = combineDateTime(editDate, editTime);
     const success = await updateTransaction(txId, {
       amount: Number(editAmount),
       category: editCategory,
       note: editNote,
       payment_method: editPaymentMethod,
-      date: editDate
+      date: combined
     });
     if (success) {
       setEditingId(null);
@@ -340,14 +367,25 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
                         <option value="Rocket">Rocket</option>
                       </select>
                     </div>
-                    <div style={{ flex: '1 1 150px' }}>
-                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Date</label>
-                      <input 
-                        type="date" 
-                        value={editDate} 
-                        onChange={e => setEditDate(e.target.value)} 
-                        style={{ padding: '0.5rem', fontSize: '0.875rem' }}
-                      />
+                    <div style={{ flex: '1 1 200px', display: 'flex', gap: '0.5rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Date</label>
+                        <input 
+                          type="date" 
+                          value={editDate} 
+                          onChange={e => setEditDate(e.target.value)} 
+                          style={{ padding: '0.5rem', fontSize: '0.875rem', width: '100%', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}
+                        />
+                      </div>
+                      <div style={{ width: '100px' }}>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Time</label>
+                        <input 
+                          type="time" 
+                          value={editTime} 
+                          onChange={e => setEditTime(e.target.value)} 
+                          style={{ padding: '0.5rem', fontSize: '0.875rem', width: '100%', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}
+                        />
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -429,7 +467,7 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
                       }}>
                         {tx.payment_method || 'Cash'}
                       </span>
-                      <span style={{ flexShrink: 0 }}>{format(new Date(tx.date), 'MMM dd, yyyy')}</span>
+                      <span style={{ flexShrink: 0 }}>{format(new Date(tx.date), 'MMM dd, yyyy • hh:mm a')}</span>
                       {tx.note && (
                         <>
                           <span style={{ flexShrink: 0, opacity: 0.5 }}>•</span>

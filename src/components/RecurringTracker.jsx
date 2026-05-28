@@ -32,7 +32,7 @@ const RecurringTracker = () => {
       amount: Number(bill.amount),
       category: bill.category,
       note: `[Recurring] ${bill.name}`,
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString(),
       payment_method: bill.payment || 'Cash'
     });
     showToast(`Logged payment for: ${bill.name}!`, 'success');

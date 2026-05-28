@@ -482,6 +482,8 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
                               </span>
                               <span>•</span>
                               <span>{tx.payment_method || 'Cash'}</span>
+                              <span>•</span>
+                              <span>{new Date(tx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                           </div>
                         </div>

@@ -16,15 +16,42 @@ const evaluateMath = (str) => {
   return str;
 };
 
-const createRow = (defaults = {}) => ({
-  id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-  amount: '',
-  note: '',
-  category: defaults.category || '',
-  date: new Date().toISOString().split('T')[0],
-  paymentMethod: defaults.paymentMethod || 'Cash',
-  ...defaults
-});
+const getLocalDateString = (d) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalTimeString = (d) => {
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
+const combineDateTime = (dateStr, timeStr) => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  const localDate = new Date(year, month - 1, day, hours, minutes);
+  return localDate.toISOString();
+};
+
+const createRow = (defaults = {}) => {
+  const now = defaults.date ? new Date(defaults.date) : new Date();
+  const dateStr = getLocalDateString(now);
+  const timeStr = getLocalTimeString(now);
+  
+  return {
+    id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    amount: '',
+    note: '',
+    category: defaults.category || '',
+    paymentMethod: defaults.paymentMethod || 'Cash',
+    ...defaults,
+    date: dateStr,
+    time: timeStr
+  };
+};
 
 // --- Sub-component: a single row in the grid ---
 const GridRow = ({
@@ -106,8 +133,8 @@ const GridRow = ({
         </select>
       </div>
 
-      {/* Line 3: Date */}
-      <div className="grid-row-line">
+      {/* Line 3: Date & Time side-by-side */}
+      <div className="grid-row-line" style={{ display: 'flex', gap: '0.5rem' }}>
         <input
           type="date"
           className="grid-date-input"
@@ -115,6 +142,21 @@ const GridRow = ({
           onChange={e => onUpdate(index, 'date', e.target.value)}
           required
           style={{ flex: 1 }}
+        />
+        <input
+          type="time"
+          className="grid-time-input"
+          value={row.time}
+          onChange={e => onUpdate(index, 'time', e.target.value)}
+          required
+          style={{
+            width: '120px',
+            padding: '0.75rem',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-color)',
+            backgroundColor: 'var(--bg-input)',
+            color: 'var(--text-main)'
+          }}
         />
       </div>
     </div>
@@ -213,7 +255,7 @@ const TransactionForm = () => {
       amount: Number(evaluateMath(r.amount)),
       category: r.category,
       note: r.note,
-      date: r.date,
+      date: combineDateTime(r.date, r.time),
       payment_method: r.paymentMethod
     }));
 
