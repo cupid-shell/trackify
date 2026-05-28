@@ -32,10 +32,34 @@ const TrendChart = () => {
     const data = [];
     const now = new Date();
 
+    // Find the earliest transaction date in history
+    let earliestDate = null;
+    if (transactions.length > 0) {
+      const timestamps = transactions.map(t => new Date(t.date).getTime());
+      earliestDate = new Date(Math.min(...timestamps));
+    }
+
     for (let i = 5; i >= 0; i--) {
       const targetDate = subMonths(now, i);
       const month = targetDate.getMonth();
       const year = targetDate.getFullYear();
+
+      // Check if this month is strictly before the earliest transaction month
+      const isBeforeStart = earliestDate && (
+        year < earliestDate.getFullYear() ||
+        (year === earliestDate.getFullYear() && month < earliestDate.getMonth())
+      );
+
+      if (isBeforeStart) {
+        data.push({
+          name: format(targetDate, 'MMM yy'),
+          Income: 0,
+          Expenses: 0,
+          Savings: 0,
+          isPlaceholder: true
+        });
+        continue;
+      }
 
       const monthTx = transactions.filter(tx => {
         const txDate = new Date(tx.date);
@@ -54,7 +78,8 @@ const TrendChart = () => {
         name: format(targetDate, 'MMM yy'),
         Income: income,
         Expenses: expenses,
-        Savings: income - expenses
+        Savings: income - expenses,
+        isPlaceholder: false
       });
     }
 
@@ -70,6 +95,7 @@ const TrendChart = () => {
     let maxSavingsMonth = '';
     
     trendData.forEach(d => {
+      if (d.isPlaceholder) return;
       totalSavings += d.Savings;
       totalIncome += d.Income;
       if (d.Savings > maxSavings) {
@@ -85,7 +111,7 @@ const TrendChart = () => {
     return {
       totalSavings,
       avgSavingsRate: Math.round(avgSavingsRate),
-      maxSavings,
+      maxSavings: maxSavings === -Infinity ? 0 : maxSavings,
       maxSavingsMonth,
       lastMonthSavingsRate: Math.round(lastMonthSavingsRate),
       lastMonthSavings: lastMonth.Savings

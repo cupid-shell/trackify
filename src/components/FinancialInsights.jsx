@@ -124,6 +124,18 @@ const FinancialInsights = () => {
       velocity = 100; // 100% increase if prev month had 0 spend
     }
 
+    // Find the earliest transaction date in history
+    let earliestDate = null;
+    if (transactions.length > 0) {
+      const timestamps = transactions.map(t => new Date(t.date).getTime());
+      earliestDate = new Date(Math.min(...timestamps));
+    }
+
+    const isPrevPlaceholder = earliestDate && (
+      prevYear < earliestDate.getFullYear() ||
+      (prevYear === earliestDate.getFullYear() && prevMonth < earliestDate.getMonth())
+    );
+
     // Budget threshold: sum of all budgets, or base income
     const categoryBudgets = userSettings.category_budgets || {};
     const hasBudgets = Object.keys(categoryBudgets).length > 0;
@@ -140,7 +152,8 @@ const FinancialInsights = () => {
       currentMTD,
       prevMTD,
       isCurrentMonth,
-      percentOfBudget
+      percentOfBudget,
+      isPrevPlaceholder
     };
   }, [currentMonthTransactions, transactions, selectedMonth, selectedYear, totalExpenses, userSettings, stats]);
 
@@ -302,7 +315,9 @@ const FinancialInsights = () => {
         }}>
           {/* Comparison Text */}
           <p style={{ fontSize: '0.85rem', margin: 0, lineHeight: '1.4', color: 'var(--text-main)' }}>
-            {pacingData.velocity < 0 ? (
+            {pacingData.isPrevPlaceholder ? (
+              <>Month-over-month comparison will be available next month once tracking history is established.</>
+            ) : pacingData.velocity < 0 ? (
               <>
                 You are spending <strong style={{ color: paceColor }}>{Math.abs(Math.round(pacingData.velocity))}% slower</strong> than last month at this date (৳{Math.round(pacingData.currentMTD).toLocaleString('en-IN')} MTD vs ৳{Math.round(pacingData.prevMTD).toLocaleString('en-IN')}). Keep it up!
               </>
