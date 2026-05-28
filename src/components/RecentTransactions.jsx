@@ -432,15 +432,9 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
             return (
               <div 
                 key={tx.id} 
-                className="flex items-center justify-between"
-                style={{
-                  padding: '1rem',
-                  backgroundColor: 'var(--bg-input)',
-                  borderRadius: 'var(--radius-md)',
-                  transition: 'var(--transition)'
-                }}
+                className="tx-row"
               >
-                <div className="flex items-center gap-4" style={{ minWidth: 0, flex: 1 }}>
+                <div className="tx-left-col">
                   <div style={{
                     width: '40px',
                     height: '40px',
@@ -481,7 +475,7 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4" style={{ flexShrink: 0, marginLeft: 'auto' }}>
+                <div className="tx-right-col">
                   <span style={{
                     fontWeight: 700,
                     fontSize: '1.125rem',

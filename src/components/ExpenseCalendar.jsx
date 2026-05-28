@@ -214,7 +214,7 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
   const modalTransactions = localSelectedDay ? [...dailyData[localSelectedDay].expenses, ...dailyData[localSelectedDay].income] : [];
 
   return (
-    <div className="glass-card flex-col gap-0" style={{ padding: '1.25rem 1.5rem', background: 'linear-gradient(180deg, var(--bg-card) 0%, rgba(255,255,255,0.01) 100%)' }}>
+    <div className="glass-card expense-calendar-card flex-col gap-0" style={{ padding: '1.25rem 1.5rem', background: 'linear-gradient(180deg, var(--bg-card) 0%, rgba(255,255,255,0.01) 100%)' }}>
       <style>{`
         .calendar-scroll-container {
           width: 100%;
@@ -299,22 +299,27 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
           line-height: 1.2;
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
+          .expense-calendar-card {
+            padding: 0.75rem 0.5rem !important;
+          }
           .calendar-grid {
-            gap: 0.35rem;
+            grid-template-columns: repeat(7, minmax(30px, 1fr)) !important;
+            gap: 0.25rem !important;
+            min-width: 0 !important;
           }
           .calendar-day-cell {
-            padding: 0.3rem 0.35rem;
+            padding: 0.3rem 0.25rem !important;
           }
           .calendar-day-cell-number {
-            font-size: 0.68rem;
+            font-size: 0.68rem !important;
           }
           .calendar-day-cell-amount {
-            font-size: 0.55rem;
+            font-size: 0.55rem !important;
           }
           .calendar-day-cell-win {
-            font-size: 0.5rem;
-            padding: 0.02rem 0.15rem;
+            font-size: 0.5rem !important;
+            padding: 0.02rem 0.15rem !important;
           }
         }
       `}</style>

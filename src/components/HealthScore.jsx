@@ -183,7 +183,7 @@ const HealthScore = () => {
   }, [metrics.overallScore]);
 
   return (
-    <div className="glass-card flex-col gap-0">
+    <div className="glass-card flex-col gap-0" style={{ height: '100%' }}>
       <style>{`
         .badge-grid {
           display: grid;

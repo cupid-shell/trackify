@@ -21,10 +21,17 @@ const AnalyticsCarousel = ({ slides }) => {
     if (!stageRef.current) return;
     const stageW = stageRef.current.offsetWidth;
     setStageWidth(stageW);
-    const cardW  = stageW * CARD_FRAC;
-    const gap    = stageW * GAP_FRAC;
-    const peek   = (stageW - cardW) / 2;
-    setTrackOffset(peek - current * (cardW + gap));
+    
+    if (stageW < 640) {
+      // Mobile: full width cards, no peeking, slide exactly by card index
+      setTrackOffset(-current * stageW);
+    } else {
+      // Desktop: cover-flow look
+      const cardW  = stageW * CARD_FRAC;
+      const gap    = stageW * GAP_FRAC;
+      const peek   = (stageW - cardW) / 2;
+      setTrackOffset(peek - current * (cardW + gap));
+    }
   }, [current]);
 
   useLayoutEffect(() => { calcOffset(); }, [calcOffset]);
@@ -51,6 +58,19 @@ const AnalyticsCarousel = ({ slides }) => {
 
   const cardStyle = (diff) => {
     const abs = Math.abs(diff);
+    const isMobile = stageWidth < 640;
+    
+    if (isMobile) {
+      return {
+        transform: 'scale(1)',
+        opacity: abs === 0 ? 1 : 0,
+        filter: 'none',
+        zIndex: abs === 0 ? 10 : 1,
+        pointerEvents: abs === 0 ? 'auto' : 'none',
+        cursor: 'default'
+      };
+    }
+    
     if (abs === 0) return { transform: 'scale(1)',    opacity: 1,    filter: 'none',             zIndex: 10, cursor: 'default' };
     if (abs === 1) return { transform: 'scale(0.87)', opacity: 0.44, filter: 'brightness(0.35)',  zIndex: 6,  cursor: 'pointer' };
     if (abs === 2) return { transform: 'scale(0.75)', opacity: 0.24, filter: 'brightness(0.18)',  zIndex: 3,  cursor: 'default' };

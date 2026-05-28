@@ -96,6 +96,7 @@ const PredictionEngine = () => {
     <div className="glass-card flex-col gap-0" style={{
       background: 'linear-gradient(145deg, var(--bg-card) 0%, rgba(99,102,241,0.04) 100%)',
       border: '1px solid rgba(99,102,241,0.18)',
+      height: '100%'
     }}>
 
       {/* ── Header ─────────────────────────────────────────── */}

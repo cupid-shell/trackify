@@ -218,7 +218,7 @@ const FinancialInsights = () => {
 
   if (totalExpenses === 0) {
     return (
-      <div className="glass-card flex-col gap-3">
+      <div className="glass-card flex-col gap-3" style={{ height: '100%' }}>
         <h3 style={{ fontSize: '1.125rem' }}>Monthly Insights</h3>
         <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
           Insights will appear once you log expenses for the selected month.
@@ -231,7 +231,7 @@ const FinancialInsights = () => {
   const paceColor = pacingData.velocity < 0 ? 'var(--success)' : pacingData.velocity > 0 ? 'var(--warning)' : 'var(--text-muted)';
 
   return (
-    <div className="glass-card flex-col gap-0">
+    <div className="glass-card flex-col gap-0" style={{ height: '100%' }}>
       <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexShrink: 0 }}>
         <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Financial Insights</h3>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>

@@ -71,7 +71,7 @@ const SavingsGoals = () => {
   };
 
   return (
-    <div className="glass-card flex-col gap-0">
+    <div className="glass-card flex-col gap-0" style={{ height: '100%' }}>
       {/* Header — pinned */}
       <div style={{
         display: 'flex',
