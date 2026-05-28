@@ -463,6 +463,13 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 8px var(--primary-glow);
 }
 
+.pred-stats-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+}
+
 /* ── Mobile: full-width single card, no peek ─────────────── */
 @media (max-width: 640px) {
   .ac-stage {
@@ -472,10 +479,19 @@ input:focus, select:focus, textarea:focus {
     flex: 0 0 100% !important;
     margin-right: 0 !important;
     transform: scale(1) !important;
-    opacity: 1 !important;
     filter: none !important;
   }
   /* Keeping non-active cards in layout flow so translating the track works correctly */
+  
+  .glass-card {
+    padding: 1.15rem 1rem !important;
+  }
+  
+  .pred-stats-row {
+    flex-direction: column !important;
+    gap: 1.25rem !important;
+    align-items: center !important;
+  }
 }
 
 

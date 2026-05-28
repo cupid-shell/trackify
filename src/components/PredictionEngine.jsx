@@ -112,7 +112,7 @@ const PredictionEngine = () => {
       <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
 
         {/* Row 1: Radial gauge + key stats */}
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div className="pred-stats-row">
 
           {/* Radial gauge */}
           <div style={{ position: 'relative', width: 110, height: 110, flexShrink: 0 }}>

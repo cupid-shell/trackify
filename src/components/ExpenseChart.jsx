@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Sector } from 'recharts';
 import { BarChart2, PieChart as PieIcon } from 'lucide-react';
@@ -16,16 +16,21 @@ const renderActiveShape = (props) => {
   const sin = Math.sin(-RADIAN * midAngle);
   
   // Coordinates for the leader line (start, elbow, end)
+  const isMobile = window.innerWidth < 640;
+  const lineElbow = isMobile ? 5 : 10;
+  const lineExtension = isMobile ? 8 : 12;
+  const textSpacing = isMobile ? 3 : 5;
+
   const sx = cx + (outerRadius + 2) * cos;
   const sy = cy + (outerRadius + 2) * sin;
-  const mx = cx + (outerRadius + 10) * cos;
-  const my = cy + (outerRadius + 10) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
+  const mx = cx + (outerRadius + lineElbow) * cos;
+  const my = cy + (outerRadius + lineElbow) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * lineExtension;
   const ey = my;
   
   // Label text position and alignment
   const textAnchor = cos >= 0 ? 'start' : 'end';
-  const tx = ex + (cos >= 0 ? 1 : -1) * 5;
+  const tx = ex + (cos >= 0 ? 1 : -1) * textSpacing;
   const ty = ey;
 
   return (
@@ -87,6 +92,13 @@ const ExpenseChart = () => {
   const { currentMonthTransactions, getCategoryStyle } = useAppContext();
   const [chartType, setChartType] = useState('donut'); // 'donut' or 'bar'
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const data = useMemo(() => {
     const expenses = currentMonthTransactions.filter(tx => tx.type === 'expense');
@@ -197,11 +209,11 @@ const ExpenseChart = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   whiteSpace: 'nowrap',
-                  width: '120px',
+                  width: isMobile ? '80px' : '120px',
                   zIndex: 10
                 }}>
-                  <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Total Expenses</span>
-                  <span style={{ fontSize: '1.25rem', fontFamily: 'Hubot Sans Variable', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.15rem' }}>৳{totalExpenseValue.toLocaleString('en-IN')}</span>
+                  <span style={{ fontSize: isMobile ? '0.52rem' : '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Total Expenses</span>
+                  <span style={{ fontSize: isMobile ? '0.95rem' : '1.25rem', fontFamily: 'Hubot Sans Variable', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.15rem' }}>৳{totalExpenseValue.toLocaleString('en-IN')}</span>
                 </div>
               )}
               
@@ -246,8 +258,8 @@ const ExpenseChart = () => {
                       data={data}
                       cx="50%"
                       cy="50%"
-                      innerRadius={65}
-                      outerRadius={82}
+                      innerRadius={isMobile ? 45 : 65}
+                      outerRadius={isMobile ? 60 : 82}
                       paddingAngle={3}
                       dataKey="value"
                       activeIndex={activeIndex}
