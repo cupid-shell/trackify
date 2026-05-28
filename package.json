@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "lint": "eslint . && node validate-css.js",
     "preview": "vite preview"
   },
   "dependencies": {
