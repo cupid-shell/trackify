@@ -4,7 +4,7 @@ import { Sparkles, AlertTriangle, CheckCircle, TrendingUp, Zap, Target, Calendar
 import {
   RadialBarChart, RadialBar, PolarAngleAxis,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer, Cell
 } from 'recharts';
 
 const CustomTooltip = ({ active, payload }) => {
@@ -27,7 +27,7 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 const PredictionEngine = () => {
-  const { totalIncome, totalExpenses, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear, balance } = useAppContext();
+  const { totalIncome, totalExpenses, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear, balance, getCategoryStyle } = useAppContext();
 
   const prediction = useMemo(() => {
     const today = new Date();
@@ -70,7 +70,7 @@ const PredictionEngine = () => {
     const topCats = Object.entries(catMap)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
-      .map(([name, val]) => ({ name: name.length > 12 ? name.slice(0, 12) + '…' : name, value: Math.round(val) }));
+      .map(([name, val]) => ({ name, value: Math.round(val) }));
 
     return {
       dailyBurnRate,
@@ -213,24 +213,61 @@ const PredictionEngine = () => {
             <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-main)' }}>
               Top Spending Categories
             </span>
-            <div style={{ height: 140 }}>
+            <div style={{ height: 150 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={prediction.topCats} margin={{ top: 0, right: 4, left: -18, bottom: 0 }} barSize={14}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                <BarChart data={prediction.topCats} margin={{ top: 5, right: 4, left: -22, bottom: 0 }}>
+                  <defs>
+                    {prediction.topCats.map((cat, idx) => {
+                      const style = getCategoryStyle(cat.name);
+                      const color = style.color || '#6366f1';
+                      return (
+                        <linearGradient key={idx} id={`predBarGrad-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={color} stopOpacity={0.85} />
+                          <stop offset="100%" stopColor={color} stopOpacity={0.15} />
+                        </linearGradient>
+                      );
+                    })}
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: 'rgba(255,255,255,0.45)', fontSize: 9 }}
+                    tick={{ fill: 'var(--text-muted)', fontSize: 9, fontWeight: 500 }}
                     axisLine={false}
                     tickLine={false}
+                    angle={-22}
+                    textAnchor="end"
+                    height={38}
+                    interval={0}
+                    tickFormatter={(name) => name.length > 14 ? `${name.substring(0, 11)}...` : name}
                   />
                   <YAxis
-                    tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 9 }}
+                    tick={{ fill: 'var(--text-muted)', fontSize: 9 }}
                     axisLine={false}
                     tickLine={false}
-                    tickFormatter={v => `৳${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v}`}
+                    width={45}
+                    tickFormatter={v => {
+                      if (v >= 1000) {
+                        const kVal = v / 1000;
+                        return `৳${Number.isInteger(kVal) ? kVal : kVal.toFixed(1)}k`;
+                      }
+                      return `৳${v}`;
+                    }}
                   />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                  <Bar dataKey="value" fill="#58a6ff" radius={[4, 4, 0, 0]} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                  <Bar dataKey="value" radius={[5, 5, 0, 0]} barSize={20}>
+                    {prediction.topCats.map((entry, idx) => {
+                      const style = getCategoryStyle(entry.name);
+                      const color = style.color || '#6366f1';
+                      return (
+                        <Cell 
+                          key={`cell-${idx}`} 
+                          fill={`url(#predBarGrad-${idx})`} 
+                          stroke={color}
+                          strokeWidth={1.5}
+                        />
+                      );
+                    })}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
