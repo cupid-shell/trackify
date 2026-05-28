@@ -61,17 +61,7 @@ const Dashboard = () => (
 );
 
 const HistoryPage = () => {
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
-
-  const handleToggle = (mode) => {
-    if (document.startViewTransition) {
-      document.startViewTransition(() => {
-        setViewMode(mode);
-      });
-    } else {
-      setViewMode(mode);
-    }
-  };
+  const [selectedDay, setSelectedDay] = useState(null);
 
   return (
     <>
@@ -82,63 +72,13 @@ const HistoryPage = () => {
           <p>View your complete transaction history.</p>
         </div>
         
-        <div className="animate-fade-in stagger-2">
+        <div className="animate-fade-in stagger-2" style={{ marginBottom: '2rem' }}>
           <MonthSelector />
         </div>
 
-        {/* View Toggle */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          marginBottom: '2rem',
-          gap: '0.5rem'
-        }} className="animate-fade-in stagger-3">
-          <div style={{
-            background: 'var(--bg-card)',
-            padding: '4px',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            display: 'flex'
-          }}>
-            <button 
-              onClick={() => handleToggle('list')}
-              style={{
-                padding: '0.5rem 1.25rem',
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor: viewMode === 'list' ? 'var(--primary)' : 'transparent',
-                color: viewMode === 'list' ? '#07090e' : 'var(--text-muted)',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                transition: 'all 0.2s ease',
-                viewTransitionName: viewMode === 'list' ? 'history-toggle-pill' : 'none'
-              }}
-            >
-              List View
-            </button>
-            <button 
-              onClick={() => handleToggle('calendar')}
-              style={{
-                padding: '0.5rem 1.25rem',
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor: viewMode === 'calendar' ? 'var(--primary)' : 'transparent',
-                color: viewMode === 'calendar' ? '#07090e' : 'var(--text-muted)',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                transition: 'all 0.2s ease',
-                viewTransitionName: viewMode === 'calendar' ? 'history-toggle-pill' : 'none'
-              }}
-            >
-              Calendar Heatmap
-            </button>
-          </div>
-        </div>
-        
-        <div style={{ maxWidth: viewMode === 'calendar' ? '900px' : '800px', margin: '0 auto' }} className="animate-fade-in stagger-4">
-          {viewMode === 'list' ? (
-            <RecentTransactions />
-          ) : (
-            <ExpenseCalendar />
-          )}
+        <div className="flex-col gap-8 animate-fade-in stagger-3" style={{ maxWidth: '900px', margin: '0 auto', width: '100%' }}>
+          <ExpenseCalendar selectedDay={selectedDay} setSelectedDay={setSelectedDay} />
+          <RecentTransactions selectedDay={selectedDay} setSelectedDay={setSelectedDay} />
         </div>
       </main>
       <Footer />

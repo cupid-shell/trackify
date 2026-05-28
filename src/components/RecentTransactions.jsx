@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { format } from 'date-fns';
-import { Trash2, TrendingUp, Download, Edit2 } from 'lucide-react';
+import { Trash2, TrendingUp, Download, Edit2, X } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 
-const RecentTransactions = () => {
-  const { currentMonthTransactions, deleteTransaction, updateTransaction, userSettings, getCategoryStyle, showToast } = useAppContext();
+const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
+  const { 
+    currentMonthTransactions, 
+    deleteTransaction, 
+    updateTransaction, 
+    userSettings, 
+    getCategoryStyle, 
+    showToast,
+    selectedMonth,
+    selectedYear
+  } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [startDate, setStartDate] = useState('');
@@ -48,8 +57,17 @@ const RecentTransactions = () => {
   // Get unique categories for the current month to populate the dropdown
   const uniqueCategories = ['All', ...new Set(currentMonthTransactions.map(tx => tx.category))].sort();
 
-  // Filter by search term AND selected category
+  // Filter by search term AND selected category AND calendar day click
   const filteredTx = currentMonthTransactions.filter(tx => {
+    const txDate = new Date(tx.date);
+    
+    // Day filter
+    if (selectedDay !== null) {
+      if (txDate.getDate() !== selectedDay) {
+        return false;
+      }
+    }
+
     const matchesSearch = 
       tx.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (tx.note && tx.note.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -57,7 +75,6 @@ const RecentTransactions = () => {
       
     const matchesCategory = selectedCategory === 'All' || tx.category === selectedCategory;
     
-    const txDate = new Date(tx.date);
     txDate.setHours(0, 0, 0, 0);
 
     let matchesStartDate = true;
@@ -134,6 +151,45 @@ const RecentTransactions = () => {
           </button>
         )}
       </div>
+
+      {selectedDay !== null && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          padding: '0.45rem 0.85rem',
+          background: 'rgba(99, 102, 241, 0.1)',
+          border: '1px solid rgba(99, 102, 241, 0.3)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--primary)',
+          fontSize: '0.82rem',
+          fontWeight: 600,
+          width: 'fit-content',
+          marginTop: '-0.5rem',
+          boxShadow: '0 0 10px rgba(99, 102, 241, 0.05)'
+        }}>
+          <span>Filtered by Date: {format(new Date(selectedYear, selectedMonth, selectedDay), 'MMMM dd, yyyy')}</span>
+          <button 
+            onClick={() => setSelectedDay(null)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--primary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '0.1rem',
+              marginLeft: '0.25rem',
+              transition: 'transform 0.15s ease'
+            }}
+            onMouseOver={e => e.currentTarget.style.transform = 'scale(1.15)'}
+            onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+            title="Clear date filter"
+          >
+            <X size={13} strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
 
       <div className="flex-col gap-4" style={{ marginBottom: '1rem' }}>
         <div className="flex gap-4" style={{ flexWrap: 'wrap' }}>
