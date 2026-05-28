@@ -104,21 +104,7 @@ const AnalyticsCarousel = ({ slides }) => {
         </button>
       </div>
 
-      {/* Pill tab nav */}
-      <div className="ac-nav-bar">
-        <div className="ac-pills-scroll">
-          {slides.map((s, i) => (
-            <button
-              key={i}
-              className={`ac-pill${i === current ? ' active' : ''}`}
-              onClick={() => setCurrent(i)}
-            >
-              <span className="ac-pill-icon">{s.icon}</span>
-              <span>{s.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+
 
       {/* Dot indicators */}
       <div className="ac-dots-row">
