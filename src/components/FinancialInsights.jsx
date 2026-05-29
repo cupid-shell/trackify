@@ -332,7 +332,7 @@ const FinancialInsights = () => {
 
           {/* Projection Indicator */}
           <div className="flex-col gap-2" style={{ marginTop: '0.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap', gap: '0.25rem' }}>
               <span>Projected EOM Expense: <strong style={{ color: 'var(--text-main)' }}>৳{Math.round(pacingData.projectedTotal).toLocaleString('en-IN')}</strong></span>
               <span>Budget Limit: <strong style={{ color: 'var(--text-main)' }}>৳{pacingData.totalBudget.toLocaleString('en-IN')}</strong></span>
             </div>

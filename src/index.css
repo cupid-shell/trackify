@@ -511,8 +511,7 @@ input:focus, select:focus, textarea:focus {
     padding: 0.5rem 0;
   }
   .ac-card {
-    flex: 0 0 100% !important;
-    margin-right: 0 !important;
+    /* Width is controlled by JS inline style (exact stageWidth px) — no CSS override */
     transform: scale(1) !important;
     filter: none !important;
   }

@@ -184,7 +184,7 @@ const TrendChart = () => {
         </div>
 
         {stats && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.6rem' }}>
             {[
               { label: 'Total Saved (6M)', value: `৳${stats.totalSavings.toLocaleString('en-IN')}`, icon: <Wallet size={13} />, color: stats.totalSavings >= 0 ? 'var(--success)' : 'var(--danger)' },
               { label: 'Avg Savings Rate', value: `${stats.avgSavingsRate}%`, icon: <TrendingUp size={13} />, color: 'var(--primary)' },

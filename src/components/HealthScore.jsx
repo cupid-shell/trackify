@@ -251,9 +251,9 @@ const HealthScore = () => {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '1.25rem',
+        gap: '1rem',
         flexWrap: 'wrap',
-        justifyContent: 'space-between'
+        justifyContent: 'flex-start'
       }}>
         {/* Large Semicircular Segmented Gauge */}
         <div style={{ position: 'relative', width: '135px', height: '80px', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
@@ -323,7 +323,7 @@ const HealthScore = () => {
         </div>
 
         {/* Breakdown details */}
-        <div style={{ flex: 1, minWidth: '180px' }} className="flex-col gap-2">
+        <div style={{ flex: 1, minWidth: 0, width: '100%' }} className="flex-col gap-2">
           <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-main)', lineHeight: 1.4 }}>
             {metrics.feedback}
           </p>
