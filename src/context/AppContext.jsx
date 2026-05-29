@@ -655,7 +655,7 @@ export const AppProvider = ({ children }) => {
           minimumFetchInterval: 720, // 12 hours
           stopOnTerminate: false,
           startOnBoot: true,
-          enableHeadless: true,
+          enableHeadless: false,
           requiredNetworkType: 1 // NetworkType.ANY (Requires active internet connection)
         }, async (taskId) => {
           console.log('[BackgroundFetch] Event received: ' + taskId);
