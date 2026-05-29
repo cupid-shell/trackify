@@ -369,6 +369,28 @@ input:focus, select:focus, textarea:focus {
   padding: 1.5rem 0 1rem;
 }
 
+/* Mobile: native scroll-snap replaces JS translation */
+.ac-stage--mobile {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;          /* hide scrollbar on Firefox */
+  -ms-overflow-style: none;       /* hide scrollbar on IE/Edge */
+  display: flex;                  /* cards sit side by side */
+  padding: 0.5rem 0 1rem;         /* remove top padding so height is consistent */
+}
+.ac-stage--mobile::-webkit-scrollbar { display: none; }  /* hide scrollbar on WebKit */
+
+/* Each snap card: exactly one viewport-wide panel */
+.ac-snap-card {
+  flex: 0 0 100%;                 /* always 100% of the scroll container */
+  width: 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
 /* ── Flex track: all cards side by side ─────────────────── */
 .ac-track {
   display: flex;
@@ -511,11 +533,16 @@ input:focus, select:focus, textarea:focus {
     padding: 0.5rem 0;
   }
   .ac-card {
-    /* Width is controlled by JS inline style (exact stageWidth px) — no CSS override */
+    /* Width is controlled by CSS scroll-snap on mobile (.ac-snap-card) */
     transform: scale(1) !important;
     filter: none !important;
   }
-  
+
+  /* Hide floating arrows on mobile — swipe is the interaction */
+  .ac-float-arrow {
+    display: none;
+  }
+
   .glass-card {
     padding: 1.15rem 1rem !important;
   }

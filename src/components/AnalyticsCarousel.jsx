@@ -2,14 +2,17 @@ import { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 /**
- * Cover-flow carousel — all cards are a uniform fixed height (set in CSS).
- * The flex track translates to center the active card.
- * No JS height measurement needed — height is constant from .ac-card { height: 560px }.
+ * Carousel with two rendering modes:
+ *  - Mobile (< 640px): CSS scroll-snap, no JS translation needed.
+ *    The stage is overflow-x: auto with scroll-snap-type: x mandatory.
+ *    Each card is exactly 100% of the stage width (set in CSS).
+ *    Arrows call scrollTo on the stage. Dots scroll to the right panel.
+ *  - Desktop (>= 640px): JS cover-flow translateX carousel (unchanged).
  */
 const AnalyticsCarousel = ({ slides }) => {
-  const [current, setCurrent]     = useState(0);
+  const [current, setCurrent]       = useState(0);
   const [trackOffset, setTrackOffset] = useState(0);
-  const [stageWidth, setStageWidth]   = useState(0);
+  const [stageWidth, setStageWidth]   = useState(null); // null = not yet measured
 
   const stageRef = useRef(null);
   const total    = slides.length;
@@ -17,19 +20,19 @@ const AnalyticsCarousel = ({ slides }) => {
   const CARD_FRAC = 0.78;
   const GAP_FRAC  = 0.025;
 
+  // ── Desktop offset calc ─────────────────────────────────────
   const calcOffset = useCallback(() => {
     if (!stageRef.current) return;
     const stageW = stageRef.current.offsetWidth;
     setStageWidth(stageW);
-    
+
     if (stageW < 640) {
-      // Mobile: full width cards, no peeking, slide exactly by card index
-      setTrackOffset(-current * stageW);
+      // Mobile: CSS scroll-snap handles layout — just track the active index
+      setTrackOffset(0);
     } else {
-      // Desktop: cover-flow look
-      const cardW  = stageW * CARD_FRAC;
-      const gap    = stageW * GAP_FRAC;
-      const peek   = (stageW - cardW) / 2;
+      const cardW = stageW * CARD_FRAC;
+      const gap   = stageW * GAP_FRAC;
+      const peek  = (stageW - cardW) / 2;
       setTrackOffset(peek - current * (cardW + gap));
     }
   }, [current]);
@@ -43,81 +46,110 @@ const AnalyticsCarousel = ({ slides }) => {
     return () => ro.disconnect();
   }, [calcOffset]);
 
-  const go = useCallback((dir) => {
-    setCurrent(c => (c + dir + total) % total);
-  }, [total]);
+  // ── Navigation ───────────────────────────────────────────────
+  const isMobileMode = stageWidth !== null && stageWidth < 640;
 
+  const scrollMobileTo = useCallback((idx) => {
+    if (!stageRef.current) return;
+    const w = stageRef.current.offsetWidth;
+    stageRef.current.scrollTo({ left: idx * w, behavior: 'smooth' });
+  }, []);
+
+  const go = useCallback((dir) => {
+    const next = (current + dir + total) % total;
+    setCurrent(next);
+    if (isMobileMode) scrollMobileTo(next);
+  }, [current, total, isMobileMode, scrollMobileTo]);
+
+  // Sync dot indicator when user swipe-scrolls on mobile
   useEffect(() => {
+    const el = stageRef.current;
+    if (!el || !isMobileMode) return;
+    const onScroll = () => {
+      const idx = Math.round(el.scrollLeft / el.offsetWidth);
+      if (idx !== current) setCurrent(idx);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [isMobileMode, current]);
+
+  // Keyboard arrows (desktop only)
+  useEffect(() => {
+    if (isMobileMode) return;
     const h = (e) => {
       if (e.key === 'ArrowLeft')  go(-1);
       if (e.key === 'ArrowRight') go(1);
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [go]);
+  }, [go, isMobileMode]);
 
+  // ── Desktop card styles ──────────────────────────────────────
   const cardStyle = (diff) => {
     const abs = Math.abs(diff);
-    const isMobile = stageWidth < 640;
-    
-    if (isMobile) {
-      return {
-        transform: 'scale(1)',
-        opacity: abs === 0 ? 1 : 0,
-        filter: 'none',
-        zIndex: abs === 0 ? 10 : 1,
-        pointerEvents: abs === 0 ? 'auto' : 'none',
-        cursor: 'default'
-      };
-    }
-    
     if (abs === 0) return { transform: 'scale(1)',    opacity: 1,    filter: 'none',             zIndex: 10, cursor: 'default' };
     if (abs === 1) return { transform: 'scale(0.87)', opacity: 0.44, filter: 'brightness(0.35)',  zIndex: 6,  cursor: 'pointer' };
     if (abs === 2) return { transform: 'scale(0.75)', opacity: 0.24, filter: 'brightness(0.18)',  zIndex: 3,  cursor: 'default' };
-    return              { transform: 'scale(0.65)', opacity: 0,    filter: 'brightness(0.1)',   zIndex: 1,  cursor: 'default' };
+    return               { transform: 'scale(0.65)', opacity: 0,    filter: 'brightness(0.1)',   zIndex: 1,  cursor: 'default' };
   };
 
+  // ── Render ───────────────────────────────────────────────────
   return (
     <div className="ac-root">
 
-      {/* Stage with static floating arrows */}
       <div className="ac-stage-wrap">
 
         <button className="ac-float-arrow ac-float-arrow--left" onClick={() => go(-1)} aria-label="Previous">
           <ChevronLeft size={22} strokeWidth={2.5} />
         </button>
 
-        <div ref={stageRef} className="ac-stage">
-          <div
-            className="ac-track"
-            style={{ transform: `translateX(${trackOffset}px)` }}
-          >
-            {slides.map((slide, i) => {
-              const diff     = i - current;
-              const isActive = diff === 0;
-              const vstyle   = cardStyle(diff);
-              const isMobile = stageWidth < 640;
-              const cardW    = isMobile ? stageWidth : (stageWidth ? stageWidth * CARD_FRAC : '78%');
-              const gap      = isMobile ? 0 : (stageWidth ? stageWidth * GAP_FRAC  : '2.5%');
+        {/* Stage — switches between scroll-snap (mobile) and overflow:hidden (desktop) */}
+        <div
+          ref={stageRef}
+          className={`ac-stage${isMobileMode ? ' ac-stage--mobile' : ''}`}
+        >
+          {isMobileMode ? (
+            /* ── Mobile: each card is a native scroll-snap child ── */
+            slides.map((slide, i) => (
+              <div
+                key={i}
+                className={`ac-card ac-snap-card${i === current ? ' ac-card--active' : ''}`}
+              >
+                {slide.content}
+              </div>
+            ))
+          ) : (
+            /* ── Desktop: translateX cover-flow track ── */
+            <div
+              className="ac-track"
+              style={{ transform: `translateX(${trackOffset}px)` }}
+            >
+              {slides.map((slide, i) => {
+                const diff     = i - current;
+                const isActive = diff === 0;
+                const vstyle   = cardStyle(diff);
+                const cardW    = stageWidth ? stageWidth * CARD_FRAC : 0;
+                const gap      = stageWidth ? stageWidth * GAP_FRAC  : 0;
 
-              return (
-                <div
-                  key={i}
-                  className={`ac-card${isActive ? ' ac-card--active' : ''}`}
-                  style={{
-                    flex:            `0 0 ${typeof cardW === 'number' ? cardW + 'px' : cardW}`,
-                    marginRight:     i < total - 1 ? (typeof gap === 'number' ? `${gap}px` : gap) : 0,
-                    ...vstyle,
-                    transition:      'transform 0.48s cubic-bezier(0.4,0,0.2,1), opacity 0.48s ease, filter 0.48s ease',
-                    transformOrigin: 'top center',
-                  }}
-                  onClick={() => { if (Math.abs(diff) === 1) go(diff > 0 ? 1 : -1); }}
-                >
-                  {slide.content}
-                </div>
-              );
-            })}
-          </div>
+                return (
+                  <div
+                    key={i}
+                    className={`ac-card${isActive ? ' ac-card--active' : ''}`}
+                    style={{
+                      flex:            `0 0 ${cardW}px`,
+                      marginRight:     i < total - 1 ? `${gap}px` : 0,
+                      ...vstyle,
+                      transition:      'transform 0.48s cubic-bezier(0.4,0,0.2,1), opacity 0.48s ease, filter 0.48s ease',
+                      transformOrigin: 'top center',
+                    }}
+                    onClick={() => { if (Math.abs(diff) === 1) go(diff > 0 ? 1 : -1); }}
+                  >
+                    {slide.content}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <button className="ac-float-arrow ac-float-arrow--right" onClick={() => go(1)} aria-label="Next">
@@ -125,15 +157,16 @@ const AnalyticsCarousel = ({ slides }) => {
         </button>
       </div>
 
-
-
       {/* Dot indicators */}
       <div className="ac-dots-row">
         {slides.map((_, i) => (
           <button
             key={i}
             className={`ac-dot${i === current ? ' active' : ''}`}
-            onClick={() => setCurrent(i)}
+            onClick={() => {
+              setCurrent(i);
+              if (isMobileMode) scrollMobileTo(i);
+            }}
             aria-label={slides[i].label}
           />
         ))}
