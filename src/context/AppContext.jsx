@@ -1174,6 +1174,16 @@ export const AppProvider = ({ children }) => {
     if (!Capacitor.isNativePlatform()) return;
 
     try {
+      // Ensure notification permissions are granted on native platforms
+      let perm = await LocalNotifications.checkPermissions();
+      if (perm.display !== 'granted') {
+        perm = await LocalNotifications.requestPermissions();
+      }
+      if (perm.display !== 'granted') {
+        console.warn('Notification permissions were denied.');
+        return;
+      }
+
       // Create custom notification channels for Android 8+
       await LocalNotifications.createChannel({
         id: 'reminders',
