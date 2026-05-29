@@ -572,9 +572,12 @@ export const AppProvider = ({ children }) => {
 
         const cleanCurrent = currentVersion.replace(/^v/, '');
 
-        if (isNewer(latestVersion, cleanCurrent)) {
+         if (isNewer(latestVersion, cleanCurrent)) {
           const lastNotified = localStorage.getItem('trackify_notified_update_version');
           if (lastNotified === latestVersion) return;
+
+          // In-app visual toast notification
+          showToast(`Trackify v${latestVersion} is available! Tap the download button in the footer to update.`, 'info');
 
           let perm = await LocalNotifications.checkPermissions();
           if (perm.display !== 'granted') {
@@ -594,8 +597,8 @@ export const AppProvider = ({ children }) => {
                 }
               ]
             });
-            localStorage.setItem('trackify_notified_update_version', latestVersion);
           }
+          localStorage.setItem('trackify_notified_update_version', latestVersion);
         }
       } catch (error) {
         console.error('Error checking for APK update:', error);
@@ -620,7 +623,7 @@ export const AppProvider = ({ children }) => {
       clearTimeout(timer);
       actionListener.remove();
     };
-  }, []);
+  }, [showToast]);
 
 
   const updateSettings = async (newSettings) => {
