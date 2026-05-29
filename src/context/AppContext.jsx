@@ -648,6 +648,31 @@ export const AppProvider = ({ children }) => {
     // Check 5 seconds after startup
     const timer = setTimeout(checkAppUpdate, 5000);
 
+    // Register Background Fetch for native app updates (Runs periodically when closed/locked)
+    if (Capacitor.isNativePlatform()) {
+      import('@transistorsoft/capacitor-background-fetch').then(({ BackgroundFetch }) => {
+        BackgroundFetch.configure({
+          minimumFetchInterval: 720, // 12 hours
+          stopOnTerminate: false,
+          startOnBoot: true,
+          enableHeadless: true,
+          requiredNetworkType: 1 // NetworkType.ANY (Requires active internet connection)
+        }, async (taskId) => {
+          console.log('[BackgroundFetch] Event received: ' + taskId);
+          try {
+            await checkAppUpdate();
+          } catch (e) {
+            console.error('[BackgroundFetch] Error running app update check:', e);
+          }
+          BackgroundFetch.finish(taskId);
+        }, (error) => {
+          console.error('[BackgroundFetch] Failed to configure:', error);
+        });
+      }).catch(err => {
+        console.error('[BackgroundFetch] Dynamic import failed:', err);
+      });
+    }
+
     // Register listener for tapping notification on native platform
     let actionListener = null;
     if (Capacitor.isNativePlatform()) {
