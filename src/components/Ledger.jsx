@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { 
   Plus, Trash2, Calendar, PlusCircle, 
   ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Coins 
@@ -129,7 +129,7 @@ const LedgerPage = () => {
     if (!dueDateStr) return { label: '', color: 'var(--text-muted)' };
     const today = new Date();
     today.setHours(0,0,0,0);
-    const due = new Date(dueDateStr);
+    const due = parseLocalDate(dueDateStr);
     due.setHours(0,0,0,0);
 
     if (due < today) {

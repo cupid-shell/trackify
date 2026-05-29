@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { Sparkles, Calendar, Coffee, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const FinancialInsights = () => {
@@ -30,7 +30,7 @@ const FinancialInsights = () => {
       currentMonthTransactions
         .filter(tx => tx.type === 'expense')
         .map(tx => {
-          const dateObj = new Date(tx.date);
+          const dateObj = parseLocalDate(tx.date);
           return dateObj.getDate();
         })
     );
@@ -41,7 +41,7 @@ const FinancialInsights = () => {
     currentMonthTransactions
       .filter(tx => tx.type === 'expense')
       .forEach(tx => {
-        const day = new Date(tx.date).getDate();
+        const day = parseLocalDate(tx.date).getDate();
         spentByDay[day] = (spentByDay[day] || 0) + Number(tx.amount);
       });
 
@@ -105,16 +105,16 @@ const FinancialInsights = () => {
 
     // Filter transactions up to limit day
     const currentMTD = currentMonthTransactions
-      .filter(tx => tx.type === 'expense' && new Date(tx.date).getDate() <= activeDays)
+      .filter(tx => tx.type === 'expense' && parseLocalDate(tx.date).getDate() <= activeDays)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
     const prevMonthTransactions = transactions.filter(tx => {
-      const txDate = new Date(tx.date);
+      const txDate = parseLocalDate(tx.date);
       return txDate.getMonth() === prevMonth && txDate.getFullYear() === prevYear;
     });
 
     const prevMTD = prevMonthTransactions
-      .filter(tx => tx.type === 'expense' && new Date(tx.date).getDate() <= prevLimitDay)
+      .filter(tx => tx.type === 'expense' && parseLocalDate(tx.date).getDate() <= prevLimitDay)
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
     let velocity = 0;
@@ -127,8 +127,8 @@ const FinancialInsights = () => {
     // Find the earliest transaction date in history
     let earliestDate = null;
     if (transactions.length > 0) {
-      const timestamps = transactions.map(t => new Date(t.date).getTime());
-      earliestDate = new Date(Math.min(...timestamps));
+      const timestamps = transactions.map(t => parseLocalDate(t.date).getTime());
+      earliestDate = parseLocalDate(transactions[transactions.length - 1].date);
     }
 
     const isPrevPlaceholder = earliestDate && (

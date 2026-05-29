@@ -27,12 +27,23 @@ const RecurringTracker = () => {
   };
 
   const handlePayBill = (bill) => {
+    const dueDay = String(bill.dueDate).padStart(2, '0');
+    const monthStr = String(selectedMonth + 1).padStart(2, '0');
+    const dateStr = `${selectedYear}-${monthStr}-${dueDay}`;
+    
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const localDate = new Date(y, m - 1, d, hours, minutes);
+
     addTransaction({
       type: 'expense',
       amount: Number(bill.amount),
       category: bill.category,
       note: `[Recurring] ${bill.name}`,
-      date: new Date().toISOString(),
+      date: localDate.toISOString(),
       payment_method: bill.payment || 'Cash'
     });
     showToast(`Logged payment for: ${bill.name}!`, 'success');

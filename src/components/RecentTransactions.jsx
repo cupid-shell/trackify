@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { format } from 'date-fns';
 import { Trash2, TrendingUp, Download, Edit2, X } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
@@ -86,7 +86,7 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
 
   // Filter by search term AND selected category AND calendar day click
   const filteredTx = currentMonthTransactions.filter(tx => {
-    const txDate = new Date(tx.date);
+    const txDate = parseLocalDate(tx.date);
     
     // Day filter
     if (selectedDay !== null) {

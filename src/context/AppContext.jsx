@@ -6,6 +6,13 @@ import { version as currentVersion } from '../../package.json';
 
 const AppContext = createContext();
 
+export const parseLocalDate = (dateStr) => {
+  if (!dateStr) return new Date();
+  const datePart = dateStr.split(/[ T]/)[0];
+  const [year, month, day] = datePart.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAppContext = () => useContext(AppContext);
 
@@ -214,6 +221,8 @@ export const AppProvider = ({ children }) => {
         ? data.notification_preferences
         : (categoryMetadata._notification_preferences !== undefined ? categoryMetadata._notification_preferences : defaultNotificationPrefs);
 
+      const loadedSkippedBills = categoryMetadata._skipped_bills || [];
+
       setUserSettings({
         base_income: data.base_income || 15000,
         savings_goal: data.savings_goal || 3000,
@@ -240,6 +249,10 @@ export const AppProvider = ({ children }) => {
         Object.keys(prefs).forEach(key => {
           localStorage.setItem(`trackify_${key}`, prefs[key].toString());
         });
+      }
+      if (loadedSkippedBills != null) {
+        setSkippedBills(loadedSkippedBills);
+        localStorage.setItem('trackify_skipped_bills', JSON.stringify(loadedSkippedBills));
       }
     }
   }
@@ -332,20 +345,18 @@ export const AppProvider = ({ children }) => {
 
   const skipBillForMonth = (billName, year, month) => {
     const key = `${year}-${month}-${billName}`;
-    setSkippedBills(prev => {
-      const next = prev.includes(key) ? prev : [...prev, key];
-      localStorage.setItem('trackify_skipped_bills', JSON.stringify(next));
-      return next;
-    });
+    const next = skippedBills.includes(key) ? skippedBills : [...skippedBills, key];
+    setSkippedBills(next);
+    localStorage.setItem('trackify_skipped_bills', JSON.stringify(next));
+    updateSettings({ skipped_bills: next });
   };
 
   const unskipBillForMonth = (billName, year, month) => {
     const key = `${year}-${month}-${billName}`;
-    setSkippedBills(prev => {
-      const next = prev.filter(k => k !== key);
-      localStorage.setItem('trackify_skipped_bills', JSON.stringify(next));
-      return next;
-    });
+    const next = skippedBills.filter(k => k !== key);
+    setSkippedBills(next);
+    localStorage.setItem('trackify_skipped_bills', JSON.stringify(next));
+    updateSettings({ skipped_bills: next });
   };
 
   // Automatically check due dates for active loans/debts
@@ -357,7 +368,7 @@ export const AppProvider = ({ children }) => {
       debts.forEach(debt => {
         if (debt.status !== 'active' || !debt.due_date) return;
 
-        const dueDate = new Date(debt.due_date);
+        const dueDate = parseLocalDate(debt.due_date);
         dueDate.setHours(0, 0, 0, 0);
 
         const diffTime = dueDate.getTime() - today.getTime();
@@ -450,7 +461,7 @@ export const AppProvider = ({ children }) => {
                 t.id.toString().startsWith('temp-') && 
                 t.amount == payload.new.amount && 
                 t.category === payload.new.category &&
-                t.date === payload.new.date
+                new Date(t.date).getTime() === new Date(payload.new.date).getTime()
               );
               if (tempIndex !== -1) {
                 return prev.map((t, idx) => idx === tempIndex ? payload.new : t);
@@ -515,6 +526,8 @@ export const AppProvider = ({ children }) => {
               ? payload.new.notification_preferences
               : (categoryMetadata._notification_preferences !== undefined ? categoryMetadata._notification_preferences : defaultNotificationPrefs);
 
+            const loadedSkippedBills = categoryMetadata._skipped_bills || [];
+
             setUserSettings({
               base_income: payload.new.base_income || 15000,
               savings_goal: payload.new.savings_goal || 3000,
@@ -541,6 +554,10 @@ export const AppProvider = ({ children }) => {
               Object.keys(prefs).forEach(key => {
                 localStorage.setItem(`trackify_${key}`, prefs[key].toString());
               });
+            }
+            if (loadedSkippedBills != null) {
+              setSkippedBills(loadedSkippedBills);
+              localStorage.setItem('trackify_skipped_bills', JSON.stringify(loadedSkippedBills));
             }
           }
         }
@@ -661,6 +678,7 @@ export const AppProvider = ({ children }) => {
     
     const updatedPresets = newSettings.presets !== undefined ? newSettings.presets : presets;
     const updatedBills = newSettings.recurring_bills !== undefined ? newSettings.recurring_bills : recurringBills;
+    const updatedSkipped = newSettings.skipped_bills !== undefined ? newSettings.skipped_bills : skippedBills;
     
     let updatedPrefs = newSettings.notification_preferences;
     if (!updatedPrefs) {
@@ -678,6 +696,7 @@ export const AppProvider = ({ children }) => {
     currentMetadata._presets = updatedPresets;
     currentMetadata._recurring_bills = updatedBills;
     currentMetadata._notification_preferences = updatedPrefs;
+    currentMetadata._skipped_bills = updatedSkipped;
 
     // Optimistic UI update
     setUserSettings(prev => ({ 
@@ -693,6 +712,10 @@ export const AppProvider = ({ children }) => {
     if (newSettings.recurring_bills != null) {
       setRecurringBills(newSettings.recurring_bills);
       localStorage.setItem('trackify_recurring_bills', JSON.stringify(newSettings.recurring_bills));
+    }
+    if (newSettings.skipped_bills != null) {
+      setSkippedBills(newSettings.skipped_bills);
+      localStorage.setItem('trackify_skipped_bills', JSON.stringify(newSettings.skipped_bills));
     }
     if (newSettings.notification_preferences != null) {
       const prefs = newSettings.notification_preferences;
@@ -1378,7 +1401,7 @@ export const AppProvider = ({ children }) => {
         const currentYear = now.getFullYear();
 
         const currentMonthTxs = transactions.filter(tx => {
-          const txDate = new Date(tx.date);
+          const txDate = parseLocalDate(tx.date);
           return tx.type === 'expense' && 
                  tx.category === cat && 
                  txDate.getMonth() === currentMonth && 
@@ -1523,7 +1546,7 @@ export const AppProvider = ({ children }) => {
   const [selectedYear, setSelectedYear] = useState(currentRealDate.getFullYear());
 
   const currentMonthTransactions = transactions.filter(tx => {
-    const txDate = new Date(tx.date);
+    const txDate = parseLocalDate(tx.date);
     return txDate.getMonth() === selectedMonth && txDate.getFullYear() === selectedYear;
   });
 

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { Shield, Flame, Award, Heart } from 'lucide-react';
 
 const HealthScore = () => {
@@ -56,7 +56,7 @@ const HealthScore = () => {
     const uniqueSpendDates = new Set(
       currentMonthTransactions
         .filter(tx => tx.type === 'expense')
-        .map(tx => new Date(tx.date).getDate())
+        .map(tx => parseLocalDate(tx.date).getDate())
     );
     const noSpendDays = Math.max(0, activeDays - uniqueSpendDates.size);
     const noSpendScore = Math.min(100, (noSpendDays / 8) * 100);
@@ -69,7 +69,7 @@ const HealthScore = () => {
     currentMonthTransactions
       .filter(tx => tx.type === 'expense')
       .forEach(tx => {
-        const day = new Date(tx.date).getDate();
+        const day = parseLocalDate(tx.date).getDate();
         if (day >= 1 && day <= daysInMonth) {
           spendDaysMap[day] = true;
         }

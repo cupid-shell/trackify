@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { X, TrendingUp, Calendar as CalendarIcon, Info, Flame, Award, ShieldCheck } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 
@@ -35,7 +35,7 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
     }
 
     currentMonthTransactions.forEach(tx => {
-      const txDate = new Date(tx.date);
+      const txDate = parseLocalDate(tx.date);
       const day = txDate.getDate();
       if (day >= 1 && day <= daysInMonth) {
         if (tx.type === 'expense') {

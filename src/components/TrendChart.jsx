@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subMonths } from 'date-fns';
 import { Wallet, TrendingUp, Calendar, Award } from 'lucide-react';
@@ -35,8 +35,8 @@ const TrendChart = () => {
     // Find the earliest transaction date in history
     let earliestDate = null;
     if (transactions.length > 0) {
-      const timestamps = transactions.map(t => new Date(t.date).getTime());
-      earliestDate = new Date(Math.min(...timestamps));
+      const timestamps = transactions.map(t => parseLocalDate(t.date).getTime());
+      earliestDate = parseLocalDate(transactions[transactions.length - 1].date);
     }
 
     for (let i = 5; i >= 0; i--) {
@@ -62,7 +62,7 @@ const TrendChart = () => {
       }
 
       const monthTx = transactions.filter(tx => {
-        const txDate = new Date(tx.date);
+        const txDate = parseLocalDate(tx.date);
         return txDate.getMonth() === month && txDate.getFullYear() === year;
       });
 
