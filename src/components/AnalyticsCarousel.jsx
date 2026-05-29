@@ -96,8 +96,9 @@ const AnalyticsCarousel = ({ slides }) => {
               const diff     = i - current;
               const isActive = diff === 0;
               const vstyle   = cardStyle(diff);
-              const cardW    = stageWidth ? stageWidth * CARD_FRAC : '78%';
-              const gap      = stageWidth ? stageWidth * GAP_FRAC  : '2.5%';
+              const isMobile = stageWidth < 640;
+              const cardW    = isMobile ? stageWidth : (stageWidth ? stageWidth * CARD_FRAC : '78%');
+              const gap      = isMobile ? 0 : (stageWidth ? stageWidth * GAP_FRAC  : '2.5%');
 
               return (
                 <div

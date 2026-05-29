@@ -88,14 +88,15 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="site-header" style={{
-      borderBottom: '1px solid var(--border-color)',
-      backgroundColor: 'var(--bg-header)',
-      backdropFilter: 'blur(16px)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 200,
-    }}>
+    <>
+      <header className="site-header" style={{
+        borderBottom: '1px solid var(--border-color)',
+        backgroundColor: 'var(--bg-header)',
+        backdropFilter: 'blur(16px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 200,
+      }}>
       <style>{`
         .site-header {
           padding: 0.75rem 0.5rem;
@@ -548,6 +549,8 @@ const Header = () => {
         )}
       </div>
 
+      </header>
+
       {/* Collapsible Left Navigation Drawer (Android App Only) */}
       {isAndroid && session && (
         <>
@@ -624,7 +627,7 @@ const Header = () => {
           </div>
         </>
       )}
-    </header>
+    </>
   );
 };
 
