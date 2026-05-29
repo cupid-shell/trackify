@@ -1467,5 +1467,11 @@ body.light-theme .cs-sheet-option:hover {
   font-size: 0.85rem;
 }
 
+/* Prevent glass-card clipping when hosting CustomSelect dropdowns */
+.glass-card:has(.cs-container) {
+  overflow: visible;
+}
+
+
 
 
