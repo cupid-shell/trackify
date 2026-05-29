@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { version as currentVersion } from '../../package.json';
 import { X } from 'lucide-react';
@@ -648,34 +649,27 @@ export const AppProvider = ({ children }) => {
     // Check 5 seconds after startup
     const timer = setTimeout(checkAppUpdate, 5000);
 
-    // Register Background Fetch for native app updates (Runs periodically when closed/locked)
-    if (Capacitor.isNativePlatform()) {
-      import('@transistorsoft/capacitor-background-fetch').then(({ BackgroundFetch }) => {
-        BackgroundFetch.configure({
-          minimumFetchInterval: 720, // 12 hours
-          stopOnTerminate: false,
-          startOnBoot: true,
-          enableHeadless: false,
-          requiredNetworkType: 1 // NetworkType.ANY (Requires active internet connection)
-        }, async (taskId) => {
-          console.log('[BackgroundFetch] Event received: ' + taskId);
-          try {
-            await checkAppUpdate();
-          } catch (e) {
-            console.error('[BackgroundFetch] Error running app update check:', e);
-          }
-          BackgroundFetch.finish(taskId);
-        }, (error) => {
-          console.error('[BackgroundFetch] Failed to configure:', error);
-        });
-      }).catch(err => {
-        console.error('[BackgroundFetch] Dynamic import failed:', err);
-      });
-    }
+    // Check every 6 hours as a passive fallback while app is open
+    const intervalTimer = setInterval(checkAppUpdate, 6 * 60 * 60 * 1000);
 
     // Register listener for tapping notification on native platform
     let actionListener = null;
+    let appStateListener = null;
+
     if (Capacitor.isNativePlatform()) {
+      // Check for updates whenever the app is brought back to foreground
+      appStateListener = App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) {
+          // Throttle: only re-check if it's been at least 30 minutes since last check
+          const lastCheck = Number(localStorage.getItem('trackify_last_update_check') || '0');
+          if (Date.now() - lastCheck > 30 * 60 * 1000) {
+            checkAppUpdate();
+            localStorage.setItem('trackify_last_update_check', String(Date.now()));
+          }
+        }
+      });
+
+      // Register listener for tapping update notification
       actionListener = LocalNotifications.addListener(
         'localNotificationActionPerformed',
         (action) => {
@@ -689,9 +683,9 @@ export const AppProvider = ({ children }) => {
 
     return () => {
       clearTimeout(timer);
-      if (actionListener) {
-        actionListener.remove();
-      }
+      clearInterval(intervalTimer);
+      if (actionListener) actionListener.remove();
+      if (appStateListener) appStateListener.remove();
     };
   }, []);
 
