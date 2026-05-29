@@ -611,6 +611,7 @@ export const AppProvider = ({ children }) => {
                     title: 'Trackify Update Available 🚀',
                     body: `Version v${latestVersion} is ready to download! Tap to download the new APK.`,
                     id: 9999,
+                    channelId: 'updates',
                     extra: {
                       url: downloadUrl
                     }
@@ -1173,6 +1174,26 @@ export const AppProvider = ({ children }) => {
     if (!Capacitor.isNativePlatform()) return;
 
     try {
+      // Create custom notification channels for Android 8+
+      await LocalNotifications.createChannel({
+        id: 'reminders',
+        name: 'Daily Reminders & Alerts',
+        description: 'Notifications for daily logging reminders, budget alerts, and savings progress.',
+        importance: 4, // High importance (plays sound + banners)
+        vibration: true,
+        lights: true,
+        lightColor: '#10b981'
+      });
+
+      await LocalNotifications.createChannel({
+        id: 'updates',
+        name: 'App Updates',
+        description: 'Notifications when new versions of Trackify are available for download.',
+        importance: 3, // Default importance
+        vibration: true,
+        lights: false
+      });
+
       // 1. Cancel existing scheduled local notifications
       const pending = await LocalNotifications.getPending();
       if (pending.notifications && pending.notifications.length > 0) {
@@ -1231,6 +1252,7 @@ export const AppProvider = ({ children }) => {
             title,
             body,
             id: 1001,
+            channelId: 'reminders',
             schedule: { at: scheduleTime }
           });
         }
@@ -1249,6 +1271,7 @@ export const AppProvider = ({ children }) => {
           title: 'Your Weekly Spend Summary 📊',
           body: 'A new week has started! Tap to open Trackify and review your budget progress.',
           id: 1002,
+          channelId: 'reminders',
           schedule: {
             every: 'week',
             on: {
@@ -1268,6 +1291,7 @@ export const AppProvider = ({ children }) => {
           title: 'Monthly Financial Review 📊',
           body: 'A new month has started! Tap to review your complete spending and savings for the past month.',
           id: 1003,
+          channelId: 'reminders',
           schedule: { at: nextMonth }
         });
       }
@@ -1278,6 +1302,7 @@ export const AppProvider = ({ children }) => {
           title: 'Keep Saving! 🎯',
           body: 'Review your savings goals this weekend. Small additions add up to big achievements!',
           id: 1005,
+          channelId: 'reminders',
           schedule: {
             every: 'week',
             on: {
@@ -1308,6 +1333,7 @@ export const AppProvider = ({ children }) => {
             title: `Bill Due Today: ${bill.name} 🏠`,
             body: `Your payment of ৳${bill.amount} for ${bill.category} is due. Tap to record it!`,
             id: 2000 + idx,
+            channelId: 'reminders',
             schedule: { at: scheduleTime }
           });
         });
@@ -1363,6 +1389,7 @@ export const AppProvider = ({ children }) => {
                     title: `Budget Exhausted! 🛑`,
                     body: `You have spent ৳${totalSpent.toLocaleString('en-IN')} out of your ৳${limit.toLocaleString('en-IN')} budget limit for ${cat}.`,
                     id: 3500 + Math.floor(Math.random() * 1000),
+                    channelId: 'reminders',
                   }
                 ]
               });
@@ -1382,6 +1409,7 @@ export const AppProvider = ({ children }) => {
                     title: `Budget Warning: ${cat} ⚠️`,
                     body: `You have spent ৳${totalSpent.toLocaleString('en-IN')} out of your ৳${limit.toLocaleString('en-IN')} budget limit for ${cat} (${Math.round((totalSpent / limit) * 100)}%).`,
                     id: 3000 + Math.floor(Math.random() * 1000),
+                    channelId: 'reminders',
                   }
                 ]
               });
@@ -1409,7 +1437,8 @@ export const AppProvider = ({ children }) => {
                 {
                   title: 'Unusual Spending Spike 🚨',
                   body: `You just logged a ৳${Number(newTx.amount).toLocaleString('en-IN')} expense for ${cat}, which is significantly higher than your typical average (৳${Math.round(average).toLocaleString('en-IN')}).`,
-                  id: 5000 + Math.floor(Math.random() * 1000)
+                  id: 5000 + Math.floor(Math.random() * 1000),
+                  channelId: 'reminders',
                 }
               ]
             });
@@ -1462,7 +1491,8 @@ export const AppProvider = ({ children }) => {
             {
               title: titleMap[milestoneCrossed],
               body: bodyMap[milestoneCrossed],
-              id: 4000 + milestoneCrossed + (Number(goal.id.slice(-4)) || 0)
+              id: 4000 + milestoneCrossed + (Number(goal.id.slice(-4)) || 0),
+              channelId: 'reminders',
             }
           ]
         });
