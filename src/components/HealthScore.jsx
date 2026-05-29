@@ -324,7 +324,7 @@ const HealthScore = () => {
 
         {/* Breakdown details */}
         <div style={{ flex: 1, minWidth: 0, width: '100%' }} className="flex-col gap-2">
-          <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-main)', lineHeight: 1.4 }}>
+          <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-main)', lineHeight: 1.5, textAlign: 'justify' }}>
             {metrics.feedback}
           </p>
           <div style={{ display: 'flex', gap: '0.65rem', fontSize: '0.72rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
@@ -415,7 +415,7 @@ const HealthScore = () => {
                   }} />
                 </div>
                 
-                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.45, textAlign: 'justify' }}>
                   {ach.desc}
                 </span>
               </div>
