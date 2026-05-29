@@ -1,10 +1,11 @@
 import { useAppContext } from '../context/AppContext';
 import { Download, Sparkles, X, Info } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 
 const AppUpdatePrompt = () => {
   const { updateAvailable, updateDismissed, dismissUpdate } = useAppContext();
 
-  if (!updateAvailable || updateDismissed) return null;
+  if (!Capacitor.isNativePlatform() || !updateAvailable || updateDismissed) return null;
 
   const versionStr = updateAvailable.version;
   const downloadUrl = updateAvailable.downloadUrl;

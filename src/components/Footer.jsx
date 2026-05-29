@@ -1,5 +1,6 @@
 import { version } from '../../package.json';
 import { useAppContext } from '../context/AppContext';
+import { Capacitor } from '@capacitor/core';
 
 const DownloadIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
@@ -188,14 +189,16 @@ const Footer = () => {
         </div>
 
         <div className="footer-right">
-          <a
-            href={apkUrl}
-            className="footer-btn-primary"
-            title={`Download Trackify Android APK v${version}`}
-          >
-            <DownloadIcon />
-            <span>Download APK</span>
-          </a>
+          {!Capacitor.isNativePlatform() && (
+            <a
+              href={apkUrl}
+              className="footer-btn-primary"
+              title={`Download Trackify Android APK v${version}`}
+            >
+              <DownloadIcon />
+              <span>Download APK</span>
+            </a>
+          )}
 
           <a
             href="https://github.com/cupid-shell/trackify"
