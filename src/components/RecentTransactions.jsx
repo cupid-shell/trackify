@@ -3,6 +3,7 @@ import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { format } from 'date-fns';
 import { Trash2, TrendingUp, Download, Edit2, X } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
+import CustomSelect from './CustomSelect';
 
 const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
   const { 
@@ -236,24 +237,18 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
               }}
             />
           </div>
-          <select 
+          <CustomSelect
+            options={uniqueCategories}
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={val => setSelectedCategory(val)}
+            getCategoryStyle={getCategoryStyle}
+            label="Category"
             style={{
               flex: '0 0 auto',
               width: 'auto',
-              padding: '0.75rem 1rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)',
-              backgroundColor: 'var(--bg-input)',
-              color: 'var(--text-main)',
               minWidth: '150px'
             }}
-          >
-            {uniqueCategories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          />
         </div>
 
         <div className="flex gap-4 items-center" style={{ flexWrap: 'wrap', fontSize: '0.875rem' }}>
@@ -343,29 +338,24 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
                     </div>
                     <div style={{ flex: '1 1 150px' }}>
                       <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Category</label>
-                      <select 
-                        value={editCategory} 
-                        onChange={e => setEditCategory(e.target.value)}
-                        style={{ padding: '0.5rem', fontSize: '0.875rem' }}
-                      >
-                        {(tx.type === 'expense' ? userSettings.expense_categories : userSettings.income_categories).map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
+                      <CustomSelect
+                        options={tx.type === 'expense' ? userSettings.expense_categories : userSettings.income_categories}
+                        value={editCategory}
+                        onChange={val => setEditCategory(val)}
+                        getCategoryStyle={getCategoryStyle}
+                        label="Category"
+                        triggerStyle={{ padding: '0.5rem', fontSize: '0.875rem', height: '2.25rem' }}
+                      />
                     </div>
                     <div style={{ flex: '1 1 120px' }}>
                       <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Payment Method</label>
-                      <select 
-                        value={editPaymentMethod} 
-                        onChange={e => setEditPaymentMethod(e.target.value)}
-                        style={{ padding: '0.5rem', fontSize: '0.875rem' }}
-                      >
-                        <option value="Cash">Cash</option>
-                        <option value="Card">Card</option>
-                        <option value="bKash">bKash</option>
-                        <option value="Nagad">Nagad</option>
-                        <option value="Rocket">Rocket</option>
-                      </select>
+                      <CustomSelect
+                        options={['Cash', 'Card', 'bKash', 'Nagad', 'Rocket']}
+                        value={editPaymentMethod}
+                        onChange={val => setEditPaymentMethod(val)}
+                        label="Payment Method"
+                        triggerStyle={{ padding: '0.5rem', fontSize: '0.875rem', height: '2.25rem' }}
+                      />
                     </div>
                     <div style={{ flex: '1 1 200px', display: 'flex', gap: '0.5rem' }}>
                       <div style={{ flex: 1 }}>

@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { PlusCircle, Trash2, Plus } from 'lucide-react';
+import CustomSelect from './CustomSelect';
 
 // --- Helpers ---
 
@@ -108,29 +109,21 @@ const GridRow = ({
 
       {/* Line 2: Category  |  Payment */}
       <div className="grid-row-line">
-        <select
-          className="grid-category-select"
+        <CustomSelect
+          options={categories}
           value={row.category}
-          onChange={e => onUpdate(index, 'category', e.target.value)}
-        >
-          {categories.map(cat => {
-            const style = getCategoryStyle(cat);
-            return (
-              <option key={cat} value={cat}>
-                {style.emoji} {cat}
-              </option>
-            );
-          })}
-        </select>
-        <select
-          className="grid-payment-select"
+          onChange={val => onUpdate(index, 'category', val)}
+          getCategoryStyle={getCategoryStyle}
+          label="Category"
+          style={{ flex: 1 }}
+        />
+        <CustomSelect
+          options={paymentMethods}
           value={row.paymentMethod}
-          onChange={e => onUpdate(index, 'paymentMethod', e.target.value)}
-        >
-          {paymentMethods.map(m => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </select>
+          onChange={val => onUpdate(index, 'paymentMethod', val)}
+          label="Payment Method"
+          style={{ width: '110px', flexShrink: 0 }}
+        />
       </div>
 
       {/* Line 3: Date & Time side-by-side */}

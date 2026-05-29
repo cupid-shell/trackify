@@ -6,7 +6,13 @@ import {
 } from 'lucide-react';
 import Header from './Header';
 import Footer from './Footer';
+import CustomSelect from './CustomSelect';
 import { format, parseISO } from 'date-fns';
+
+const typeOptions = [
+  { value: 'lent', label: 'Lent (I gave money)' },
+  { value: 'borrowed', label: 'Borrowed (I took money)' }
+];
 
 const LedgerPage = () => {
   const { debts, addDebt, recordDebtRepayment, deleteDebt, showToast } = useAppContext();
@@ -256,14 +262,12 @@ const LedgerPage = () => {
                 {/* Type Selection */}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Transaction Type</label>
-                  <select
+                  <CustomSelect
+                    options={typeOptions}
                     value={type}
-                    onChange={e => setType(e.target.value)}
-                    style={{ padding: '0.6rem', fontSize: '0.875rem' }}
-                  >
-                    <option value="lent">Lent (I gave money)</option>
-                    <option value="borrowed">Borrowed (I took money)</option>
-                  </select>
+                    onChange={val => setType(val)}
+                    label="Transaction Type"
+                  />
                 </div>
 
                 {/* Person name */}

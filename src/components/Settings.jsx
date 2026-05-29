@@ -7,6 +7,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import CategoryIcon from './CategoryIcon';
 import Header from './Header';
 import Footer from './Footer';
+import CustomSelect from './CustomSelect';
 
 const SettingsPage = () => {
   const { 
@@ -471,25 +472,22 @@ const SettingsPage = () => {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
                     <div className="flex-col" style={{ gap: '0.25rem' }}>
                       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Category</label>
-                      <select 
-                        value={newPresetCategory} 
-                        onChange={(e) => setNewPresetCategory(e.target.value)}
-                      >
-                        {expenseCategories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
+                      <CustomSelect
+                        options={expenseCategories}
+                        value={newPresetCategory}
+                        onChange={val => setNewPresetCategory(val)}
+                        getCategoryStyle={getCategoryStyle}
+                        label="Category"
+                      />
                     </div>
                     <div className="flex-col" style={{ gap: '0.25rem' }}>
                       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Payment Method</label>
-                      <select 
-                        value={newPresetPayment} 
-                        onChange={(e) => setNewPresetPayment(e.target.value)}
-                      >
-                        <option value="Cash">Cash</option>
-                        <option value="bKash">bKash</option>
-                        <option value="Bank">Bank</option>
-                      </select>
+                      <CustomSelect
+                        options={['Cash', 'bKash', 'Bank']}
+                        value={newPresetPayment}
+                        onChange={val => setNewPresetPayment(val)}
+                        label="Payment Method"
+                      />
                     </div>
                   </div>
 
@@ -589,14 +587,13 @@ const SettingsPage = () => {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
                     <div className="flex-col" style={{ gap: '0.25rem' }}>
                       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Category</label>
-                      <select 
-                        value={newBillCategory} 
-                        onChange={(e) => setNewBillCategory(e.target.value)}
-                      >
-                        {expenseCategories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
+                      <CustomSelect
+                        options={expenseCategories}
+                        value={newBillCategory}
+                        onChange={val => setNewBillCategory(val)}
+                        getCategoryStyle={getCategoryStyle}
+                        label="Category"
+                      />
                     </div>
                     <div className="flex-col" style={{ gap: '0.25rem' }}>
                       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Due Day (1-31)</label>
@@ -611,14 +608,12 @@ const SettingsPage = () => {
                     </div>
                     <div className="flex-col" style={{ gap: '0.25rem' }}>
                       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Payment Method</label>
-                      <select 
-                        value={newBillPayment} 
-                        onChange={(e) => setNewBillPayment(e.target.value)}
-                      >
-                        <option value="Cash">Cash</option>
-                        <option value="bKash">bKash</option>
-                        <option value="Bank">Bank</option>
-                      </select>
+                      <CustomSelect
+                        options={['Cash', 'bKash', 'Bank']}
+                        value={newBillPayment}
+                        onChange={val => setNewBillPayment(val)}
+                        label="Payment Method"
+                      />
                     </div>
                   </div>
 
@@ -1049,19 +1044,14 @@ const SettingsPage = () => {
                     {weeklyDigest && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Delivery Day:</span>
-                        <select 
-                          value={weeklyDigestDay} 
-                          onChange={(e) => setWeeklyDigestDay(e.target.value)}
-                          style={{ width: '140px', padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
-                        >
-                          <option value="Saturday">Saturday</option>
-                          <option value="Sunday">Sunday</option>
-                          <option value="Monday">Monday</option>
-                          <option value="Tuesday">Tuesday</option>
-                          <option value="Wednesday">Wednesday</option>
-                          <option value="Thursday">Thursday</option>
-                          <option value="Friday">Friday</option>
-                        </select>
+                        <CustomSelect
+                          options={['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']}
+                          value={weeklyDigestDay}
+                          onChange={val => setWeeklyDigestDay(val)}
+                          label="Delivery Day"
+                          style={{ width: '140px' }}
+                          triggerStyle={{ padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
+                        />
                       </div>
                     )}
                   </div>

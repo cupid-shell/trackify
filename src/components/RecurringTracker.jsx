@@ -81,8 +81,8 @@ const RecurringTracker = () => {
 
   return (
     <div className="glass-card flex-col gap-4">
-      <div className="flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-        <div className="flex-col" style={{ gap: '0.25rem' }}>
+      <div className="flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', gap: '0.5rem' }}>
+        <div className="flex-col" style={{ gap: '0.25rem', minWidth: 0, flex: 1 }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Recurring Bills</h3>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             Track fixed monthly commitments and subscriptions
@@ -94,7 +94,9 @@ const RecurringTracker = () => {
           padding: '0.25rem 0.6rem',
           borderRadius: 'var(--radius-full)',
           backgroundColor: allPaid ? 'rgba(16, 185, 129, 0.15)' : allSkipped ? 'rgba(148, 163, 184, 0.15)' : 'rgba(99, 102, 241, 0.15)',
-          color: allPaid ? 'var(--success)' : allSkipped ? 'var(--text-muted)' : 'var(--primary)'
+          color: allPaid ? 'var(--success)' : allSkipped ? 'var(--text-muted)' : 'var(--primary)',
+          whiteSpace: 'nowrap',
+          flexShrink: 0
         }}>
           {allSkipped ? 'All Skipped' : `${paidCount} / ${totalCount} Paid`}
         </div>

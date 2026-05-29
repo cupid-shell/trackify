@@ -1,5 +1,5 @@
 import { useAppContext } from '../context/AppContext';
-import { Download, Sparkles, X, Info } from 'lucide-react';
+import { Download, Sparkles, X } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 
 const AppUpdatePrompt = () => {
@@ -25,9 +25,9 @@ const AppUpdatePrompt = () => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.4);
-          backdrop-filter: blur(4px);
-          -webkit-backdrop-filter: blur(4px);
+          background: radial-gradient(circle at center, rgba(13, 25, 21, 0.6) 0%, rgba(7, 12, 10, 0.92) 100%);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -38,12 +38,12 @@ const AppUpdatePrompt = () => {
         .update-prompt-card {
           width: 100%;
           max-width: 440px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--border-color);
           border-radius: var(--radius-lg);
-          box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 25px rgba(var(--primary), 0.15);
+          box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 0 0 30px var(--primary-glow);
           position: relative;
           overflow: hidden;
-          background: rgba(15, 17, 21, 0.85);
+          background: var(--bg-card);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           animation: slideUpCenter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -71,21 +71,22 @@ const AppUpdatePrompt = () => {
         }
 
         .update-prompt-content {
-          padding: 1.75rem;
+          padding: 2.25rem 2rem 2rem 2rem;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 1.5rem;
         }
 
         .update-header-group {
           display: flex;
-          gap: 0.85rem;
+          gap: 1rem;
           align-items: flex-start;
+          padding-right: 1.5rem;
         }
 
         .update-icon-wrapper {
-          width: 40px;
-          height: 40px;
+          width: 48px;
+          height: 48px;
           border-radius: var(--radius-md);
           background-color: var(--primary-glow);
           color: var(--primary);
@@ -93,13 +94,14 @@ const AppUpdatePrompt = () => {
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          box-shadow: 0 0 10px var(--primary-glow);
+          border: 1px solid rgba(88, 166, 255, 0.15);
+          box-shadow: 0 0 15px var(--primary-glow);
         }
 
         .update-title-wrap {
           display: flex;
           flex-direction: column;
-          gap: 0.15rem;
+          gap: 0.35rem;
           flex: 1;
         }
 
@@ -107,34 +109,77 @@ const AppUpdatePrompt = () => {
           display: inline-flex;
           align-items: center;
           align-self: flex-start;
-          gap: 0.25rem;
-          background-color: var(--primary-glow);
-          color: var(--primary);
-          font-size: 0.65rem;
+          gap: 0.35rem;
+          background-color: var(--success-bg);
+          color: var(--success);
+          font-size: 0.7rem;
           font-weight: 700;
-          padding: 0.15rem 0.4rem;
-          border-radius: var(--radius-sm);
+          padding: 0.25rem 0.65rem;
+          border-radius: var(--radius-full);
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          border: 1px solid rgba(var(--primary), 0.2);
+          letter-spacing: 0.06em;
+          border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .pulse-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background-color: var(--success);
+          animation: dotPulse 1.6s infinite ease-in-out;
+        }
+
+        @keyframes dotPulse {
+          0% { transform: scale(0.85); opacity: 0.6; }
+          50% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 6px var(--success); }
+          100% { transform: scale(0.85); opacity: 0.6; }
         }
 
         .update-title {
-          font-size: 1.15rem;
+          font-family: 'Hubot Sans Variable', sans-serif;
+          font-size: 1.35rem;
           font-weight: 700;
           color: var(--text-main);
-          margin-top: 0.25rem;
+          margin-top: 0.15rem;
+          line-height: 1.25;
+        }
+
+        .btn-close-update {
+          position: absolute;
+          top: 1.25rem;
+          right: 1.25rem;
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.03);
+          color: var(--text-muted);
+          border: 1px solid var(--border-color);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          padding: 0;
+          flex-shrink: 0;
+          z-index: 10;
+        }
+
+        .btn-close-update:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: var(--text-main);
+          transform: rotate(90deg);
+          border-color: rgba(255, 255, 255, 0.15);
         }
 
         .update-body {
-          font-size: 0.85rem;
+          font-size: 0.875rem;
           color: var(--text-muted);
-          line-height: 1.5;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.03);
+          line-height: 1.6;
+          background: var(--bg-input);
+          border: 1px solid var(--border-color);
           border-radius: var(--radius-md);
-          padding: 0.85rem 1rem;
-          max-height: 120px;
+          padding: 1rem 1.25rem;
+          max-height: 150px;
           overflow-y: auto;
           scrollbar-width: thin;
         }
@@ -151,8 +196,8 @@ const AppUpdatePrompt = () => {
         .update-actions {
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
-          margin-top: 0.5rem;
+          gap: 0.85rem;
+          margin-top: 0.25rem;
         }
 
         .btn-update-primary {
@@ -160,22 +205,23 @@ const AppUpdatePrompt = () => {
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          background: var(--primary);
+          background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
           color: #ffffff;
           border: none;
-          padding: 0.65rem 1.25rem;
+          padding: 0.85rem 1.5rem;
           border-radius: var(--radius-md);
-          font-weight: 600;
-          font-size: 0.875rem;
+          font-weight: 700;
+          font-size: 0.95rem;
           cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: var(--shadow-glow);
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 4px 15px var(--primary-glow);
+          letter-spacing: 0.02em;
         }
 
         .btn-update-primary:hover {
-          background: var(--primary-hover);
-          transform: translateY(-1.5px);
-          box-shadow: 0 0 15px var(--primary-glow);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px var(--primary-glow);
+          filter: brightness(1.05);
         }
 
         .btn-update-primary:active {
@@ -183,51 +229,63 @@ const AppUpdatePrompt = () => {
         }
 
         .update-row-actions {
-          display: flex;
-          gap: 0.5rem;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.75rem;
           width: 100%;
         }
 
         .btn-update-secondary {
-          flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.35rem;
-          background: var(--bg-input);
+          background: rgba(255, 255, 255, 0.02);
           color: var(--text-main);
           border: 1px solid var(--border-color);
-          padding: 0.55rem 1rem;
+          padding: 0.75rem 1rem;
           border-radius: var(--radius-md);
-          font-weight: 500;
-          font-size: 0.8rem;
+          font-weight: 600;
+          font-size: 0.85rem;
           cursor: pointer;
-          transition: all 0.25s;
+          transition: all 0.2s ease;
         }
 
         .btn-update-secondary:hover {
-          background: var(--bg-hover);
-          border-color: rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.1);
         }
 
         .btn-update-text {
-          font-size: 0.72rem;
-          color: var(--text-muted);
+          display: flex;
+          align-items: center;
+          justify-content: center;
           background: transparent;
-          border: none;
+          color: var(--text-muted);
+          border: 1px solid transparent;
+          padding: 0.75rem 1rem;
+          border-radius: var(--radius-md);
+          font-weight: 500;
+          font-size: 0.85rem;
           cursor: pointer;
-          align-self: center;
-          padding: 0.25rem 0.5rem;
-          transition: var(--transition);
-          text-decoration: underline;
+          transition: all 0.2s ease;
         }
 
         .btn-update-text:hover {
           color: var(--danger);
+          background: var(--danger-bg);
+          border-color: rgba(244, 63, 94, 0.1);
         }
       `}</style>
 
-      <div className="update-prompt-card glass-card">
+      <div className="update-prompt-card">
+        <button 
+          className="btn-close-update" 
+          onClick={() => dismissUpdate(false)}
+          title="Close"
+        >
+          <X size={14} />
+        </button>
+
         <div className="update-prompt-content">
           <div className="update-header-group">
             <div className="update-icon-wrapper">
@@ -235,19 +293,13 @@ const AppUpdatePrompt = () => {
             </div>
             <div className="update-title-wrap">
               <div className="update-badge">
-                <Info size={10} />
+                <span className="pulse-dot"></span>
                 <span>New Update</span>
               </div>
-              <h3 className="update-title">Trackify v{versionStr} is available!</h3>
+              <h3 className="update-title">
+                Trackify <span style={{ color: 'var(--primary)' }}>v{versionStr}</span> is available!
+              </h3>
             </div>
-            <button 
-              className="btn-update-secondary" 
-              onClick={() => dismissUpdate(false)}
-              style={{ width: '28px', height: '28px', padding: 0, borderRadius: '50%', flexShrink: 0 }}
-              title="Close"
-            >
-              <X size={14} />
-            </button>
           </div>
 
           <div className="update-body">

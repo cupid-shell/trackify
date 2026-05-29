@@ -49,9 +49,10 @@ const PWAUpdateToast = () => {
           flexDirection: 'column',
           gap: '0.75rem',
           padding: '1rem',
-          border: '1px solid rgba(139, 92, 246, 0.3)',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(139, 92, 246, 0.25)',
-          background: 'rgba(15, 17, 21, 0.9)',
+          border: '1px solid var(--border-color)',
+          borderColor: 'var(--primary)',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px var(--primary-glow)',
+          background: 'var(--bg-card)',
           backdropFilter: 'blur(12px)',
           margin: 0
         }}
@@ -61,12 +62,13 @@ const PWAUpdateToast = () => {
             width: '32px',
             height: '32px',
             borderRadius: 'var(--radius-full)',
-            backgroundColor: 'rgba(139, 92, 246, 0.15)',
-            color: '#a78bfa',
+            backgroundColor: 'var(--primary-glow)',
+            color: 'var(--primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            flexShrink: 0
+            flexShrink: 0,
+            border: '1px solid rgba(88, 166, 255, 0.15)'
           }}>
             <ShieldAlert size={18} />
           </div>
@@ -90,7 +92,7 @@ const PWAUpdateToast = () => {
               backgroundColor: 'transparent',
               color: 'var(--text-muted)',
               border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-sm)',
+              borderRadius: 'var(--radius-md)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -113,7 +115,7 @@ const PWAUpdateToast = () => {
               backgroundColor: 'var(--primary)',
               color: 'white',
               border: 'none',
-              borderRadius: 'var(--radius-sm)',
+              borderRadius: 'var(--radius-md)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
