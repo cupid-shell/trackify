@@ -99,6 +99,13 @@ const Header = () => {
           color: var(--primary) !important;
           background-color: var(--bg-hover) !important;
         }
+        .site-nav {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;     /* Firefox */
+        }
+        .site-nav::-webkit-scrollbar {
+          display: none;             /* Chrome, Safari and Opera */
+        }
       `}</style>
       <div className="container flex items-center justify-between" style={{ padding: 0 }}>
         <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
@@ -117,7 +124,7 @@ const Header = () => {
         </div>
         
         {session && (
-          <nav className="flex items-center gap-0.5" style={{ flex: 1, justifyContent: 'center', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <nav className="site-nav flex items-center gap-0.5" style={{ flex: 1, justifyContent: 'center', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <NavLink to="/" icon={LayoutDashboard} label="Dashboard" />
             <NavLink to="/history" icon={History} label="History" />
             <NavLink to="/analytics" icon={PieChart} label="Analytics" />
