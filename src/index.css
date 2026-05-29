@@ -510,7 +510,12 @@ input:focus, select:focus, textarea:focus {
   .ac-stage {
     padding: 0.5rem 0;
   }
-  /* Inline React styles handle ac-card dimensions and transforms on all viewport sizes */
+  .ac-card {
+    flex: 0 0 100% !important;
+    margin-right: 0 !important;
+    transform: scale(1) !important;
+    filter: none !important;
+  }
   
   .glass-card {
     padding: 1.15rem 1rem !important;

@@ -22,14 +22,16 @@ const AnalyticsCarousel = ({ slides }) => {
     const stageW = stageRef.current.offsetWidth;
     setStageWidth(stageW);
     
-    const isMobileLocal = stageW < 640;
-    const cardFrac = isMobileLocal ? 0.84 : CARD_FRAC;
-    const gapFrac  = isMobileLocal ? 0.02 : GAP_FRAC;
-    
-    const cardW  = stageW * cardFrac;
-    const gap    = stageW * gapFrac;
-    const peek   = (stageW - cardW) / 2;
-    setTrackOffset(peek - current * (cardW + gap));
+    if (stageW < 640) {
+      // Mobile: full width cards, no peeking, slide exactly by card index
+      setTrackOffset(-current * stageW);
+    } else {
+      // Desktop: cover-flow look
+      const cardW  = stageW * CARD_FRAC;
+      const gap    = stageW * GAP_FRAC;
+      const peek   = (stageW - cardW) / 2;
+      setTrackOffset(peek - current * (cardW + gap));
+    }
   }, [current]);
 
   useLayoutEffect(() => { calcOffset(); }, [calcOffset]);
@@ -59,9 +61,14 @@ const AnalyticsCarousel = ({ slides }) => {
     const isMobile = stageWidth < 640;
     
     if (isMobile) {
-      if (abs === 0) return { transform: 'scale(1)',    opacity: 1,    filter: 'none',             zIndex: 10, cursor: 'default' };
-      if (abs === 1) return { transform: 'scale(0.9)',  opacity: 0.35, filter: 'brightness(0.4)',  zIndex: 6,  cursor: 'pointer' };
-      return              { transform: 'scale(0.8)',  opacity: 0,    filter: 'brightness(0.2)',  zIndex: 1,  cursor: 'default' };
+      return {
+        transform: 'scale(1)',
+        opacity: abs === 0 ? 1 : 0,
+        filter: 'none',
+        zIndex: abs === 0 ? 10 : 1,
+        pointerEvents: abs === 0 ? 'auto' : 'none',
+        cursor: 'default'
+      };
     }
     
     if (abs === 0) return { transform: 'scale(1)',    opacity: 1,    filter: 'none',             zIndex: 10, cursor: 'default' };
@@ -90,8 +97,8 @@ const AnalyticsCarousel = ({ slides }) => {
               const isActive = diff === 0;
               const vstyle   = cardStyle(diff);
               const isMobile = stageWidth < 640;
-              const cardW    = isMobile ? (stageWidth ? stageWidth * 0.84 : '84%') : (stageWidth ? stageWidth * CARD_FRAC : '78%');
-              const gap      = isMobile ? (stageWidth ? stageWidth * 0.02 : '2%')   : (stageWidth ? stageWidth * GAP_FRAC  : '2.5%');
+              const cardW    = isMobile ? stageWidth : (stageWidth ? stageWidth * CARD_FRAC : '78%');
+              const gap      = isMobile ? 0 : (stageWidth ? stageWidth * GAP_FRAC  : '2.5%');
 
               return (
                 <div
