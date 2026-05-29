@@ -199,9 +199,9 @@ const AppUpdatePrompt = () => {
           min-height: 32px;
           max-height: 32px;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.02);
+          background: rgba(255, 255, 255, 0.04);
           color: var(--text-muted);
-          border: 1px solid var(--border-color);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -213,6 +213,7 @@ const AppUpdatePrompt = () => {
 
         body.light-theme .btn-close-update {
           background: rgba(0, 0, 0, 0.02);
+          border: 1px solid rgba(11, 26, 19, 0.06);
         }
 
         .btn-close-update:hover {
@@ -220,7 +221,7 @@ const AppUpdatePrompt = () => {
           color: var(--text-main);
           transform: rotate(90deg) scale(1.05);
           border-color: var(--primary);
-          box-shadow: 0 0 10px var(--primary-glow);
+          box-shadow: 0 0 12px var(--primary-glow);
         }
 
         /* Release notes container */
@@ -254,6 +255,7 @@ const AppUpdatePrompt = () => {
           scrollbar-width: thin;
           text-align: left;
           width: 100%;
+          white-space: pre-wrap;
         }
 
         body.light-theme .update-body {

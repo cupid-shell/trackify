@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { version as currentVersion } from '../../package.json';
+import { X } from 'lucide-react';
 
 const AppContext = createContext();
 
@@ -1625,8 +1626,8 @@ export const AppProvider = ({ children }) => {
               {t.type === 'info' && 'ℹ️'}
             </div>
             <div className="toast-message">{t.message}</div>
-            <button className="toast-close" onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))}>
-              &times;
+            <button className="toast-close" onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))} aria-label="Close">
+              <X size={14} />
             </button>
           </div>
         ))}

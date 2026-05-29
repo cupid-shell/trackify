@@ -17,17 +17,19 @@ const PWAUpdateToast = () => {
   if (!needRefresh) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: '24px',
-      right: '24px',
-      zIndex: 9999,
-      animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-      maxWidth: '400px',
-      width: 'calc(100% - 48px)',
-    }}>
+    <div className="pwa-toast-container">
       <style>{`
-        @keyframes slideUp {
+        .pwa-toast-container {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          z-index: 9999;
+          animation: slideUpPWA 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          max-width: 400px;
+          width: calc(100% - 48px);
+        }
+
+        @keyframes slideUpPWA {
           from {
             transform: translateY(30px);
             opacity: 0;
@@ -37,39 +39,107 @@ const PWAUpdateToast = () => {
             opacity: 1;
           }
         }
-        @keyframes spin {
+
+        .pwa-toast-card {
+          display: flex;
+          flex-direction: column;
+          gap: 0.85rem;
+          padding: 1.15rem;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-top: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 18px;
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 20px var(--primary-glow);
+          background: rgba(13, 25, 21, 0.85);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+        }
+
+        body.light-theme .pwa-toast-card {
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(11, 26, 19, 0.08);
+          border-top: 1px solid rgba(255, 255, 255, 0.6);
+          box-shadow: 0 12px 28px rgba(11, 26, 19, 0.08), 0 0 20px rgba(139, 92, 246, 0.06);
+        }
+
+        .pwa-icon-wrapper {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: rgba(139, 92, 246, 0.15);
+          color: var(--primary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          border: 1px solid rgba(139, 92, 246, 0.25);
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+        }
+
+        body.light-theme .pwa-icon-wrapper {
+          background: rgba(16, 185, 129, 0.15);
+          color: var(--success);
+          border-color: rgba(16, 185, 129, 0.25);
+        }
+
+        .pwa-dismiss-btn {
+          padding: 0.5rem 0.85rem;
+          font-size: 0.75rem;
+          font-weight: 500;
+          background: rgba(255, 255, 255, 0.02);
+          color: var(--text-muted);
+          border: 1px solid var(--border-color);
+          border-radius: 10px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          transition: var(--transition);
+        }
+
+        body.light-theme .pwa-dismiss-btn {
+          background: rgba(0, 0, 0, 0.02);
+        }
+
+        .pwa-dismiss-btn:hover {
+          background: var(--bg-hover);
+          color: var(--text-main);
+          border-color: var(--primary);
+        }
+
+        .pwa-reload-btn {
+          padding: 0.5rem 1.15rem;
+          font-size: 0.75rem;
+          font-weight: 600;
+          background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+          color: white;
+          border: none;
+          border-radius: 10px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          box-shadow: 0 4px 12px var(--primary-glow);
+          transition: var(--transition);
+        }
+
+        .pwa-reload-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px var(--primary-glow);
+          filter: brightness(1.05);
+        }
+
+        .pwa-reload-btn:hover svg {
+          animation: spinSlow 2s linear infinite;
+        }
+
+        @keyframes spinSlow {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
       `}</style>
-      <div 
-        className="glass-card" 
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.75rem',
-          padding: '1rem',
-          border: '1px solid var(--border-color)',
-          borderColor: 'var(--primary)',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px var(--primary-glow)',
-          background: 'var(--bg-card)',
-          backdropFilter: 'blur(12px)',
-          margin: 0
-        }}
-      >
+      <div className="pwa-toast-card">
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: 'var(--radius-full)',
-            backgroundColor: 'var(--primary-glow)',
-            color: 'var(--primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            border: '1px solid rgba(88, 166, 255, 0.15)'
-          }}>
+          <div className="pwa-icon-wrapper">
             <ShieldAlert size={18} />
           </div>
           <div className="flex-col" style={{ gap: '0.15rem', flex: 1 }}>
@@ -85,22 +155,7 @@ const PWAUpdateToast = () => {
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
           <button
             onClick={() => setNeedRefresh(false)}
-            style={{
-              padding: '0.4rem 0.75rem',
-              fontSize: '0.75rem',
-              fontWeight: 500,
-              backgroundColor: 'transparent',
-              color: 'var(--text-muted)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-              transition: 'var(--transition)'
-            }}
-            onMouseOver={e => e.currentTarget.style.color = 'var(--text-main)'}
-            onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
+            className="pwa-dismiss-btn"
           >
             <X size={12} />
             Dismiss
@@ -108,23 +163,7 @@ const PWAUpdateToast = () => {
           
           <button
             onClick={() => updateServiceWorker(true)}
-            style={{
-              padding: '0.4rem 1rem',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              backgroundColor: 'var(--primary)',
-              color: 'white',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              boxShadow: 'var(--shadow-glow)',
-              transition: 'var(--transition)'
-            }}
-            onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--primary-hover)'}
-            onMouseOut={e => e.currentTarget.style.backgroundColor = 'var(--primary)'}
+            className="pwa-reload-btn"
           >
             <RefreshCw size={12} />
             Reload Now

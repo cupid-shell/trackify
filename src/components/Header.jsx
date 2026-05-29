@@ -306,6 +306,161 @@ const Header = () => {
           background-color: var(--bg-hover) !important;
           border-color: rgba(255, 255, 255, 0.05) !important;
         }
+
+        /* --- Premium Notification Dropdown --- */
+        .notif-dropdown {
+          position: absolute;
+          right: 0;
+          top: calc(100% + 10px);
+          width: 320px;
+          background-color: var(--bg-card);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          border: 1px solid var(--border-color);
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: var(--radius-lg);
+          box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 0, 0, 0.2);
+          z-index: 210;
+          display: flex;
+          flex-direction: column;
+          max-height: 400px;
+          animation: slideDownFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          overflow: hidden;
+        }
+
+        body.light-theme .notif-dropdown {
+          border-top: 1px solid rgba(255, 255, 255, 0.6);
+          box-shadow: var(--shadow-lg), 0 10px 25px rgba(11, 26, 19, 0.05);
+        }
+
+        @keyframes slideDownFade {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .notif-header {
+          padding: 0.85rem 1.15rem;
+          border-bottom: 1px solid var(--border-color);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .notif-title {
+          font-family: 'Hubot Sans Variable', sans-serif;
+          font-weight: 600;
+          font-size: 0.875rem;
+          color: var(--text-main);
+        }
+
+        .notif-clear-btn {
+          color: var(--text-muted);
+          padding: 0.35rem;
+          border-radius: var(--radius-md);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: none;
+          border: 1px solid transparent;
+          cursor: pointer;
+          transition: var(--transition);
+        }
+
+        .notif-clear-btn:hover {
+          color: var(--danger) !important;
+          background-color: var(--danger-bg) !important;
+          border-color: rgba(244, 63, 94, 0.15);
+        }
+
+        .notif-list {
+          overflow-y: auto;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          scrollbar-width: thin;
+        }
+
+        .notif-list::-webkit-scrollbar {
+          width: 5px;
+        }
+
+        .notif-list::-webkit-scrollbar-thumb {
+          background-color: var(--border-color);
+          border-radius: var(--radius-full);
+        }
+
+        .notif-item {
+          padding: 0.85rem 1.15rem;
+          border-bottom: 1px solid var(--border-color);
+          background-color: transparent;
+          display: flex;
+          gap: 0.85rem;
+          align-items: start;
+          transition: var(--transition);
+          cursor: default;
+        }
+
+        .notif-item.unread {
+          background-color: rgba(139, 92, 246, 0.04);
+        }
+
+        body.light-theme .notif-item.unread {
+          background-color: rgba(16, 185, 129, 0.05);
+        }
+
+        .notif-item:hover {
+          background-color: var(--bg-hover);
+        }
+
+        .notif-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: var(--radius-full);
+          margin-top: 6px;
+          flex-shrink: 0;
+        }
+
+        .notif-dot.success { background-color: var(--success); }
+        .notif-dot.warning { background-color: var(--warning); }
+        .notif-dot.info { background-color: var(--primary); }
+
+        .notif-content {
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+          flex: 1;
+        }
+
+        .notif-item-title {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--text-main);
+        }
+
+        .notif-item-message {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          line-height: 1.35;
+        }
+
+        .notif-item-date {
+          font-size: 0.65rem;
+          color: var(--text-muted);
+          margin-top: 0.25rem;
+        }
+
+        .notif-empty {
+          padding: 2.5rem 1.5rem;
+          text-align: center;
+          color: var(--text-muted);
+          font-size: 0.875rem;
+        }
       `}</style>
       <div className="container flex items-center justify-between" style={{ padding: 0 }}>
         <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
@@ -403,91 +558,39 @@ const Header = () => {
               </button>
 
               {isOpen && (
-                <div style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: 'calc(100% + 10px)',
-                  width: '320px',
-                  backgroundColor: 'var(--bg-card)',
-                  backdropFilter: 'blur(16px)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-md)',
-                  boxShadow: 'var(--shadow-lg)',
-                  zIndex: 210,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  maxHeight: '400px'
-                }}>
+                <div className="notif-dropdown animate-fade-in">
                   {/* Header */}
-                  <div style={{
-                    padding: '0.75rem 1rem',
-                    borderBottom: '1px solid var(--border-color)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Notifications</span>
+                  <div className="notif-header">
+                    <span className="notif-title">Notifications</span>
                     <button 
                       onClick={() => {
                         clearNotifications();
                         setIsOpen(false);
                       }}
-                      style={{
-                        color: 'var(--text-muted)',
-                        padding: '0.25rem',
-                        borderRadius: 'var(--radius-sm)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
+                      className="notif-clear-btn"
                       title="Clear all"
-                      className="hover-action"
                     >
                       <Trash2 size={14} />
                     </button>
                   </div>
 
                   {/* Body */}
-                  <div style={{
-                    overflowY: 'auto',
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}>
+                  <div className="notif-list">
                     {!notifications || notifications.length === 0 ? (
-                      <div style={{
-                        padding: '2rem 1rem',
-                        textAlign: 'center',
-                        color: 'var(--text-muted)',
-                        fontSize: '0.875rem'
-                      }}>
+                      <div className="notif-empty">
                         No notifications yet.
                       </div>
                     ) : (
                       notifications.map(n => (
                         <div 
                           key={n.id}
-                          style={{
-                            padding: '0.75rem 1rem',
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
-                            backgroundColor: n.read ? 'transparent' : 'rgba(99, 102, 241, 0.05)',
-                            display: 'flex',
-                            gap: '0.75rem',
-                            alignItems: 'start'
-                          }}
+                          className={`notif-item ${n.read ? 'read' : 'unread'}`}
                         >
-                          <div style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: 'var(--radius-full)',
-                            backgroundColor: n.type === 'success' ? 'var(--success)' : n.type === 'warning' ? 'var(--warning)' : 'var(--primary)',
-                            marginTop: '6px',
-                            flexShrink: 0
-                          }} />
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem', flex: 1 }}>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)' }}>{n.title}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.25' }}>{n.message}</span>
-                            <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                          <div className={`notif-dot ${n.type || 'info'}`} />
+                          <div className="notif-content">
+                            <span className="notif-item-title">{n.title}</span>
+                            <span className="notif-item-message">{n.message}</span>
+                            <span className="notif-item-date">
                               {new Date(n.date).toLocaleString(undefined, {
                                 month: 'short',
                                 day: 'numeric',
