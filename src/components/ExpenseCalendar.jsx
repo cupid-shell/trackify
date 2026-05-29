@@ -222,6 +222,12 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
           scrollbar-width: none;
           -ms-overflow-style: none;
           margin-top: 1rem;
+          padding: 4px 4px 8px 4px;
+        }
+        @media (min-width: 640px) {
+          .calendar-scroll-container {
+            overflow: visible;
+          }
         }
         .calendar-scroll-container::-webkit-scrollbar {
           display: none;

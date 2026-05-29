@@ -209,7 +209,7 @@ const HealthScore = () => {
           gap: 0.65rem;
         }
         .ach-row {
-          background: rgba(255, 255, 255, 0.015);
+          background: var(--bg-input);
           border: 1px solid var(--border-color);
           border-radius: var(--radius-md);
           padding: 0.65rem 0.85rem;
@@ -220,18 +220,18 @@ const HealthScore = () => {
         }
         .ach-row:hover {
           transform: translateY(-2px);
-          background: rgba(255, 255, 255, 0.03);
-          border-color: rgba(255, 255, 255, 0.15);
+          background: var(--bg-hover);
+          border-color: var(--primary);
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .ach-row.locked {
-          background: rgba(255, 255, 255, 0.005);
-          border-color: rgba(255, 255, 255, 0.03);
+          background: var(--bg-input);
+          border-color: var(--border-color);
           opacity: 0.55;
         }
         .ach-row.locked:hover {
           opacity: 0.75;
-          background: rgba(255, 255, 255, 0.015);
+          background: var(--bg-hover);
           border-color: var(--border-color);
         }
       `}</style>
