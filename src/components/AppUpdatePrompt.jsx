@@ -35,9 +35,13 @@ const AppUpdatePrompt = () => {
           padding: 1.5rem;
         }
 
+        body.light-theme .update-prompt-overlay {
+          background: radial-gradient(circle at center, rgba(226, 242, 233, 0.6) 0%, rgba(180, 200, 190, 0.85) 100%);
+        }
+
         .update-prompt-card {
           width: 100%;
-          max-width: 440px;
+          max-width: 420px;
           border: 1px solid var(--border-color);
           border-radius: var(--radius-lg);
           box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 0 0 30px var(--primary-glow);
@@ -47,6 +51,10 @@ const AppUpdatePrompt = () => {
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           animation: slideUpCenter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        body.light-theme .update-prompt-card {
+          box-shadow: 0 20px 50px rgba(11, 26, 19, 0.15), 0 0 25px var(--primary-glow);
         }
 
         @keyframes slideUpCenter {
@@ -71,22 +79,16 @@ const AppUpdatePrompt = () => {
         }
 
         .update-prompt-content {
-          padding: 2.25rem 2rem 2rem 2rem;
+          padding: 2.5rem 2rem 2rem 2rem;
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
-        }
-
-        .update-header-group {
-          display: flex;
-          gap: 1rem;
-          align-items: flex-start;
-          padding-right: 1.5rem;
+          align-items: center;
+          gap: 1.25rem;
         }
 
         .update-icon-wrapper {
-          width: 48px;
-          height: 48px;
+          width: 52px;
+          height: 52px;
           border-radius: var(--radius-md);
           background-color: var(--primary-glow);
           color: var(--primary);
@@ -96,19 +98,12 @@ const AppUpdatePrompt = () => {
           flex-shrink: 0;
           border: 1px solid rgba(88, 166, 255, 0.15);
           box-shadow: 0 0 15px var(--primary-glow);
-        }
-
-        .update-title-wrap {
-          display: flex;
-          flex-direction: column;
-          gap: 0.35rem;
-          flex: 1;
+          margin-bottom: 0.25rem;
         }
 
         .update-badge {
           display: inline-flex;
           align-items: center;
-          align-self: flex-start;
           gap: 0.35rem;
           background-color: var(--success-bg);
           color: var(--success);
@@ -140,18 +135,24 @@ const AppUpdatePrompt = () => {
           font-size: 1.35rem;
           font-weight: 700;
           color: var(--text-main);
+          line-height: 1.35;
+          text-align: center;
           margin-top: 0.15rem;
-          line-height: 1.25;
+          max-width: 90%;
         }
 
         .btn-close-update {
           position: absolute;
-          top: 1.25rem;
-          right: 1.25rem;
-          width: 30px;
-          height: 30px;
+          top: 1rem;
+          right: 1rem;
+          width: 32px;
+          min-width: 32px;
+          max-width: 32px;
+          height: 32px;
+          min-height: 32px;
+          max-height: 32px;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.03);
+          background: var(--bg-input);
           color: var(--text-muted);
           border: 1px solid var(--border-color);
           display: flex;
@@ -165,10 +166,10 @@ const AppUpdatePrompt = () => {
         }
 
         .btn-close-update:hover {
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--bg-hover);
           color: var(--text-main);
-          transform: rotate(90deg);
-          border-color: rgba(255, 255, 255, 0.15);
+          transform: scale(1.08);
+          border-color: var(--primary);
         }
 
         .update-body {
@@ -182,6 +183,8 @@ const AppUpdatePrompt = () => {
           max-height: 150px;
           overflow-y: auto;
           scrollbar-width: thin;
+          text-align: left;
+          width: 100%;
         }
 
         .update-body::-webkit-scrollbar {
@@ -198,6 +201,7 @@ const AppUpdatePrompt = () => {
           flex-direction: column;
           gap: 0.85rem;
           margin-top: 0.25rem;
+          width: 100%;
         }
 
         .btn-update-primary {
@@ -216,6 +220,7 @@ const AppUpdatePrompt = () => {
           transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           box-shadow: 0 4px 15px var(--primary-glow);
           letter-spacing: 0.02em;
+          width: 100%;
         }
 
         .btn-update-primary:hover {
@@ -239,7 +244,7 @@ const AppUpdatePrompt = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: rgba(255, 255, 255, 0.02);
+          background: var(--bg-input);
           color: var(--text-main);
           border: 1px solid var(--border-color);
           padding: 0.75rem 1rem;
@@ -251,8 +256,8 @@ const AppUpdatePrompt = () => {
         }
 
         .btn-update-secondary:hover {
-          background: rgba(255, 255, 255, 0.05);
-          border-color: rgba(255, 255, 255, 0.1);
+          background: var(--bg-hover);
+          border-color: var(--primary);
         }
 
         .btn-update-text {
@@ -287,20 +292,18 @@ const AppUpdatePrompt = () => {
         </button>
 
         <div className="update-prompt-content">
-          <div className="update-header-group">
-            <div className="update-icon-wrapper">
-              <Sparkles size={20} className="animate-pulse" />
-            </div>
-            <div className="update-title-wrap">
-              <div className="update-badge">
-                <span className="pulse-dot"></span>
-                <span>New Update</span>
-              </div>
-              <h3 className="update-title">
-                Trackify <span style={{ color: 'var(--primary)' }}>v{versionStr}</span> is available!
-              </h3>
-            </div>
+          <div className="update-icon-wrapper">
+            <Sparkles size={22} className="animate-pulse" />
           </div>
+
+          <div className="update-badge">
+            <span className="pulse-dot"></span>
+            <span>New Update</span>
+          </div>
+
+          <h3 className="update-title">
+            Trackify <span style={{ color: 'var(--primary)' }}>v{versionStr}</span> is available!
+          </h3>
 
           <div className="update-body">
             {bodyText}
