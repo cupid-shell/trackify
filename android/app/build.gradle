@@ -3,6 +3,16 @@ apply plugin: 'com.android.application'
 android {
     namespace = "com.cupidshell.trackify"
     compileSdk = rootProject.ext.compileSdkVersion
+
+    signingConfigs {
+        release {
+            storeFile file('release.keystore')
+            storePassword 'trackify_secret_key'
+            keyAlias 'trackify'
+            keyPassword 'trackify_secret_key'
+        }
+    }
+
     defaultConfig {
         applicationId "com.cupidshell.trackify"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -20,6 +30,10 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
         }
     }
 }

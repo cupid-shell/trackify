@@ -1,11 +1,11 @@
 {
   "name": "trackify",
   "private": true,
-  "version": "1.2.7",
+  "version": "1.2.8",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node generate-keystore-on-runner.cjs && vite build",
+    "build": "vite build",
     "lint": "eslint . && node validate-css.js",
     "preview": "vite preview"
   },
