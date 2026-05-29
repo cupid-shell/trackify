@@ -1,4 +1,5 @@
 import { version } from '../../package.json';
+import { useAppContext } from '../context/AppContext';
 
 const DownloadIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
@@ -15,7 +16,8 @@ const GithubIcon = () => (
 );
 
 const Footer = () => {
-  const apkUrl = `https://github.com/cupid-shell/trackify/releases/download/v${version}/Trackify-v${version}.apk`;
+  const { updateAvailable } = useAppContext();
+  const apkUrl = updateAvailable?.downloadUrl || `https://github.com/cupid-shell/trackify/releases/download/v${version}/Trackify-v${version}.apk`;
 
   return (
     <>

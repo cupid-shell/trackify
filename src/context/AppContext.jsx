@@ -56,6 +56,8 @@ export const AppProvider = ({ children }) => {
   const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
+  const [updateAvailable, setUpdateAvailable] = useState(null);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
 
   // Theme mode: dark or light
   const [themeMode, setThemeMode] = useState(() => {
@@ -82,6 +84,13 @@ export const AppProvider = ({ children }) => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 3500);
   }, []);
+
+  const dismissUpdate = useCallback((permanently = false) => {
+    if (permanently && updateAvailable) {
+      localStorage.setItem('trackify_ignored_update_version', updateAvailable.version);
+    }
+    setUpdateDismissed(true);
+  }, [updateAvailable]);
   
   // Initialize dynamic theme accent on mount
   useEffect(() => {
@@ -545,10 +554,8 @@ export const AppProvider = ({ children }) => {
     };
   }, [session]);
 
-  // Native APK Update Checker
+  // App Update Checker
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-
     const checkAppUpdate = async () => {
       try {
         const response = await fetch('https://api.github.com/repos/cupid-shell/trackify/releases/latest');
@@ -572,58 +579,77 @@ export const AppProvider = ({ children }) => {
 
         const cleanCurrent = currentVersion.replace(/^v/, '');
 
-         if (isNewer(latestVersion, cleanCurrent)) {
-          const lastNotified = localStorage.getItem('trackify_notified_update_version');
-          if (lastNotified === latestVersion) return;
+        if (isNewer(latestVersion, cleanCurrent)) {
+          const ignoredVersion = localStorage.getItem('trackify_ignored_update_version');
+          if (ignoredVersion === latestVersion) return;
 
-          // In-app visual toast notification
-          showToast(`Trackify v${latestVersion} is available! Tap the download button in the footer to update.`, 'info');
+          const apkAsset = data.assets?.find(asset => asset.name.endsWith('.apk'));
+          const downloadUrl = apkAsset ? apkAsset.browser_download_url : 'https://github.com/cupid-shell/trackify/releases';
 
-          let perm = await LocalNotifications.checkPermissions();
-          if (perm.display !== 'granted') {
-            perm = await LocalNotifications.requestPermissions();
-          }
+          // Set the global update state to show in-app prompt
+          setUpdateAvailable({
+            version: latestVersion,
+            downloadUrl,
+            publishedAt: data.published_at,
+            body: data.body
+          });
 
-          if (perm.display === 'granted') {
-            await LocalNotifications.schedule({
-              notifications: [
-                {
-                  title: 'Trackify Update Available 🚀',
-                  body: `Version v${latestVersion} is ready to download! Tap to download the new APK.`,
-                  id: 9999,
-                  extra: {
-                    url: 'https://github.com/cupid-shell/trackify/releases'
+          // Also trigger push notification on native platform
+          if (Capacitor.isNativePlatform()) {
+            const lastNotified = localStorage.getItem('trackify_notified_update_version');
+            if (lastNotified === latestVersion) return;
+
+            let perm = await LocalNotifications.checkPermissions();
+            if (perm.display !== 'granted') {
+              perm = await LocalNotifications.requestPermissions();
+            }
+
+            if (perm.display === 'granted') {
+              await LocalNotifications.schedule({
+                notifications: [
+                  {
+                    title: 'Trackify Update Available 🚀',
+                    body: `Version v${latestVersion} is ready to download! Tap to download the new APK.`,
+                    id: 9999,
+                    extra: {
+                      url: downloadUrl
+                    }
                   }
-                }
-              ]
-            });
+                ]
+              });
+            }
+            localStorage.setItem('trackify_notified_update_version', latestVersion);
           }
-          localStorage.setItem('trackify_notified_update_version', latestVersion);
         }
       } catch (error) {
-        console.error('Error checking for APK update:', error);
+        console.error('Error checking for app update:', error);
       }
     };
 
     // Check 5 seconds after startup
     const timer = setTimeout(checkAppUpdate, 5000);
 
-    // Register listener for tapping notification
-    const actionListener = LocalNotifications.addListener(
-      'localNotificationActionPerformed',
-      (action) => {
-        const url = action.notification.extra?.url;
-        if (url) {
-          window.open(url, '_blank');
+    // Register listener for tapping notification on native platform
+    let actionListener = null;
+    if (Capacitor.isNativePlatform()) {
+      actionListener = LocalNotifications.addListener(
+        'localNotificationActionPerformed',
+        (action) => {
+          const url = action.notification.extra?.url;
+          if (url) {
+            window.open(url, '_blank');
+          }
         }
-      }
-    );
+      );
+    }
 
     return () => {
       clearTimeout(timer);
-      actionListener.remove();
+      if (actionListener) {
+        actionListener.remove();
+      }
     };
-  }, [showToast]);
+  }, []);
 
 
   const updateSettings = async (newSettings) => {
@@ -1516,6 +1542,9 @@ export const AppProvider = ({ children }) => {
     unskipBillForMonth,
     rescheduleNotifications,
     showToast,
+    updateAvailable,
+    updateDismissed,
+    dismissUpdate,
     themeMode,
     toggleThemeMode
   };

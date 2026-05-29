@@ -23,6 +23,7 @@ import SavingsGoals from './components/SavingsGoals';
 import LedgerPage from './components/Ledger';
 import PWAUpdateToast from './components/PWAUpdateToast';
 import AnalyticsCarousel from './components/AnalyticsCarousel';
+import AppUpdatePrompt from './components/AppUpdatePrompt';
 
 
 
@@ -248,6 +249,7 @@ function App() {
         } />
       </Routes>
       <PWAUpdateToast />
+      <AppUpdatePrompt />
     </BrowserRouter>
   );
 }
