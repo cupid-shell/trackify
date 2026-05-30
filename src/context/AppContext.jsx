@@ -1441,7 +1441,8 @@ export const AppProvider = ({ children }) => {
                   {
                     title: `Budget Exhausted! 🛑`,
                     body: `You have spent ৳${totalSpent.toLocaleString('en-IN')} out of your ৳${limit.toLocaleString('en-IN')} budget limit for ${cat}.`,
-                    id: 3500 + Math.floor(Math.random() * 1000),
+                    // Deterministic ID: 3500 + hash of category name (no random, so Android deduplicates)
+                    id: 3500 + (Math.abs(cat.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)) % 400),
                     channelId: 'reminders',
                   }
                 ]
@@ -1461,7 +1462,8 @@ export const AppProvider = ({ children }) => {
                   {
                     title: `Budget Warning: ${cat} ⚠️`,
                     body: `You have spent ৳${totalSpent.toLocaleString('en-IN')} out of your ৳${limit.toLocaleString('en-IN')} budget limit for ${cat} (${Math.round((totalSpent / limit) * 100)}%).`,
-                    id: 3000 + Math.floor(Math.random() * 1000),
+                    // Deterministic ID: 3000 + hash of category name
+                    id: 3000 + (Math.abs(cat.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)) % 400),
                     channelId: 'reminders',
                   }
                 ]
@@ -1484,19 +1486,26 @@ export const AppProvider = ({ children }) => {
         const total = categoryTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
         const average = total / categoryTxs.length;
         if (Number(newTx.amount) > 3 * average) {
-          try {
-            await LocalNotifications.schedule({
-              notifications: [
-                {
-                  title: 'Unusual Spending Spike 🚨',
-                  body: `You just logged a ৳${Number(newTx.amount).toLocaleString('en-IN')} expense for ${cat}, which is significantly higher than your typical average (৳${Math.round(average).toLocaleString('en-IN')}).`,
-                  id: 5000 + Math.floor(Math.random() * 1000),
-                  channelId: 'reminders',
-                }
-              ]
-            });
-          } catch (e) {
-            console.error('Error scheduling spend spike notification:', e);
+          // Throttle: only one spike alert per category per day
+          const today = new Date().toISOString().split('T')[0];
+          const spikeKey = `trackify_notified_spike_${cat}_${today}`;
+          if (localStorage.getItem(spikeKey) !== 'true') {
+            try {
+              await LocalNotifications.schedule({
+                notifications: [
+                  {
+                    title: 'Unusual Spending Spike 🚨',
+                    body: `You just logged a ৳${Number(newTx.amount).toLocaleString('en-IN')} expense for ${cat}, which is significantly higher than your typical average (৳${Math.round(average).toLocaleString('en-IN')}).`,
+                    // Deterministic ID: 5000 + hash of category name
+                    id: 5000 + (Math.abs(cat.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)) % 400),
+                    channelId: 'reminders',
+                  }
+                ]
+              });
+              localStorage.setItem(spikeKey, 'true');
+            } catch (e) {
+              console.error('Error scheduling spend spike notification:', e);
+            }
           }
         }
       }

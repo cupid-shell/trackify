@@ -305,8 +305,20 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
       </div>
       
       {sortedTx.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
-          <p>No transactions found for this month.</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null ? '🔍' : '📭'}
+          </div>
+          <h3>
+            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null
+              ? 'No matching transactions'
+              : 'No transactions yet'}
+          </h3>
+          <p>
+            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null
+              ? 'Try adjusting your filters or search term.'
+              : 'Add your first transaction above to start tracking your finances.'}
+          </p>
         </div>
       ) : (
         <div className="flex-col gap-4">

@@ -2,6 +2,25 @@ import { useState, useCallback, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { PlusCircle, Trash2, Plus } from 'lucide-react';
 import CustomSelect from './CustomSelect';
+import { Capacitor } from '@capacitor/core';
+
+// Light haptic tap — safe no-op on web
+const hapticLight = async () => {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+    await Haptics.impact({ style: ImpactStyle.Light });
+  } catch { /* ignore */ }
+};
+
+// Medium haptic tap — used on successful save
+const hapticMedium = async () => {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+    await Haptics.impact({ style: ImpactStyle.Medium });
+  } catch { /* ignore */ }
+};
 
 // --- Helpers ---
 
@@ -217,6 +236,7 @@ const TransactionForm = () => {
 
   // --- Preset: append pre-filled row ---
   const handlePresetClick = useCallback((preset) => {
+    hapticLight();
     setRows(prev => [
       ...prev,
       createRow({
@@ -253,6 +273,7 @@ const TransactionForm = () => {
     }));
 
     addTransactions(payload);
+    hapticMedium();
 
     const count = payload.length;
     showToast(

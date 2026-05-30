@@ -24,6 +24,7 @@ import LedgerPage from './components/Ledger';
 import PWAUpdateToast from './components/PWAUpdateToast';
 import AnalyticsCarousel from './components/AnalyticsCarousel';
 import AppUpdatePrompt from './components/AppUpdatePrompt';
+import SplashScreen from './components/SplashScreen';
 
 
 
@@ -145,11 +146,7 @@ const ProtectedRoute = ({ children }) => {
   const { session, loading } = useAppContext();
   
   if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
-        <p>Loading...</p>
-      </div>
-    );
+    return <SplashScreen />;
   }
   
   if (!session) {
