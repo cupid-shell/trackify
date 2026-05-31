@@ -8,8 +8,16 @@ import { X } from 'lucide-react';
 
 const AppContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const parseLocalDate = (dateStr) => {
   if (!dateStr) return new Date();
+  const hasTime = /[T ]\d/.test(dateStr);
+  if (hasTime) {
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+      return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+    }
+  }
   const datePart = dateStr.split(/[ T]/)[0];
   const [year, month, day] = datePart.split('-').map(Number);
   return new Date(year, month - 1, day);

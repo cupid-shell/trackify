@@ -68,6 +68,7 @@ const Header = () => {
 
   // Close drawer on navigation
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsDrawerOpen(false);
   }, [location.pathname]);
 

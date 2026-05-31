@@ -35,7 +35,6 @@ const TrendChart = () => {
     // Find the earliest transaction date in history
     let earliestDate = null;
     if (transactions.length > 0) {
-      const timestamps = transactions.map(t => parseLocalDate(t.date).getTime());
       earliestDate = parseLocalDate(transactions[transactions.length - 1].date);
     }
 
