@@ -103,7 +103,7 @@ export const AppProvider = ({ children }) => {
   
   // Initialize dynamic theme accent on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('trackify_theme') || 'indigo';
+    const savedTheme = localStorage.getItem('trackify_theme') || 'emerald';
     const themes = {
       indigo: { primary: '#6366f1', hover: '#4f46e5', glow: 'rgba(99, 102, 241, 0.4)' },
       emerald: { primary: '#10b981', hover: '#059669', glow: 'rgba(16, 185, 129, 0.4)' },
@@ -111,7 +111,7 @@ export const AppProvider = ({ children }) => {
       cyan: { primary: '#06b6d4', hover: '#0891b2', glow: 'rgba(6, 182, 212, 0.4)' },
       amber: { primary: '#f59e0b', hover: '#d97706', glow: 'rgba(245, 158, 11, 0.4)' }
     };
-    const theme = themes[savedTheme] || themes.indigo;
+    const theme = themes[savedTheme] || themes.emerald;
     document.documentElement.style.setProperty('--primary', theme.primary);
     document.documentElement.style.setProperty('--primary-hover', theme.hover);
     document.documentElement.style.setProperty('--primary-glow', theme.glow);
