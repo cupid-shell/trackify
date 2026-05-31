@@ -229,6 +229,12 @@ function App() {
     };
   }, []);
 
+  const { loading } = useAppContext();
+
+  if (loading) {
+    return <SplashScreen />;
+  }
+
   return (
     <BrowserRouter>
       <NotificationNavigationHandler />
