@@ -171,6 +171,15 @@ const NotificationNavigationHandler = () => {
 };
 
 function App() {
+  const [showSplash, setShowSplash] = React.useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   React.useEffect(() => {
     const askPermissionOnFirstLaunch = async () => {
       if (Capacitor.isNativePlatform()) {
@@ -231,7 +240,7 @@ function App() {
 
   const { loading } = useAppContext();
 
-  if (loading) {
+  if (loading || showSplash) {
     return <SplashScreen />;
   }
 
