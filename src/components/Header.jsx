@@ -668,7 +668,7 @@ const Header = () => {
             <div className="drawer-header">
               <div className="flex items-center gap-2">
                 <img 
-                  src="/favicon.png?v=2" 
+                  src="/logo-mint.svg" 
                   alt="Trackify Logo" 
                   style={{ width: '28px', height: '28px', borderRadius: 'var(--radius-md)' }} 
                 />
