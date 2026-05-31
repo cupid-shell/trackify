@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Bar 1: Mint (40% opacity) -->
+  <rect x="80" y="280" width="64" height="152" rx="32" fill="#10b981" opacity="0.4" />
+  <!-- Bar 2: Mint (60% opacity) -->
+  <rect x="176" y="200" width="64" height="232" rx="32" fill="#10b981" opacity="0.6" />
+  <!-- Bar 3: Mint (80% opacity) -->
+  <rect x="272" y="240" width="64" height="192" rx="32" fill="#10b981" opacity="0.8" />
+  <!-- Bar 4: Mint (100% opacity) -->
+  <rect x="368" y="80" width="64" height="352" rx="32" fill="#10b981" opacity="1.0" />
+</svg>
