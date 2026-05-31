@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { CheckCircle, AlertCircle, Calendar, MinusCircle } from 'lucide-react';
 import { format } from 'date-fns';
@@ -12,8 +13,33 @@ const RecurringTracker = () => {
     skippedBills,
     skipBillForMonth,
     unskipBillForMonth,
-    showToast
+    showToast,
+    highlightedBill,
+    setHighlightedBill
   } = useAppContext();
+
+  // Clear highlighted bill after 4 seconds
+  useEffect(() => {
+    if (highlightedBill) {
+      const timer = setTimeout(() => {
+        setHighlightedBill(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedBill, setHighlightedBill]);
+
+  // Scroll highlighted bill into view smoothly
+  useEffect(() => {
+    if (highlightedBill && highlightedBill.billName) {
+      setTimeout(() => {
+        const el = document.querySelector(`[data-bill-name="${CSS.escape(highlightedBill.billName)}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+  }, [highlightedBill]);
+
 
   // Helper to check if a bill is paid in the currently selected month
   const getPaidTransaction = (bill) => {
@@ -128,6 +154,8 @@ const RecurringTracker = () => {
           return (
             <div 
               key={idx} 
+              data-bill-name={bill.name}
+              className={highlightedBill?.billName === bill.name ? 'highlighted-bill-row' : ''}
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 

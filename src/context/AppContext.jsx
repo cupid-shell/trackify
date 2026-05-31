@@ -158,6 +158,7 @@ export const AppProvider = ({ children }) => {
 
   // Notifications state & persistence
   const [notifications, setNotifications] = useState([]);
+  const [highlightedBill, setHighlightedBill] = useState(null);
 
   const [skippedBills, setSkippedBills] = useState(() => {
     const saved = localStorage.getItem('trackify_skipped_bills');
@@ -669,13 +670,19 @@ export const AppProvider = ({ children }) => {
         }
       });
 
-      // Register listener for tapping update notification
+      // Register listener for tapping notifications
       actionListener = LocalNotifications.addListener(
         'localNotificationActionPerformed',
         (action) => {
-          const url = action.notification.extra?.url;
-          if (url) {
-            window.open(url, '_blank');
+          const extra = action.notification.extra;
+          if (extra?.url) {
+            window.open(extra.url, '_blank');
+          } else if (extra?.type === 'bill_reminder' && extra?.billName) {
+            setHighlightedBill({
+              billName: extra.billName,
+              timestamp: Date.now(),
+              triggerNavigate: true
+            });
           }
         }
       );
@@ -1387,7 +1394,11 @@ export const AppProvider = ({ children }) => {
             body: `Your payment of ৳${bill.amount} for ${bill.category} is due. Tap to record it!`,
             id: 2000 + idx,
             channelId: 'reminders',
-            schedule: { at: scheduleTime }
+            schedule: { at: scheduleTime },
+            extra: {
+              type: 'bill_reminder',
+              billName: bill.name
+            }
           });
         });
       }
@@ -1638,7 +1649,9 @@ export const AppProvider = ({ children }) => {
     updateDismissed,
     dismissUpdate,
     themeMode,
-    toggleThemeMode
+    toggleThemeMode,
+    highlightedBill,
+    setHighlightedBill
   };
 
   return (

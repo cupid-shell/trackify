@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { useAppContext } from './context/AppContext';
@@ -156,6 +156,20 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+const NotificationNavigationHandler = () => {
+  const { highlightedBill, setHighlightedBill } = useAppContext();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (highlightedBill && highlightedBill.triggerNavigate) {
+      setHighlightedBill(prev => ({ ...prev, triggerNavigate: false }));
+      navigate('/');
+    }
+  }, [highlightedBill, navigate, setHighlightedBill]);
+
+  return null;
+};
+
 function App() {
   React.useEffect(() => {
     const askPermissionOnFirstLaunch = async () => {
@@ -217,6 +231,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <NotificationNavigationHandler />
       <Routes>
         <Route path="/login" element={<LoginRoute />} />
         <Route path="/" element={

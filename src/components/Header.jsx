@@ -475,7 +475,7 @@ const Header = () => {
             </button>
           )}
           <img 
-            src="/favicon.png" 
+            src="/logo-mint.svg" 
             alt="Trackify Logo" 
             style={{ 
               width: '32px', 
@@ -668,7 +668,7 @@ const Header = () => {
             <div className="drawer-header">
               <div className="flex items-center gap-2">
                 <img 
-                  src="/favicon.png" 
+                  src="/favicon.png?v=2" 
                   alt="Trackify Logo" 
                   style={{ width: '28px', height: '28px', borderRadius: 'var(--radius-md)' }} 
                 />

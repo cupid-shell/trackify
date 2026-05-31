@@ -3,8 +3,12 @@ const path = require('path');
 const sharp = require('sharp');
 
 // Pure white logo silhouette on a transparent background for Android status bar icons
-const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="46" viewBox="0 0 48 46">
-  <path fill="#ffffff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" />
+const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <rect x="12" y="24" width="6" height="12" rx="2.5" fill="#ffffff" />
+  <rect x="21" y="16" width="6" height="20" rx="2.5" fill="#ffffff" />
+  <rect x="30" y="8" width="6" height="28" rx="2.5" fill="#ffffff" />
+  <path d="M8 30 C 16 26, 24 16, 38 12" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="38" cy="12" r="3" fill="#ffffff" />
 </svg>`;
 
 const sizes = [

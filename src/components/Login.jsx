@@ -60,7 +60,7 @@ const Login = () => {
       }}>
         <div className="flex-col items-center gap-2" style={{ textAlign: 'center' }}>
           <img 
-            src="/favicon.png" 
+            src="/logo-mint.svg" 
             alt="Trackify Logo" 
             style={{ 
               width: '56px', 
