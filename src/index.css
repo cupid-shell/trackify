@@ -1363,6 +1363,10 @@ body.light-theme .toast-close {
   z-index: 50;
 }
 
+.glass-card > *:has(.cs-active) {
+  z-index: 10;
+}
+
 .cs-trigger {
   display: flex;
   align-items: center;
