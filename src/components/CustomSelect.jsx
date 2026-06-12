@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Check } from 'lucide-react';
 
 const CustomSelect = ({ 
@@ -107,7 +108,7 @@ const CustomSelect = ({
       )}
 
       {/* Slide-Up Bottom Sheet Modal (Mobile) */}
-      {isMobile && isOpen && (
+      {isMobile && isOpen && createPortal(
         <div className="cs-mobile-portal">
           <div className="cs-mobile-backdrop" onClick={() => setIsOpen(false)} />
           <div className="cs-bottom-sheet">
@@ -136,7 +137,8 @@ const CustomSelect = ({
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
