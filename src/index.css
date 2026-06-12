@@ -1359,6 +1359,10 @@ body.light-theme .toast-close {
   width: 100%;
 }
 
+.cs-container.cs-active {
+  z-index: 50;
+}
+
 .cs-trigger {
   display: flex;
   align-items: center;

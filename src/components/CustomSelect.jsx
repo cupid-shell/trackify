@@ -72,7 +72,7 @@ const CustomSelect = ({
   };
 
   return (
-    <div className="cs-container" ref={containerRef} style={style}>
+    <div className={`cs-container ${isOpen ? 'cs-active' : ''}`} ref={containerRef} style={style}>
       {/* Trigger Button */}
       <button
         type="button"
