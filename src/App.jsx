@@ -275,7 +275,7 @@ function App() {
           </ProtectedRoute>
         } />
       </Routes>
-      <PWAUpdateToast />
+      {!Capacitor.isNativePlatform() && <PWAUpdateToast />}
       <AppUpdatePrompt />
     </BrowserRouter>
   );
