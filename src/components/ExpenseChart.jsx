@@ -4,95 +4,95 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieCha
 import { BarChart2, PieChart as PieIcon } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 
-const renderActiveShape = (props) => {
-  const RADIAN = Math.PI / 180;
-  const {
-    cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle,
-    fill, payload, percent, value
-  } = props;
-  
-  // Pre-calculate trigonometric values
-  const cos = Math.cos(-RADIAN * midAngle);
-  const sin = Math.sin(-RADIAN * midAngle);
-  
-  // Coordinates for the leader line (start, elbow, end)
-  const isMobile = window.innerWidth < 640;
-  const lineElbow = isMobile ? 5 : 10;
-  const lineExtension = isMobile ? 8 : 12;
-  const textSpacing = isMobile ? 3 : 5;
-
-  const sx = cx + (outerRadius + 2) * cos;
-  const sy = cy + (outerRadius + 2) * sin;
-  const mx = cx + (outerRadius + lineElbow) * cos;
-  const my = cy + (outerRadius + lineElbow) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * lineExtension;
-  const ey = my;
-  
-  // Label text position and alignment
-  const textAnchor = cos >= 0 ? 'start' : 'end';
-  const tx = ex + (cos >= 0 ? 1 : -1) * textSpacing;
-  const ty = ey;
-
-  return (
-    <g>
-      {/* Glow Sector on hover */}
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius + 4}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        style={{
-          filter: `drop-shadow(0 0 5px ${fill}33)`,
-          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-        }}
-      />
-      
-      {/* Animated leader line path */}
-      <path
-        className="leader-line"
-        d={`M${sx},${sy}L${mx},${my}H${ex}`}
-        stroke={fill}
-        strokeWidth={1.5}
-        fill="none"
-      />
-      
-      {/* Animated Callout Label */}
-      <g className="callout-text-group">
-        <text
-          x={tx}
-          y={ty - 5}
-          textAnchor={textAnchor}
-          fill="var(--text-main)"
-          fontSize={10.5}
-          fontWeight={600}
-          fontFamily="Hubot Sans Variable"
-        >
-          {payload.name}
-        </text>
-        <text
-          x={tx}
-          y={ty + 10}
-          textAnchor={textAnchor}
-          fill="var(--text-muted)"
-          fontSize={9.5}
-          fontWeight={500}
-          fontFamily="Mona Sans Variable"
-        >
-          {`৳${value.toLocaleString('en-IN')} (${(percent * 100).toFixed(1)}%)`}
-        </text>
-      </g>
-    </g>
-  );
-};
-
 const ExpenseChart = () => {
-  const { currentMonthTransactions, getCategoryStyle } = useAppContext();
+  const { currentMonthTransactions, getCategoryStyle, formatCurrency } = useAppContext();
   const [chartType, setChartType] = useState('donut'); // 'donut' or 'bar'
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  const renderActiveShape = (props) => {
+    const RADIAN = Math.PI / 180;
+    const {
+      cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle,
+      fill, payload, percent, value
+    } = props;
+    
+    // Pre-calculate trigonometric values
+    const cos = Math.cos(-RADIAN * midAngle);
+    const sin = Math.sin(-RADIAN * midAngle);
+    
+    // Coordinates for the leader line (start, elbow, end)
+    const isMobile = window.innerWidth < 640;
+    const lineElbow = isMobile ? 5 : 10;
+    const lineExtension = isMobile ? 8 : 12;
+    const textSpacing = isMobile ? 3 : 5;
+
+    const sx = cx + (outerRadius + 2) * cos;
+    const sy = cy + (outerRadius + 2) * sin;
+    const mx = cx + (outerRadius + lineElbow) * cos;
+    const my = cy + (outerRadius + lineElbow) * sin;
+    const ex = mx + (cos >= 0 ? 1 : -1) * lineExtension;
+    const ey = my;
+    
+    // Label text position and alignment
+    const textAnchor = cos >= 0 ? 'start' : 'end';
+    const tx = ex + (cos >= 0 ? 1 : -1) * textSpacing;
+    const ty = ey;
+
+    return (
+      <g>
+        {/* Glow Sector on hover */}
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius}
+          outerRadius={outerRadius + 4}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+          style={{
+            filter: `drop-shadow(0 0 5px ${fill}33)`,
+            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        />
+        
+        {/* Animated leader line path */}
+        <path
+          className="leader-line"
+          d={`M${sx},${sy}L${mx},${my}H${ex}`}
+          stroke={fill}
+          strokeWidth={1.5}
+          fill="none"
+        />
+        
+        {/* Animated Callout Label */}
+        <g className="callout-text-group">
+          <text
+            x={tx}
+            y={ty - 5}
+            textAnchor={textAnchor}
+            fill="var(--text-main)"
+            fontSize={10.5}
+            fontWeight={600}
+            fontFamily="Hubot Sans Variable"
+          >
+            {payload.name}
+          </text>
+          <text
+            x={tx}
+            y={ty + 10}
+            textAnchor={textAnchor}
+            fill="var(--text-muted)"
+            fontSize={9.5}
+            fontWeight={500}
+            fontFamily="Mona Sans Variable"
+          >
+            {`${formatCurrency(value)} (${(percent * 100).toFixed(1)}%)`}
+          </text>
+        </g>
+      </g>
+    );
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -213,7 +213,7 @@ const ExpenseChart = () => {
                   zIndex: 10
                 }}>
                   <span style={{ fontSize: isMobile ? '0.52rem' : '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Total Expenses</span>
-                  <span style={{ fontSize: isMobile ? '0.95rem' : '1.25rem', fontFamily: 'Hubot Sans Variable', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.15rem' }}>৳{totalExpenseValue.toLocaleString('en-IN')}</span>
+                  <span style={{ fontSize: isMobile ? '0.95rem' : '1.25rem', fontFamily: 'Hubot Sans Variable', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.15rem' }}>{formatCurrency(totalExpenseValue)}</span>
                 </div>
               )}
               
@@ -238,13 +238,13 @@ const ExpenseChart = () => {
                       tickLine={false} 
                       axisLine={false} 
                       width={55}
-                      tickFormatter={(val) => `৳${val.toLocaleString('en-IN')}`} 
+                      tickFormatter={(val) => formatCurrency(val)} 
                     />
                     <Tooltip 
                       cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
                       contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}
                       itemStyle={{ color: 'var(--text-main)', fontSize: '0.75rem' }}
-                      formatter={(value) => [`৳${value.toLocaleString('en-IN')}`, 'Amount']}
+                      formatter={(value) => [formatCurrency(value), 'Amount']}
                     />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                       {data.map((entry, index) => (
@@ -293,7 +293,7 @@ const ExpenseChart = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
                           <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.name}</span>
                           <span style={{ fontWeight: 700, color: style.color || 'var(--text-main)' }}>
-                            ৳{item.value.toLocaleString('en-IN')}{' '}
+                            {formatCurrency(item.value)}{' '}
                             <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 500 }}>({pct.toFixed(1)}%)</span>
                           </span>
                         </div>

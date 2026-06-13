@@ -3,7 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 
 const BudgetProgress = () => {
-  const { userSettings, currentMonthTransactions, getCategoryStyle } = useAppContext();
+  const { userSettings, currentMonthTransactions, getCategoryStyle, formatCurrency, rolloverData } = useAppContext();
   const budgets = userSettings.category_budgets || {};
   const expenseCategories = userSettings.expense_categories || [];
 
@@ -25,7 +25,10 @@ const BudgetProgress = () => {
       <h2 style={{ fontSize: '1.25rem' }}>Budget Tracker</h2>
       <div className="flex-col gap-3">
         {budgetedCategories.map(cat => {
-          const limit = budgets[cat];
+          const baseLimit = budgets[cat];
+          const rollover = rolloverData?.[cat] || 0;
+          const limit = baseLimit + rollover;
+          
           const spent = spentByCategory[cat] || 0;
           const percentage = Math.min((spent / limit) * 100, 100);
           const isOver = spent >= limit;
@@ -33,7 +36,7 @@ const BudgetProgress = () => {
           
           const diff = limit - spent;
           const diffAbs = Math.abs(diff);
-          const diffText = isOver ? `৳${diffAbs.toLocaleString('en-IN')} over` : `৳${diffAbs.toLocaleString('en-IN')} left`;
+          const diffText = isOver ? `${formatCurrency(diffAbs)} over` : `${formatCurrency(diffAbs)} left`;
           const diffColor = isOver ? 'var(--danger)' : 'var(--success)';
 
           return (
@@ -52,7 +55,7 @@ const BudgetProgress = () => {
                       color: isOver ? 'var(--danger)' : isWarning ? '#f59e0b' : 'var(--text-main)',
                       display: 'block'
                     }}>
-                      ৳{spent.toLocaleString('en-IN')} / ৳{limit.toLocaleString('en-IN')}
+                      {formatCurrency(spent)} / {formatCurrency(limit)}
                     </span>
                     <span style={{
                       fontSize: '0.7rem',
@@ -71,9 +74,10 @@ const BudgetProgress = () => {
               <div style={{
                 width: '100%',
                 height: '8px',
-                backgroundColor: 'rgba(255,255,255,0.1)',
+                backgroundColor: 'rgba(255,255,255,0.05)',
                 borderRadius: '4px',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                position: 'relative'
               }}>
                 <div style={{
                   width: `${percentage}%`,
@@ -86,7 +90,32 @@ const BudgetProgress = () => {
                       : `linear-gradient(90deg, ${getCategoryStyle(cat).color}, ${getCategoryStyle(cat).color}dd)`,
                   transition: 'width 0.5s ease'
                 }} />
+                {rollover > 0 && spent < limit && (
+                  <div style={{
+                    position: 'absolute',
+                    left: `${(baseLimit / limit) * 100}%`,
+                    top: 0,
+                    width: '1.5px',
+                    height: '100%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                    zIndex: 1
+                  }} title="Base budget limit boundary" />
+                )}
               </div>
+
+              {rollover > 0 && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: '0.4rem',
+                  fontSize: '0.7rem',
+                  color: 'var(--text-muted)'
+                }}>
+                  <span>Base: {formatCurrency(baseLimit)}</span>
+                  <span style={{ color: 'var(--success)', fontWeight: 500 }}>Rollover: +{formatCurrency(rollover)}</span>
+                </div>
+              )}
             </div>
           );
         })}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
@@ -6,25 +6,21 @@ import { useAppContext } from './context/AppContext';
 import Header from './components/Header';
 import OverviewCards from './components/OverviewCards';
 import TransactionForm from './components/TransactionForm';
-import RecentTransactions from './components/RecentTransactions';
-import ExpenseChart from './components/ExpenseChart';
-import PredictionEngine from './components/PredictionEngine';
 import Login from './components/Login';
-import SettingsPage from './components/Settings';
 import BudgetProgress from './components/BudgetProgress';
-import TrendChart from './components/TrendChart';
 import MonthSelector from './components/MonthSelector';
 import Footer from './components/Footer';
 import RecurringTracker from './components/RecurringTracker';
-import FinancialInsights from './components/FinancialInsights';
-import ExpenseCalendar from './components/ExpenseCalendar';
-import HealthScore from './components/HealthScore';
-import SavingsGoals from './components/SavingsGoals';
-import LedgerPage from './components/Ledger';
 import PWAUpdateToast from './components/PWAUpdateToast';
-import AnalyticsCarousel from './components/AnalyticsCarousel';
 import AppUpdatePrompt from './components/AppUpdatePrompt';
 import SplashScreen from './components/SplashScreen';
+import ErrorBoundary from './components/ErrorBoundary';
+import Onboarding from './components/Onboarding';
+
+const HistoryPage = React.lazy(() => import('./components/HistoryPage'));
+const AnalyticsPage = React.lazy(() => import('./components/AnalyticsPage'));
+const SettingsPage = React.lazy(() => import('./components/Settings'));
+const LedgerPage = React.lazy(() => import('./components/Ledger'));
 
 
 
@@ -62,88 +58,10 @@ const Dashboard = () => (
   </>
 );
 
-const HistoryPage = () => {
-  const [selectedDay, setSelectedDay] = useState(null);
-
-  return (
-    <>
-      <Header />
-      <main className="container animate-fade-in" style={{ flex: 1 }}>
-        <div style={{ marginBottom: '2rem', textAlign: 'center' }} className="animate-fade-in stagger-1">
-          <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Expense Log</h2>
-          <p>View your complete transaction history.</p>
-        </div>
-        
-        <div className="animate-fade-in stagger-2" style={{ marginBottom: '2rem' }}>
-          <MonthSelector />
-        </div>
-
-        <div className="flex-col gap-8 animate-fade-in stagger-3" style={{ maxWidth: '900px', margin: '0 auto', width: '100%' }}>
-          <ExpenseCalendar selectedDay={selectedDay} setSelectedDay={setSelectedDay} />
-          <RecentTransactions selectedDay={selectedDay} setSelectedDay={setSelectedDay} />
-        </div>
-      </main>
-      <Footer />
-    </>
-  );
-};
-
-const ANALYTICS_SLIDES = [
-  {
-    label: 'AI Prediction',
-    icon: '🔮',
-    content: <PredictionEngine />,
-  },
-  {
-    label: 'Health Score',
-    icon: '❤️',
-    content: <HealthScore />,
-  },
-  {
-    label: 'Expense Chart',
-    icon: '🍩',
-    content: <ExpenseChart />,
-  },
-  {
-    label: '6-Month Trend',
-    icon: '📈',
-    content: <TrendChart />,
-  },
-  {
-    label: 'Insights',
-    icon: '💡',
-    content: <FinancialInsights />,
-  },
-  {
-    label: 'Savings Goals',
-    icon: '🎯',
-    content: <SavingsGoals />,
-  },
-];
-
-const AnalyticsPage = () => (
-  <>
-    <Header />
-    <main className="container animate-fade-in" style={{ flex: 1 }}>
-      <div style={{ marginBottom: '2rem', textAlign: 'center' }} className="animate-fade-in stagger-1">
-        <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Analytics & Prediction</h2>
-        <p>Analyze your spending patterns, forecast your month, and track your savings goals.</p>
-      </div>
-
-      <div className="animate-fade-in stagger-2">
-        <MonthSelector />
-      </div>
-
-      <div className="animate-fade-in stagger-3">
-        <AnalyticsCarousel slides={ANALYTICS_SLIDES} />
-      </div>
-    </main>
-    <Footer />
-  </>
-);
+// Lazy-loaded pages loaded via react-router-dom below
 
 const ProtectedRoute = ({ children }) => {
-  const { session, loading } = useAppContext();
+  const { session, loading, isOnboardingNeeded } = useAppContext();
   
   if (loading) {
     return <SplashScreen />;
@@ -151,6 +69,10 @@ const ProtectedRoute = ({ children }) => {
   
   if (!session) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (isOnboardingNeeded) {
+    return <Onboarding />;
   }
   
   return children;
@@ -245,39 +167,49 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <NotificationNavigationHandler />
-      <Routes>
-        <Route path="/login" element={<LoginRoute />} />
-        <Route path="/" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/history" element={
-          <ProtectedRoute>
-            <HistoryPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/analytics" element={
-          <ProtectedRoute>
-            <AnalyticsPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/settings" element={
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/ledger" element={
-          <ProtectedRoute>
-            <LedgerPage />
-          </ProtectedRoute>
-        } />
-      </Routes>
-      {!Capacitor.isNativePlatform() && <PWAUpdateToast />}
-      <AppUpdatePrompt />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <NotificationNavigationHandler />
+        <Routes>
+          <Route path="/login" element={<LoginRoute />} />
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/history" element={
+            <ProtectedRoute>
+              <Suspense fallback={<SplashScreen />}>
+                <HistoryPage />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+          <Route path="/analytics" element={
+            <ProtectedRoute>
+              <Suspense fallback={<SplashScreen />}>
+                <AnalyticsPage />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Suspense fallback={<SplashScreen />}>
+                <SettingsPage />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+          <Route path="/ledger" element={
+            <ProtectedRoute>
+              <Suspense fallback={<SplashScreen />}>
+                <LedgerPage />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+        </Routes>
+        {!Capacitor.isNativePlatform() && <PWAUpdateToast />}
+        <AppUpdatePrompt />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

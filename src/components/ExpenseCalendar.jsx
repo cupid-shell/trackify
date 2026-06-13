@@ -8,7 +8,8 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
     currentMonthTransactions, 
     selectedMonth, 
     selectedYear,
-    getCategoryStyle
+    getCategoryStyle,
+    formatCurrency
   } = useAppContext();
   
   const [localSelectedDay, setLocalSelectedDay] = useState(null);
@@ -194,7 +195,7 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
         <span className="calendar-day-cell-number" style={{ color: isActive ? '#fff' : 'var(--text-muted)' }}>{day}</span>
         {dayInfo.totalExpense > 0 ? (
           <span className="calendar-day-cell-amount" style={{ color: isActive ? '#fff' : undefined }}>
-            ৳{Math.round(dayInfo.totalExpense).toLocaleString('en-IN')}
+            {formatCurrency(Math.round(dayInfo.totalExpense))}
           </span>
         ) : (
           <div className="calendar-day-cell-win" title="Savings day win!">
@@ -499,7 +500,7 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
                           </div>
                         </div>
                         <span style={{ fontWeight: 'bold', color: isExpense ? 'var(--danger)' : 'var(--success)' }}>
-                          {isExpense ? '-' : '+'}৳{tx.amount}
+                          {isExpense ? '-' : '+'}{formatCurrency(tx.amount)}
                         </span>
                       </div>
                     );

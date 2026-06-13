@@ -5,7 +5,18 @@ import { Trash2, TrendingUp, Download, Edit2, X } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 import CustomSelect from './CustomSelect';
 
-const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
+const RecentTransactions = ({ 
+  selectedDay = null, 
+  setSelectedDay = null,
+  searchTerm: propSearchTerm,
+  setSearchTerm: propSetSearchTerm,
+  selectedCategory: propSelectedCategory,
+  setSelectedCategory: propSetSelectedCategory,
+  startDate: propStartDate,
+  setStartDate: propSetStartDate,
+  endDate: propEndDate,
+  setEndDate: propSetEndDate
+}) => {
   const { 
     currentMonthTransactions, 
     deleteTransaction, 
@@ -13,13 +24,30 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
     userSettings, 
     getCategoryStyle, 
     showToast,
+    showConfirm,
     selectedMonth,
-    selectedYear
+    selectedYear,
+    formatCurrency,
+    currency
   } = useAppContext();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  
+  const [localSearchTerm, localSetSearchTerm] = useState('');
+  const [localSelectedCategory, localSetSelectedCategory] = useState('All');
+  const [localStartDate, localSetStartDate] = useState('');
+  const [localEndDate, localSetEndDate] = useState('');
+  const [activeReceiptUrl, setActiveReceiptUrl] = useState(null);
+
+  const searchTerm = propSearchTerm !== undefined ? propSearchTerm : localSearchTerm;
+  const setSearchTerm = propSetSearchTerm !== undefined ? propSetSearchTerm : localSetSearchTerm;
+
+  const selectedCategory = propSelectedCategory !== undefined ? propSelectedCategory : localSelectedCategory;
+  const setSelectedCategory = propSetSelectedCategory !== undefined ? propSetSelectedCategory : localSetSelectedCategory;
+
+  const startDate = propStartDate !== undefined ? propStartDate : localStartDate;
+  const setStartDate = propSetStartDate !== undefined ? propSetStartDate : localSetStartDate;
+
+  const endDate = propEndDate !== undefined ? propEndDate : localEndDate;
+  const setEndDate = propSetEndDate !== undefined ? propSetEndDate : localSetEndDate;
 
   // Edit mode states
   const [editingId, setEditingId] = useState(null);
@@ -129,7 +157,7 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
     if (currentMonthTransactions.length === 0) return;
 
     // Create CSV headers
-    const headers = ['Date', 'Type', 'Category', 'Payment Method', 'Amount (BDT)', 'Note'];
+    const headers = ['Date', 'Type', 'Category', 'Payment Method', `Amount (${currency})`, 'Note'];
     
     // Map transactions to CSV rows
     const csvRows = sortedTx.map(tx => {
@@ -154,29 +182,223 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
     document.body.removeChild(link);
   };
 
+  const handleExportPDF = () => {
+    if (sortedTx.length === 0) return;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+
+    const incTotal = sortedTx.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+    const expTotal = sortedTx.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+    const netBal = incTotal - expTotal;
+
+    const dateRangeStr = startDate || endDate
+      ? `${startDate ? 'From ' + startDate : ''} ${endDate ? 'To ' + endDate : ''}`
+      : `Month: ${format(new Date(selectedYear, selectedMonth, 1), 'MMMM yyyy')}`;
+
+    const rowsHtml = sortedTx.map((tx, idx) => {
+      const formattedDate = format(new Date(tx.date), 'yyyy-MM-dd HH:mm');
+      const isIncome = tx.type === 'income';
+      return `
+        <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#f8f9fa'};">
+          <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">${formattedDate}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #dee2e6; font-weight: 600; color: ${isIncome ? '#2b8a3e' : '#c92a2a'};">${tx.type.toUpperCase()}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">${tx.category}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">${tx.payment_method || 'Cash'}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #dee2e6; text-align: right; font-weight: 600;">${isIncome ? '+' : '-'}${formatCurrency(tx.amount)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #dee2e6; color: #495057;">${tx.note || ''}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Trackify Financial Statement</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              color: #212529;
+              padding: 20px;
+              line-height: 1.5;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid #3eb489;
+              padding-bottom: 15px;
+              margin-bottom: 20px;
+            }
+            .logo {
+              font-size: 24px;
+              font-weight: 800;
+              color: #3eb489;
+              letter-spacing: 0.5px;
+            }
+            .statement-title {
+              font-size: 18px;
+              font-weight: 600;
+              color: #495057;
+              text-align: right;
+            }
+            .meta {
+              font-size: 12px;
+              color: #868e96;
+              margin-bottom: 25px;
+            }
+            .summary-cards {
+              display: flex;
+              gap: 15px;
+              margin-bottom: 30px;
+            }
+            .card {
+              flex: 1;
+              padding: 15px;
+              background-color: #f8f9fa;
+              border: 1px solid #e9ecef;
+              border-radius: 8px;
+            }
+            .card-title {
+              font-size: 11px;
+              text-transform: uppercase;
+              color: #868e96;
+              margin-bottom: 5px;
+              font-weight: 700;
+            }
+            .card-value {
+              font-size: 20px;
+              font-weight: 700;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 13px;
+              margin-top: 15px;
+            }
+            th {
+              background-color: #f1f3f5;
+              font-weight: 700;
+              text-align: left;
+              padding: 12px 10px;
+              border-bottom: 2px solid #dee2e6;
+            }
+            @media print {
+              body { padding: 0; }
+              .card { border: 1px solid #dee2e6; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">TRACKIFY</div>
+            <div class="statement-title">Financial Statement</div>
+          </div>
+          <div class="meta">
+            <div><strong>Statement Period:</strong> ${dateRangeStr}</div>
+            <div><strong>Generated On:</strong> ${new Date().toLocaleString()}</div>
+          </div>
+          <div class="summary-cards">
+            <div class="card">
+              <div class="card-title">Total Income</div>
+              <div class="card-value" style="color: #2b8a3e;">${formatCurrency(incTotal)}</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Total Expenses</div>
+              <div class="card-value" style="color: #c92a2a;">${formatCurrency(expTotal)}</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Net Balance</div>
+              <div class="card-value" style="color: ${netBal >= 0 ? '#2b8a3e' : '#c92a2a'};">${formatCurrency(netBal)}</div>
+            </div>
+          </div>
+          <h3>Transaction History (${sortedTx.length} records)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 15%;">Date</th>
+                <th style="width: 10%;">Type</th>
+                <th style="width: 20%;">Category</th>
+                <th style="width: 15%;">Payment</th>
+                <th style="text-align: right; width: 15%;">Amount</th>
+                <th style="width: 25%;">Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    doc.write(htmlContent);
+    doc.close();
+
+    iframe.contentWindow.focus();
+    setTimeout(() => {
+      iframe.contentWindow.print();
+      document.body.removeChild(iframe);
+    }, 500);
+  };
+
   return (
     <div className="glass-card flex-col gap-6">
       <div className="flex items-center justify-between">
         <h2 style={{ fontSize: '1.25rem' }}>Monthly Transactions</h2>
         {currentMonthTransactions.length > 0 && (
-          <button 
-            onClick={handleExportCSV}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 0.75rem',
-              backgroundColor: 'var(--bg-input)',
-              color: 'var(--text-main)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              border: '1px solid var(--border-color)'
-            }}
-          >
-            <Download size={16} />
-            Export Excel
-          </button>
+          <div className="flex gap-2" style={{ flexShrink: 0 }}>
+            <button 
+              onClick={handleExportCSV}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.45rem 0.75rem',
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--text-main)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                border: '1px solid var(--border-color)',
+                cursor: 'pointer'
+              }}
+              title="Export as CSV spreadsheet"
+            >
+              <Download size={14} />
+              CSV
+            </button>
+            <button 
+              onClick={handleExportPDF}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.45rem 0.75rem',
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--text-main)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                border: '1px solid var(--border-color)',
+                cursor: 'pointer'
+              }}
+              title="Print statement to PDF"
+            >
+              <Download size={14} />
+              PDF Statement
+            </button>
+          </div>
         )}
       </div>
 
@@ -464,6 +686,27 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
                         {tx.payment_method || 'Cash'}
                       </span>
                       <span style={{ flexShrink: 0 }}>{format(new Date(tx.date), 'MMM dd, yyyy • hh:mm a')}</span>
+                      {userSettings.category_metadata?._receipt_attachments?.[tx.id] && (
+                        <button
+                          onClick={() => setActiveReceiptUrl(userSettings.category_metadata._receipt_attachments[tx.id])}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '2px',
+                            background: 'var(--primary-glow)',
+                            border: '1px solid var(--primary)',
+                            color: 'var(--primary)',
+                            borderRadius: '4px',
+                            padding: '1px 5px',
+                            fontSize: '0.7rem',
+                            cursor: 'pointer',
+                            flexShrink: 0
+                          }}
+                          title="View Receipt"
+                        >
+                          📷 Receipt
+                        </button>
+                      )}
                       {tx.note && (
                         <>
                           <span style={{ flexShrink: 0, opacity: 0.5 }}>•</span>
@@ -485,7 +728,7 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
                     whiteSpace: 'nowrap',
                     flexShrink: 0
                   }}>
-                    {tx.type === 'income' ? '+' : '-'}৳{tx.amount.toLocaleString('en-IN')}
+                    {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                   </span>
                   <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
                     <button 
@@ -498,7 +741,14 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
                       <Edit2 size={16} />
                     </button>
                     <button 
-                      onClick={() => deleteTransaction(tx.id)}
+                      onClick={() => {
+                        showConfirm({
+                          title: 'Delete Transaction?',
+                          message: 'Are you sure you want to permanently delete this transaction record?',
+                          confirmLabel: 'Delete',
+                          onConfirm: () => deleteTransaction(tx.id)
+                        });
+                      }}
                       style={{ color: 'var(--text-muted)' }}
                       onMouseOver={(e) => e.currentTarget.style.color = 'var(--danger)'}
                       onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
@@ -511,6 +761,89 @@ const RecentTransactions = ({ selectedDay = null, setSelectedDay = null }) => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {activeReceiptUrl && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+          onClick={() => setActiveReceiptUrl(null)}
+        >
+          <div 
+            style={{
+              position: 'relative',
+              maxWidth: '90%',
+              maxHeight: '90%',
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '1.5rem 1rem 1rem 1rem',
+              boxShadow: 'var(--shadow-lg)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setActiveReceiptUrl(null)}
+              style={{
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={20} />
+            </button>
+            <img 
+              src={activeReceiptUrl} 
+              alt="Receipt Attachment" 
+              style={{
+                maxWidth: '100%',
+                maxHeight: '75vh',
+                objectFit: 'contain',
+                borderRadius: 'var(--radius-md)',
+                marginTop: '0.5rem'
+              }} 
+            />
+            <div style={{ marginTop: '1rem', width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <a 
+                href={activeReceiptUrl} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.85rem',
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  borderRadius: 'var(--radius-md)',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  textAlign: 'center'
+                }}
+              >
+                Open in New Tab
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </div>

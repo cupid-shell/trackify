@@ -1,10 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { version as currentVersion } from '../../package.json';
 import { X } from 'lucide-react';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { formatCurrency, getCurrencySymbol } from '../utils/currency';
 
 const AppContext = createContext();
 
@@ -64,7 +66,8 @@ const defaultSettings = {
   category_metadata: {},
   presets: defaultPresets,
   recurring_bills: defaultRecurringBills,
-  notification_preferences: defaultNotificationPrefs
+  notification_preferences: defaultNotificationPrefs,
+  currency: 'BDT'
 };
 
 export const AppProvider = ({ children }) => {
@@ -73,6 +76,16 @@ export const AppProvider = ({ children }) => {
   const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmLabel: 'Confirm',
+    cancelLabel: 'Cancel',
+    variant: 'danger',
+    checkbox: null,
+    onConfirm: () => {}
+  });
   const [updateAvailable, setUpdateAvailable] = useState(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
 
@@ -90,9 +103,7 @@ export const AppProvider = ({ children }) => {
     }
   }, [themeMode]);
 
-  const toggleThemeMode = useCallback(() => {
-    setThemeMode(prev => (prev === 'light' ? 'dark' : 'light'));
-  }, []);
+  // toggleThemeMode moved below updateSettings to avoid TDZ
 
   const showToast = useCallback((message, type = 'success') => {
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -100,6 +111,26 @@ export const AppProvider = ({ children }) => {
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 3500);
+  }, []);
+
+  const showConfirm = useCallback(({ title, message, confirmLabel, cancelLabel, variant, checkbox, onConfirm }) => {
+    setConfirmDialog({
+      isOpen: true,
+      title,
+      message,
+      confirmLabel: confirmLabel || 'Confirm',
+      cancelLabel: cancelLabel || 'Cancel',
+      variant: variant || 'danger',
+      checkbox: checkbox || null,
+      onConfirm: (checkboxChecked) => {
+        onConfirm(checkboxChecked);
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  }, []);
+
+  const hideConfirm = useCallback(() => {
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
   }, []);
 
   const dismissUpdate = useCallback((permanently = false) => {
@@ -113,6 +144,7 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     const savedTheme = localStorage.getItem('trackify_theme') || 'emerald';
     const themes = {
+      mint: { primary: '#3eb489', hover: '#2e9b73', glow: 'rgba(62, 180, 137, 0.4)' },
       indigo: { primary: '#6366f1', hover: '#4f46e5', glow: 'rgba(99, 102, 241, 0.4)' },
       emerald: { primary: '#10b981', hover: '#059669', glow: 'rgba(16, 185, 129, 0.4)' },
       rose: { primary: '#f43f5e', hover: '#e11d48', glow: 'rgba(244, 63, 94, 0.4)' },
@@ -127,6 +159,7 @@ export const AppProvider = ({ children }) => {
   
   // Settings state
   const [userSettings, setUserSettings] = useState(defaultSettings);
+  const currency = userSettings.currency || 'BDT';
 
   const [presets, setPresets] = useState(() => {
     const saved = localStorage.getItem('trackify_presets');
@@ -186,6 +219,7 @@ export const AppProvider = ({ children }) => {
     setRecurringBills(defaultRecurringBills);
     setNotifications([]);
     setSkippedBills([]);
+    hasCheckedAutoLog.current = false;
 
     localStorage.removeItem('trackify_presets');
     localStorage.removeItem('trackify_recurring_bills');
@@ -234,6 +268,8 @@ export const AppProvider = ({ children }) => {
 
       const loadedSkippedBills = categoryMetadata._skipped_bills || [];
 
+      const loadedCurrency = categoryMetadata._currency || 'BDT';
+
       setUserSettings({
         base_income: data.base_income || 15000,
         savings_goal: data.savings_goal || 3000,
@@ -244,7 +280,8 @@ export const AppProvider = ({ children }) => {
         category_metadata: categoryMetadata,
         presets: loadedPresets,
         recurring_bills: loadedRecurringBills,
-        notification_preferences: loadedNotificationPrefs
+        notification_preferences: loadedNotificationPrefs,
+        currency: loadedCurrency
       });
 
       if (loadedPresets != null) {
@@ -265,6 +302,27 @@ export const AppProvider = ({ children }) => {
         setSkippedBills(loadedSkippedBills);
         localStorage.setItem('trackify_skipped_bills', JSON.stringify(loadedSkippedBills));
       }
+
+      // Apply theme mode loaded from Supabase
+      const loadedThemeMode = categoryMetadata._theme_mode || localStorage.getItem('trackify_theme_mode') || 'dark';
+      setThemeMode(loadedThemeMode);
+      localStorage.setItem('trackify_theme_mode', loadedThemeMode);
+
+      // Apply theme accent loaded from Supabase
+      const loadedThemeAccent = categoryMetadata._theme_accent || localStorage.getItem('trackify_theme') || 'emerald';
+      localStorage.setItem('trackify_theme', loadedThemeAccent);
+      const themes = {
+        mint: { primary: '#3eb489', hover: '#2e9b73', glow: 'rgba(62, 180, 137, 0.4)' },
+        indigo: { primary: '#6366f1', hover: '#4f46e5', glow: 'rgba(99, 102, 241, 0.4)' },
+        emerald: { primary: '#10b981', hover: '#059669', glow: 'rgba(16, 185, 129, 0.4)' },
+        rose: { primary: '#f43f5e', hover: '#e11d48', glow: 'rgba(244, 63, 94, 0.4)' },
+        cyan: { primary: '#06b6d4', hover: '#0891b2', glow: 'rgba(6, 182, 212, 0.4)' },
+        amber: { primary: '#f59e0b', hover: '#d97706', glow: 'rgba(245, 158, 11, 0.4)' }
+      };
+      const selected = themes[loadedThemeAccent] || themes.emerald;
+      document.documentElement.style.setProperty('--primary', selected.primary);
+      document.documentElement.style.setProperty('--primary-hover', selected.hover);
+      document.documentElement.style.setProperty('--primary-glow', selected.glow);
     }
   }
 
@@ -296,6 +354,55 @@ export const AppProvider = ({ children }) => {
     }
     if (!background) setLoading(false);
   }
+
+  const hasCheckedAutoLog = useRef(false);
+
+  const processAutoLogBills = useCallback(async (bills, existingTransactions) => {
+    if (!session?.user) return;
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const autoLogged = [];
+
+    for (const bill of bills) {
+      if (!bill.autoLog) continue;
+      if (today.getDate() < Number(bill.dueDate)) continue;
+
+      const billNameLower = bill.name.toLowerCase();
+      const alreadyPaid = existingTransactions.some(tx => {
+        const txDate = parseLocalDate(tx.date);
+        return tx.type === 'expense' &&
+          txDate.getMonth() === currentMonth &&
+          txDate.getFullYear() === currentYear &&
+          (tx.note?.toLowerCase().includes(billNameLower) || 
+           (tx.note?.toLowerCase().includes('recurring') && Number(tx.amount) === Number(bill.amount) && tx.category === bill.category));
+      });
+
+      if (!alreadyPaid) {
+        const targetDate = new Date(currentYear, currentMonth, Number(bill.dueDate));
+        await addTransaction({
+          type: 'expense',
+          amount: Number(bill.amount),
+          category: bill.category,
+          note: `[Recurring] ${bill.name}`,
+          date: targetDate.toISOString().split('T')[0],
+          payment_method: bill.payment || 'Cash'
+        });
+        autoLogged.push(bill.name);
+      }
+    }
+
+    if (autoLogged.length > 0) {
+      showToast(`Auto-logged ${autoLogged.length} recurring bill(s): ${autoLogged.join(', ')}`, 'info');
+    }
+  }, [session, addTransaction, showToast]);
+
+  useEffect(() => {
+    if (session && !loading && !hasCheckedAutoLog.current && userSettings.recurring_bills && transactions) {
+      hasCheckedAutoLog.current = true;
+      processAutoLogBills(userSettings.recurring_bills, transactions);
+    }
+  }, [session, loading, userSettings.recurring_bills, transactions, processAutoLogBills]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -406,14 +513,14 @@ export const AppProvider = ({ children }) => {
             if (isOverdue) {
               addNotification(
                 `Overdue ${typeStr}`,
-                `৳${remainingAmount} is overdue ${directionStr} ${debt.person} since ${formattedDate}.`,
+                `${formatCurrency(remainingAmount, currency)} is overdue ${directionStr} ${debt.person} since ${formattedDate}.`,
                 'warning',
                 notifId
               );
             } else {
               addNotification(
                 `Due Soon: ${typeStr}`,
-                `৳${remainingAmount} is due ${directionStr} ${debt.person} on ${formattedDate} (${diffDays === 0 ? 'today' : diffDays === 1 ? 'tomorrow' : `in ${diffDays} days`}).`,
+                `${formatCurrency(remainingAmount, currency)} is due ${directionStr} ${debt.person} on ${formattedDate} (${diffDays === 0 ? 'today' : diffDays === 1 ? 'tomorrow' : `in ${diffDays} days`}).`,
                 'info',
                 notifId
               );
@@ -422,7 +529,7 @@ export const AppProvider = ({ children }) => {
         }
       });
     }
-  }, [debts, session, notifications, addNotification]);
+  }, [debts, session, notifications, addNotification, currency]);
 
   // Auth state listener
   useEffect(() => {
@@ -710,6 +817,16 @@ export const AppProvider = ({ children }) => {
     
     // Construct the updated category_metadata that holds fallback settings
     const currentMetadata = { ...(newSettings.category_metadata || userSettings.category_metadata || {}) };
+
+    if (newSettings.theme_mode !== undefined) {
+      currentMetadata._theme_mode = newSettings.theme_mode;
+    }
+    if (newSettings.theme_accent !== undefined) {
+      currentMetadata._theme_accent = newSettings.theme_accent;
+    }
+    if (newSettings.currency !== undefined) {
+      currentMetadata._currency = newSettings.currency;
+    }
     
     const updatedPresets = newSettings.presets !== undefined ? newSettings.presets : presets;
     const updatedBills = newSettings.recurring_bills !== undefined ? newSettings.recurring_bills : recurringBills;
@@ -759,9 +876,14 @@ export const AppProvider = ({ children }) => {
       });
     }
 
+    const cleanSettingsForPayload = { ...newSettings };
+    delete cleanSettingsForPayload.theme_mode;
+    delete cleanSettingsForPayload.theme_accent;
+    delete cleanSettingsForPayload.currency;
+
     const payload = {
       user_id: session.user.id,
-      ...newSettings,
+      ...cleanSettingsForPayload,
       category_metadata: currentMetadata,
       updated_at: new Date().toISOString()
     };
@@ -777,6 +899,9 @@ export const AppProvider = ({ children }) => {
         delete fallbackSettings.presets;
         delete fallbackSettings.recurring_bills;
         delete fallbackSettings.notification_preferences;
+        delete fallbackSettings.theme_mode;
+        delete fallbackSettings.theme_accent;
+        delete fallbackSettings.currency;
         const fallbackPayload = {
           user_id: session.user.id,
           ...fallbackSettings,
@@ -794,6 +919,18 @@ export const AppProvider = ({ children }) => {
       }
     }
   };
+
+  const toggleThemeMode = useCallback(() => {
+    const newMode = themeMode === 'light' ? 'dark' : 'light';
+    setThemeMode(newMode);
+    
+    document.body.classList.add('theme-transitioning');
+    setTimeout(() => {
+      document.body.classList.remove('theme-transitioning');
+    }, 500);
+
+    updateSettings({ theme_mode: newMode });
+  }, [themeMode]);
 
   const addDebt = async (debt, logAsTransaction) => {
     if (!session?.user) return;
@@ -934,8 +1071,42 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const addTransaction = async (transaction) => {
-    if (!session?.user) return;
+  const uploadReceiptFile = async (file) => {
+    if (!session?.user) throw new Error('User not logged in');
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    const filePath = `${session.user.id}/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from('receipts')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase Storage Upload Error:', error);
+      throw error;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('receipts')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
+  const addReceiptAttachment = useCallback(async (txId, url) => {
+    const currentMetadata = { ...(userSettings.category_metadata || {}) };
+    currentMetadata._receipt_attachments = {
+      ...(currentMetadata._receipt_attachments || {}),
+      [txId]: url
+    };
+    await updateSettings({ category_metadata: currentMetadata });
+  }, [userSettings.category_metadata, updateSettings]);
+
+  async function addTransaction(transaction) {
+    if (!session?.user) return null;
 
     // Optimistic UI update
     // eslint-disable-next-line react-hooks/purity
@@ -963,14 +1134,16 @@ export const AppProvider = ({ children }) => {
     if (!error && data) {
       setTransactions(prev => prev.map(tx => tx.id === tempId ? data : tx));
       checkTransactionAlerts(data);
+      return data;
     } else {
       setTransactions(prev => prev.filter(tx => tx.id !== tempId));
       showToast('Error adding transaction: ' + error.message, 'error');
+      return null;
     }
-  };
+  }
 
-  const addTransactions = async (transactionList) => {
-    if (!session?.user || !transactionList || transactionList.length === 0) return;
+  async function addTransactions(transactionList) {
+    if (!session?.user || !transactionList || transactionList.length === 0) return null;
 
     // Optimistic UI: generate temp IDs and push all rows at once
     const tempRows = transactionList.map((tx, i) => ({
@@ -1003,10 +1176,12 @@ export const AppProvider = ({ children }) => {
         return [...data, ...withoutTemps];
       });
       data.forEach(tx => checkTransactionAlerts(tx));
+      return data;
     } else {
       // Rollback optimistic rows
       setTransactions(prev => prev.filter(tx => !tempRows.some(t => t.id === tx.id)));
       showToast('Error adding transactions: ' + (error?.message || 'Unknown error'), 'error');
+      return null;
     }
   };
 
@@ -1399,7 +1574,7 @@ export const AppProvider = ({ children }) => {
 
           notificationsToSchedule.push({
             title: `Bill Due Today: ${bill.name} 🏠`,
-            body: `Your payment of ৳${bill.amount} for ${bill.category} is due. Tap to record it!`,
+            body: `Your payment of ${formatCurrency(bill.amount, currency)} for ${bill.category} is due. Tap to record it!`,
             id: 2000 + idx,
             channelId: 'reminders',
             schedule: { at: scheduleTime },
@@ -1419,7 +1594,7 @@ export const AppProvider = ({ children }) => {
     } catch (error) {
       console.error('Error rescheduling notifications:', error);
     }
-  }, [transactions, recurringBills]);
+  }, [transactions, recurringBills, currency]);
 
   const checkTransactionAlerts = async (newTx) => {
     if (!Capacitor.isNativePlatform() || newTx.type !== 'expense') return;
@@ -1459,7 +1634,7 @@ export const AppProvider = ({ children }) => {
                 notifications: [
                   {
                     title: `Budget Exhausted! 🛑`,
-                    body: `You have spent ৳${totalSpent.toLocaleString('en-IN')} out of your ৳${limit.toLocaleString('en-IN')} budget limit for ${cat}.`,
+                    body: `You have spent ${formatCurrency(totalSpent, currency)} out of your ${formatCurrency(limit, currency)} budget limit for ${cat}.`,
                     // Deterministic ID: 3500 + hash of category name (no random, so Android deduplicates)
                     id: 3500 + (Math.abs(cat.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)) % 400),
                     channelId: 'reminders',
@@ -1480,7 +1655,7 @@ export const AppProvider = ({ children }) => {
                 notifications: [
                   {
                     title: `Budget Warning: ${cat} ⚠️`,
-                    body: `You have spent ৳${totalSpent.toLocaleString('en-IN')} out of your ৳${limit.toLocaleString('en-IN')} budget limit for ${cat} (${Math.round((totalSpent / limit) * 100)}%).`,
+                    body: `You have spent ${formatCurrency(totalSpent, currency)} out of your ${formatCurrency(limit, currency)} budget limit for ${cat} (${Math.round((totalSpent / limit) * 100)}%).`,
                     // Deterministic ID: 3000 + hash of category name
                     id: 3000 + (Math.abs(cat.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)) % 400),
                     channelId: 'reminders',
@@ -1514,7 +1689,7 @@ export const AppProvider = ({ children }) => {
                 notifications: [
                   {
                     title: 'Unusual Spending Spike 🚨',
-                    body: `You just logged a ৳${Number(newTx.amount).toLocaleString('en-IN')} expense for ${cat}, which is significantly higher than your typical average (৳${Math.round(average).toLocaleString('en-IN')}).`,
+                    body: `You just logged a ${formatCurrency(newTx.amount, currency)} expense for ${cat}, which is significantly higher than your typical average (${formatCurrency(Math.round(average), currency)}).`,
                     // Deterministic ID: 5000 + hash of category name
                     id: 5000 + (Math.abs(cat.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)) % 400),
                     channelId: 'reminders',
@@ -1561,8 +1736,8 @@ export const AppProvider = ({ children }) => {
       };
       
       const bodyMap = {
-        50: `Your savings goal "${goal.name}" is now 50% complete (৳${nextAmount.toLocaleString('en-IN')}/${target.toLocaleString('en-IN')}).`,
-        75: `Your savings goal "${goal.name}" is now 75% complete (৳${nextAmount.toLocaleString('en-IN')}/${target.toLocaleString('en-IN')}).`,
+        50: `Your savings goal "${goal.name}" is now 50% complete (${formatCurrency(nextAmount, currency)}/${formatCurrency(target, currency)}).`,
+        75: `Your savings goal "${goal.name}" is now 75% complete (${formatCurrency(nextAmount, currency)}/${formatCurrency(target, currency)}).`,
         100: `Congratulations! You have fully achieved your "${goal.name}" savings goal!`
       };
 
@@ -1610,8 +1785,96 @@ export const AppProvider = ({ children }) => {
 
   const balance = totalIncome - totalExpenses;
 
+  const rolloverData = useMemo(() => {
+    const enabledCategories = userSettings.category_metadata?._budget_rollover?.enabled_categories || [];
+    if (enabledCategories.length === 0 || transactions.length === 0) return {};
+
+    const sortedTxs = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+    if (sortedTxs.length === 0) return {};
+
+    const oldestDate = parseLocalDate(sortedTxs[0].date);
+    const currentDate = new Date(selectedYear, selectedMonth, 1);
+
+    const monthsList = [];
+    let d = new Date(oldestDate.getFullYear(), oldestDate.getMonth(), 1);
+    while (d <= currentDate) {
+      monthsList.push({ month: d.getMonth(), year: d.getFullYear() });
+      d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    }
+
+    const rollovers = {};
+    const previousRollover = {};
+
+    enabledCategories.forEach(cat => {
+      previousRollover[cat] = 0;
+    });
+
+    const budgets = userSettings.category_budgets || {};
+
+    monthsList.forEach(({ month, year }) => {
+      const monthKey = `${year}-${month}`;
+      
+      rollovers[monthKey] = { ...previousRollover };
+
+      const monthTxs = transactions.filter(tx => {
+        const txDate = parseLocalDate(tx.date);
+        return tx.type === 'expense' && txDate.getMonth() === month && txDate.getFullYear() === year;
+      });
+
+      const spentByCategory = {};
+      monthTxs.forEach(tx => {
+        spentByCategory[tx.category] = (spentByCategory[tx.category] || 0) + Number(tx.amount);
+      });
+
+      enabledCategories.forEach(cat => {
+        const baseLimit = Number(budgets[cat] || 0);
+        if (baseLimit > 0) {
+          const appliedRollover = previousRollover[cat] || 0;
+          const effectiveLimit = baseLimit + appliedRollover;
+          const spent = spentByCategory[cat] || 0;
+          const surplus = effectiveLimit - spent;
+          
+          previousRollover[cat] = Math.max(0, surplus);
+        } else {
+          previousRollover[cat] = 0;
+        }
+      });
+    });
+
+    return rollovers;
+  }, [transactions, userSettings.category_budgets, userSettings.category_metadata?._budget_rollover?.enabled_categories, selectedMonth, selectedYear]);
+
+  const activeRolloverData = useMemo(() => {
+    return rolloverData[`${selectedYear}-${selectedMonth}`] || {};
+  }, [rolloverData, selectedMonth, selectedYear]);
+
+  const formatAmount = useCallback((amount) => {
+    return formatCurrency(amount, currency);
+  }, [currency]);
+
+  const isOnboardingNeeded = useMemo(() => {
+    if (loading || !session) return false;
+    const completed = userSettings.category_metadata?._onboarding_completed;
+    if (completed === true) return false;
+    if (completed === false) return true;
+    
+    // If it's undefined, let's look at transactions or budgets
+    const hasTransactions = transactions.length > 0;
+    const hasBudgets = Object.keys(userSettings.category_budgets || {}).length > 0;
+    const hasSavingsGoals = (userSettings.savings_goals || []).length > 0;
+    
+    if (hasTransactions || hasBudgets || hasSavingsGoals) {
+      return false;
+    }
+    
+    return true; // Brand new user
+  }, [loading, session, userSettings, transactions]);
+
   const value = {
     session,
+    currency,
+    formatCurrency: formatAmount,
+    getCurrencySymbol: () => getCurrencySymbol(currency),
     transactions,
     debts,
     userSettings,
@@ -1623,6 +1886,8 @@ export const AppProvider = ({ children }) => {
     baseIncome: Number(userSettings.base_income),
     savingsGoal: Number(userSettings.savings_goal),
     loading,
+    uploadReceiptFile,
+    addReceiptAttachment,
     addTransaction,
     addTransactions,
     deleteTransaction,
@@ -1636,6 +1901,7 @@ export const AppProvider = ({ children }) => {
     totalIncome,
     totalExpenses,
     balance,
+    rolloverData: activeRolloverData,
     notifications,
     addNotification,
     markAllNotificationsRead,
@@ -1653,18 +1919,21 @@ export const AppProvider = ({ children }) => {
     unskipBillForMonth,
     rescheduleNotifications,
     showToast,
+    showConfirm,
     updateAvailable,
     updateDismissed,
     dismissUpdate,
     themeMode,
     toggleThemeMode,
     highlightedBill,
-    setHighlightedBill
+    setHighlightedBill,
+    isOnboardingNeeded
   };
 
   return (
     <AppContext.Provider value={value}>
       {children}
+      <ConfirmDialog {...confirmDialog} onCancel={hideConfirm} />
       <div className="toast-container">
         {toasts.map(t => (
           <div key={t.id} className={`toast-alert toast-${t.type}`}>

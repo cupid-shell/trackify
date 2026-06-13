@@ -4,29 +4,31 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { format, subMonths } from 'date-fns';
 import { Wallet, TrendingUp, Calendar, Award } from 'lucide-react';
 
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{
-        backgroundColor: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        borderRadius: 'var(--radius-md)',
-        padding: '0.75rem 1rem',
-      }}>
-        <p style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.8rem' }}>{label}</p>
-        {payload.map((entry, index) => (
-          <p key={index} style={{ color: entry.color, fontSize: '0.75rem', marginTop: '0.2rem' }}>
-            {entry.name}: ৳{Number(entry.value).toLocaleString('en-IN')}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
+// CustomTooltip moved inside component to capture formatCurrency
 
 const TrendChart = () => {
-  const { transactions, baseIncome } = useAppContext();
+  const { transactions, baseIncome, formatCurrency } = useAppContext();
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{
+          backgroundColor: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-md)',
+          padding: '0.75rem 1rem',
+        }}>
+          <p style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.8rem' }}>{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color, fontSize: '0.75rem', marginTop: '0.2rem' }}>
+              {entry.name}: {formatCurrency(entry.value)}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   const trendData = useMemo(() => {
     const data = [];
@@ -151,7 +153,7 @@ const TrendChart = () => {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} />
-              <YAxis stroke="var(--text-muted)" fontSize={11} width={55} tickFormatter={(v) => `৳${(v/1000).toFixed(0)}k`} />
+              <YAxis stroke="var(--text-muted)" fontSize={11} width={55} tickFormatter={(v) => `${formatCurrency(v/1000)}k`} />
               <Tooltip content={<CustomTooltip />} />
               <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '0.75rem' }} />
               <Area 
@@ -185,10 +187,10 @@ const TrendChart = () => {
         {stats && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.6rem' }}>
             {[
-              { label: 'Total Saved (6M)', value: `৳${stats.totalSavings.toLocaleString('en-IN')}`, icon: <Wallet size={13} />, color: stats.totalSavings >= 0 ? 'var(--success)' : 'var(--danger)' },
+              { label: 'Total Saved (6M)', value: formatCurrency(stats.totalSavings), icon: <Wallet size={13} />, color: stats.totalSavings >= 0 ? 'var(--success)' : 'var(--danger)' },
               { label: 'Avg Savings Rate', value: `${stats.avgSavingsRate}%`, icon: <TrendingUp size={13} />, color: 'var(--primary)' },
-              { label: 'Best Month', value: `${stats.maxSavingsMonth} (৳${stats.maxSavings.toLocaleString('en-IN')})`, icon: <Award size={13} />, color: 'var(--warning)', fullWidth: true },
-              { label: 'Recent Month Saved', value: `৳${stats.lastMonthSavings.toLocaleString('en-IN')} (${stats.lastMonthSavingsRate}%)`, icon: <Calendar size={13} />, color: 'var(--text-main)', fullWidth: true },
+              { label: 'Best Month', value: `${stats.maxSavingsMonth} (${formatCurrency(stats.maxSavings)})`, icon: <Award size={13} />, color: 'var(--warning)', fullWidth: true },
+              { label: 'Recent Month Saved', value: `${formatCurrency(stats.lastMonthSavings)} (${stats.lastMonthSavingsRate}%)`, icon: <Calendar size={13} />, color: 'var(--text-main)', fullWidth: true },
             ].map((stat, i) => (
               <div key={i} style={{
                 padding: '0.55rem 0.7rem',

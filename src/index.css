@@ -63,6 +63,19 @@ body.light-theme {
   --shadow-lg: 0 16px 32px rgba(11, 26, 19, 0.1);
   --shadow-glow: 0 0 15px var(--primary-glow);
 }
+
+body.theme-transitioning,
+body.theme-transitioning *,
+body.theme-transitioning *::before,
+body.theme-transitioning *::after {
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              fill 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              stroke 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 /* ================================================
    Splash / Loading Screen
    ================================================ */
@@ -1656,4 +1669,35 @@ body.light-theme .cs-sheet-option:hover {
   animation: pulseGlow 1.5s ease-in-out infinite;
   border: 1px solid var(--primary) !important;
   transition: all 0.3s ease;
+}
+
+/* Confetti Particle Animations */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.confetti-particle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg) translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(105vh) rotate(720deg) translateX(var(--drift, 50px));
+    opacity: 0;
+  }
 }

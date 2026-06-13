@@ -4,7 +4,7 @@ import { Plus, Trash2, Calendar, Target, PlusCircle, MinusCircle, PiggyBank } fr
 import { format, parseISO } from 'date-fns';
 
 const SavingsGoals = () => {
-  const { userSettings, addSavingsGoal, deleteSavingsGoal, updateSavingsGoalProgress, showToast } = useAppContext();
+  const { userSettings, addSavingsGoal, deleteSavingsGoal, updateSavingsGoalProgress, showToast, showConfirm, formatCurrency } = useAppContext();
   const goals = userSettings.savings_goals || [];
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -290,9 +290,12 @@ const SavingsGoals = () => {
                     <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{goal.name}</span>
                     <button
                       onClick={() => {
-                        if (window.confirm(`Delete the goal "${goal.name}"?`)) {
-                          deleteSavingsGoal(goal.id);
-                        }
+                        showConfirm({
+                          title: 'Delete Savings Goal?',
+                          message: `Are you sure you want to delete the goal "${goal.name}"?`,
+                          confirmLabel: 'Delete',
+                          onConfirm: () => deleteSavingsGoal(goal.id)
+                        });
                       }}
                       style={{ color: 'var(--text-muted)', padding: '2px' }}
                       onMouseOver={e => e.currentTarget.style.color = 'var(--danger)'}
@@ -305,7 +308,7 @@ const SavingsGoals = () => {
                   <div className="flex gap-4" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       <Target size={12} />
-                      Target: ৳{target.toLocaleString('en-IN')}
+                      Target: {formatCurrency(target)}
                     </span>
                     {formattedDate && (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -316,7 +319,7 @@ const SavingsGoals = () => {
                   </div>
                   
                   <span style={{ fontSize: '0.85rem', fontWeight: 500, marginTop: '0.25rem' }}>
-                    Saved: ৳{current.toLocaleString('en-IN')}
+                    Saved: {formatCurrency(current)}
                   </span>
                 </div>
 

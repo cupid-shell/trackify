@@ -7,27 +7,29 @@ import {
   ResponsiveContainer, Cell
 } from 'recharts';
 
-const CustomTooltip = ({ active, payload }) => {
-  if (active && payload?.length) {
-    return (
-      <div style={{
-        background: 'rgba(13,17,23,0.92)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: '8px',
-        padding: '0.4rem 0.7rem',
-        fontSize: '0.75rem',
-        color: '#fff',
-        backdropFilter: 'blur(8px)'
-      }}>
-        {payload[0].payload.name}: <strong>৳{payload[0].value.toLocaleString('en-IN')}</strong>
-      </div>
-    );
-  }
-  return null;
-};
+// CustomTooltip moved inside component to capture formatCurrency
 
 const PredictionEngine = () => {
-  const { totalIncome, totalExpenses, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear, balance, getCategoryStyle } = useAppContext();
+  const { totalIncome, totalExpenses, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear, balance, getCategoryStyle, formatCurrency } = useAppContext();
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload?.length) {
+      return (
+        <div style={{
+          background: 'rgba(13,17,23,0.92)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '8px',
+          padding: '0.4rem 0.7rem',
+          fontSize: '0.75rem',
+          color: '#fff',
+          backdropFilter: 'blur(8px)'
+        }}>
+          {payload[0].payload.name}: <strong>{formatCurrency(payload[0].value)}</strong>
+        </div>
+      );
+    }
+    return null;
+  };
 
   const prediction = useMemo(() => {
     const today = new Date();
@@ -147,7 +149,7 @@ const PredictionEngine = () => {
           {/* Key stat tiles */}
           <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
             {[
-              { label: 'Daily Burn', value: `৳${Math.round(prediction.dailyBurnRate).toLocaleString('en-IN')}`, icon: <Zap size={13} />, color: 'var(--warning)' },
+              { label: 'Daily Burn', value: formatCurrency(Math.round(prediction.dailyBurnRate)), icon: <Zap size={13} />, color: 'var(--warning)' },
               { label: 'Days Left', value: prediction.isPastMonth ? '—' : prediction.daysRemaining, icon: <Calendar size={13} />, color: 'var(--primary)' },
               { label: 'Savings Rate', value: `${prediction.savingsPct}%`, icon: <TrendingUp size={13} />, color: 'var(--success)' },
               { label: 'Projected Save', value: `${prediction.projectedSavingsPct}%`, icon: <Target size={13} />, color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)' },
@@ -182,12 +184,12 @@ const PredictionEngine = () => {
           <div style={{ flex: 1 }}>
             <span style={{ fontSize: '0.8rem', fontWeight: 600, color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)' }}>
               {prediction.isPastMonth ? 'Final Balance: ' : 'Projected End Balance: '}
-              ৳{Math.round(prediction.projectedBalance).toLocaleString('en-IN')}
+              {formatCurrency(Math.round(prediction.projectedBalance))}
             </span>
             <p style={{ fontSize: '0.75rem', color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)', marginTop: '0.2rem', opacity: 0.85 }}>
               {prediction.isPastMonth
-                ? (prediction.isOnTrack ? `Goal achieved! You saved at least ৳${savingsGoal.toLocaleString('en-IN')}.` : `You missed your ৳${savingsGoal.toLocaleString('en-IN')} savings goal.`)
-                : (prediction.isOnTrack ? `On track to save ৳${savingsGoal.toLocaleString('en-IN')}. Keep it up!` : `At this burn rate, you'll miss your ৳${savingsGoal.toLocaleString('en-IN')} goal. Cut variable spending.`)}
+                ? (prediction.isOnTrack ? `Goal achieved! You saved at least ${formatCurrency(savingsGoal)}.` : `You missed your ${formatCurrency(savingsGoal)} savings goal.`)
+                : (prediction.isOnTrack ? `On track to save ${formatCurrency(savingsGoal)}. Keep it up!` : `At this burn rate, you'll miss your ${formatCurrency(savingsGoal)} goal. Cut variable spending.`)}
             </p>
           </div>
         </div>
@@ -246,13 +248,7 @@ const PredictionEngine = () => {
                     axisLine={false}
                     tickLine={false}
                     width={45}
-                    tickFormatter={v => {
-                      if (v >= 1000) {
-                        const kVal = v / 1000;
-                        return `৳${Number.isInteger(kVal) ? kVal : kVal.toFixed(1)}k`;
-                      }
-                      return `৳${v}`;
-                    }}
+                    tickFormatter={v => formatCurrency(v)}
                   />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
                   <Bar dataKey="value" radius={[5, 5, 0, 0]} barSize={20}>

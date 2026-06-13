@@ -11,7 +11,8 @@ const FinancialInsights = () => {
     totalExpenses, 
     userSettings, 
     savingsGoal,
-    totalIncome
+    totalIncome,
+    formatCurrency
   } = useAppContext();
 
   const stats = useMemo(() => {
@@ -190,13 +191,13 @@ const FinancialInsights = () => {
       const needed = savingsGoal - projectedBalance;
       list.push({
         type: 'warning',
-        text: `Warning: Based on your current spending rate, you are projected to miss your monthly savings goal of ৳${savingsGoal.toLocaleString('en-IN')} by ৳${Math.ceil(needed).toLocaleString('en-IN')}. Try to reduce daily spending.`,
+        text: `Warning: Based on your current spending rate, you are projected to miss your monthly savings goal of ${formatCurrency(savingsGoal)} by ${formatCurrency(Math.ceil(needed))}. Try to reduce daily spending.`,
         icon: <AlertCircle size={16} style={{ color: 'var(--danger)' }} />
       });
     } else if (totalExpenses > 0) {
       list.push({
         type: 'success',
-        text: `Excellent job! You are on track to reach your monthly savings goal. Projected net surplus: ৳${Math.round(projectedBalance).toLocaleString('en-IN')}.`,
+        text: `Excellent job! You are on track to reach your monthly savings goal. Projected net surplus: ${formatCurrency(Math.round(projectedBalance))}.`,
         icon: <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
       });
     }
@@ -261,7 +262,7 @@ const FinancialInsights = () => {
         <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }} className="flex-col gap-1">
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Daily Average</span>
           <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)' }}>
-            ৳{Math.round(stats.dailyAverage).toLocaleString('en-IN')}
+            {formatCurrency(Math.round(stats.dailyAverage))}
           </span>
         </div>
 
@@ -276,7 +277,7 @@ const FinancialInsights = () => {
           <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }} className="flex-col gap-1">
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Peak Day Spend</span>
             <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--danger)' }}>
-              ৳{stats.highestAmount.toLocaleString('en-IN')}
+              {formatCurrency(stats.highestAmount)}
             </span>
             <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
               Day {stats.highestDay}
@@ -291,7 +292,7 @@ const FinancialInsights = () => {
               {stats.topCategory}
             </span>
             <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-              ৳{stats.topCategoryAmount.toLocaleString('en-IN')}
+              {formatCurrency(stats.topCategoryAmount)}
             </span>
           </div>
         )}
@@ -318,11 +319,11 @@ const FinancialInsights = () => {
               <>Month-over-month comparison will be available next month once tracking history is established.</>
             ) : pacingData.velocity < 0 ? (
               <>
-                You are spending <strong style={{ color: paceColor }}>{Math.abs(Math.round(pacingData.velocity))}% slower</strong> than last month at this date (৳{Math.round(pacingData.currentMTD).toLocaleString('en-IN')} MTD vs ৳{Math.round(pacingData.prevMTD).toLocaleString('en-IN')}). Keep it up!
+                You are spending <strong style={{ color: paceColor }}>{Math.abs(Math.round(pacingData.velocity))}% slower</strong> than last month at this date ({formatCurrency(Math.round(pacingData.currentMTD))} MTD vs {formatCurrency(Math.round(pacingData.prevMTD))}). Keep it up!
               </>
             ) : pacingData.velocity > 0 ? (
               <>
-                You are spending <strong style={{ color: paceColor }}>{Math.round(pacingData.velocity)}% faster</strong> than last month at this date (৳{Math.round(pacingData.currentMTD).toLocaleString('en-IN')} MTD vs ৳{Math.round(pacingData.prevMTD).toLocaleString('en-IN')}). Try to dial back.
+                You are spending <strong style={{ color: paceColor }}>{Math.round(pacingData.velocity)}% faster</strong> than last month at this date ({formatCurrency(Math.round(pacingData.currentMTD))} MTD vs {formatCurrency(Math.round(pacingData.prevMTD))}). Try to dial back.
               </>
             ) : (
               <>Spending is identical to last month at this date.</>
@@ -332,8 +333,8 @@ const FinancialInsights = () => {
           {/* Projection Indicator */}
           <div className="flex-col gap-2" style={{ marginTop: '0.25rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap', gap: '0.25rem' }}>
-              <span>Projected EOM Expense: <strong style={{ color: 'var(--text-main)' }}>৳{Math.round(pacingData.projectedTotal).toLocaleString('en-IN')}</strong></span>
-              <span>Budget Limit: <strong style={{ color: 'var(--text-main)' }}>৳{pacingData.totalBudget.toLocaleString('en-IN')}</strong></span>
+              <span>Projected EOM Expense: <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(Math.round(pacingData.projectedTotal))}</strong></span>
+              <span>Budget Limit: <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(pacingData.totalBudget)}</strong></span>
             </div>
             <div style={{
               width: '100%',

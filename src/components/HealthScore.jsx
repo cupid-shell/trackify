@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { Shield, Flame, Award, Heart } from 'lucide-react';
 
 const HealthScore = () => {
   const { 
+    transactions,
     currentMonthTransactions, 
     totalIncome, 
     totalExpenses, 
@@ -11,8 +12,12 @@ const HealthScore = () => {
     balance,
     selectedMonth,
     selectedYear,
-    recurringBills
+    recurringBills,
+    updateSettings,
+    showToast
   } = useAppContext();
+
+  const [confettiParticles, setConfettiParticles] = useState([]);
 
   // Calculations for health score & achievements
   const metrics = useMemo(() => {
@@ -184,6 +189,81 @@ const HealthScore = () => {
       savingsRate: Math.round(savingsRate * 100)
     };
   }, [currentMonthTransactions, userSettings, totalIncome, totalExpenses, balance, selectedMonth, selectedYear, recurringBills]);
+
+  // All-time Badge Multipliers
+  const allTimeBadges = useMemo(() => {
+    const history = userSettings.category_metadata?._achievements_history || {};
+    const counts = {};
+    Object.values(history).forEach((monthAchs) => {
+      if (Array.isArray(monthAchs)) {
+        monthAchs.forEach(achId => {
+          counts[achId] = (counts[achId] || 0) + 1;
+        });
+      }
+    });
+    return counts;
+  }, [userSettings.category_metadata?._achievements_history]);
+
+  const monthKey = `${selectedYear}-${selectedMonth}`;
+  const history = userSettings.category_metadata?._achievements_history || {};
+  const unlockedThisMonthInHistory = useMemo(() => history[monthKey] || [], [history, monthKey]);
+
+  const spawnConfetti = () => {
+    const particles = [];
+    const colors = ['#3eb489', '#6366f1', '#f59e0b', '#06b6d4', '#ec4899', '#f43f5e', '#a855f7'];
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        id: i,
+        left: `${Math.random() * 100}vw`,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: `${Math.random() * 6 + 6}px`,
+        drift: `${Math.random() * 200 - 100}px`,
+        delay: `${Math.random() * 1.5}s`,
+        duration: `${Math.random() * 2 + 1.5}s`
+      });
+    }
+    setConfettiParticles(particles);
+    setTimeout(() => {
+      setConfettiParticles([]);
+    }, 4000);
+  };
+
+  useEffect(() => {
+    if (loadingSettingsAndTxs) return; // wait till loaded
+
+    const newlyUnlocked = metrics.achievements.filter(
+      ach => ach.unlocked && !unlockedThisMonthInHistory.includes(ach.id)
+    );
+
+    if (newlyUnlocked.length > 0) {
+      const nextHistory = { ...history };
+      const currentUnlocked = [...unlockedThisMonthInHistory];
+
+      newlyUnlocked.forEach(ach => {
+        if (!currentUnlocked.includes(ach.id)) {
+          currentUnlocked.push(ach.id);
+          showToast(`Achievement Unlocked: ${ach.name}! 🎉`, 'success');
+        }
+      });
+
+      nextHistory[monthKey] = currentUnlocked;
+      
+      const currentMetadata = { ...(userSettings.category_metadata || {}) };
+      currentMetadata._achievements_history = nextHistory;
+      updateSettings({ category_metadata: currentMetadata });
+      spawnConfetti();
+    }
+  }, [metrics.achievements, unlockedThisMonthInHistory, monthKey, history, userSettings.category_metadata, updateSettings, showToast]);
+
+  // Small helper to check if loaded (to avoid triggering achievements during initial load)
+  const [loadingSettingsAndTxs, setLoadingSettingsAndTxs] = useState(true);
+  useEffect(() => {
+    if (userSettings && transactions.length !== undefined) {
+      // Small timeout to let things settle
+      const t = setTimeout(() => setLoadingSettingsAndTxs(false), 800);
+      return () => clearTimeout(t);
+    }
+  }, [userSettings, currentMonthTransactions]);
 
   const progressColor = useMemo(() => {
     if (metrics.overallScore >= 90) return 'var(--success)';
@@ -371,8 +451,9 @@ const HealthScore = () => {
               key={ach.id} 
               className={`ach-row ${ach.unlocked ? '' : 'locked'}`}
             >
-              {/* Left Side: Glowing Icon */}
+              {/* Left Side: Glowing Icon with cumulative badge count */}
               <div style={{
+                position: 'relative',
                 width: '36px',
                 height: '36px',
                 borderRadius: 'var(--radius-full)',
@@ -385,6 +466,26 @@ const HealthScore = () => {
                 boxShadow: ach.unlocked ? `0 0 10px ${ach.color}22` : 'none'
               }}>
                 {ach.icon}
+                {allTimeBadges[ach.id] > 1 && (
+                  <span style={{
+                    position: 'absolute',
+                    bottom: '-4px',
+                    right: '-4px',
+                    backgroundColor: 'var(--primary)',
+                    color: 'white',
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    borderRadius: '50%',
+                    width: '15px',
+                    height: '15px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid var(--bg-card)'
+                  }}>
+                    {allTimeBadges[ach.id]}
+                  </span>
+                )}
               </div>
 
               {/* Middle: Title, Progress track, and Description */}
@@ -424,6 +525,27 @@ const HealthScore = () => {
         </div>
       </div>
       </div>{/* end ac-card-body */}
+
+      {/* Confetti Celebration Particles */}
+      {confettiParticles.length > 0 && (
+        <div className="confetti-container">
+          {confettiParticles.map(p => (
+            <div
+              key={p.id}
+              className="confetti-particle"
+              style={{
+                left: p.left,
+                backgroundColor: p.color,
+                width: p.size,
+                height: p.size,
+                animationDelay: p.delay,
+                animationDuration: p.duration,
+                '--drift': p.drift
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

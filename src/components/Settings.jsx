@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette, Download, AlertTriangle, DollarSign, Zap, Calendar, List, Bell, Sliders } from 'lucide-react';
 import { format } from 'date-fns';
+import { CURRENCIES } from '../utils/currency';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import CategoryIcon from './CategoryIcon';
@@ -20,7 +21,10 @@ const SettingsPage = () => {
     updateCategoryMetadata,
     getCategoryStyle,
     rescheduleNotifications,
-    showToast
+    showToast,
+    showConfirm,
+    formatCurrency,
+    getCurrencySymbol
   } = useAppContext();
 
   const [activeTab, setActiveTab] = useState(0);
@@ -107,6 +111,7 @@ const SettingsPage = () => {
   
   const [saving, setSaving] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(localStorage.getItem('trackify_theme') || 'indigo');
+  const [selectedCurrency, setSelectedCurrency] = useState(userSettings.currency || 'BDT');
 
   const [activeCustomizeCat, setActiveCustomizeCat] = useState(null);
   const [customEmojiInput, setCustomEmojiInput] = useState('');
@@ -124,6 +129,9 @@ const SettingsPage = () => {
   const [newBillCategory, setNewBillCategory] = useState('');
   const [newBillDueDate, setNewBillDueDate] = useState('');
   const [newBillPayment, setNewBillPayment] = useState('Cash');
+  const [newBillAutoLog, setNewBillAutoLog] = useState(false);
+  
+  const [rolloverCategories, setRolloverCategories] = useState(userSettings.category_metadata?._budget_rollover?.enabled_categories || []);
 
   useEffect(() => {
     setTimeout(() => {
@@ -174,12 +182,14 @@ const SettingsPage = () => {
       amount: Number(newBillAmount),
       category: newBillCategory || expenseCategories[0] || 'Other / Unexpected',
       dueDate: Number(newBillDueDate),
-      payment: newBillPayment
+      payment: newBillPayment,
+      autoLog: newBillAutoLog
     };
     setLocalRecurringBills(prev => [...prev, newBill]);
     setNewBillName('');
     setNewBillAmount('');
     setNewBillDueDate('');
+    setNewBillAutoLog(false);
   };
 
   const removeRecurringBill = (idx) => {
@@ -189,7 +199,7 @@ const SettingsPage = () => {
   const handleExportAllTimeCSV = () => {
     if (transactions.length === 0) return;
 
-    const headers = ['Date', 'Type', 'Category', 'Payment Method', 'Amount (BDT)', 'Note'];
+    const headers = ['Date', 'Type', 'Category', 'Payment Method', `Amount (${userSettings.currency || 'BDT'})`, 'Note'];
     const sortedAllTime = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
     
     const csvRows = sortedAllTime.map(tx => {
@@ -211,6 +221,7 @@ const SettingsPage = () => {
   };
 
   const themes = [
+    { name: 'mint', label: 'Mint', color: '#3eb489', hover: '#2e9b73', glow: 'rgba(62, 180, 137, 0.4)' },
     { name: 'indigo', label: 'Indigo', color: '#6366f1', hover: '#4f46e5', glow: 'rgba(99, 102, 241, 0.4)' },
     { name: 'emerald', label: 'Emerald', color: '#10b981', hover: '#059669', glow: 'rgba(16, 185, 129, 0.4)' },
     { name: 'rose', label: 'Rose', color: '#f43f5e', hover: '#e11d48', glow: 'rgba(244, 63, 94, 0.4)' },
@@ -227,33 +238,42 @@ const SettingsPage = () => {
       document.documentElement.style.setProperty('--primary-hover', theme.hover);
       document.documentElement.style.setProperty('--primary-glow', theme.glow);
     }
+    updateSettings({ theme_accent: themeName });
   };
 
   const handleResetDefaults = () => {
-    if (window.confirm('Are you sure you want to reset all settings to defaults? This will reset base income, savings goals, categories, and category budgets. (Your transactions list will NOT be deleted)')) {
-      setBaseIncome(15000);
-      setSavingsGoal(3000);
-      setExpenseCategories(["Rent", "Utilities & Bills", "Food & Dining", "Transport", "Daily Living", "Education", "Other / Unexpected"]);
-      setIncomeCategories(["Allowance", "Bonus", "Other"]);
-      setCategoryBudgets({
-        "Rent": 3000,
-        "Transport": 500,
-        "Utilities & Bills": 850,
-        "Food & Dining": 3500,
-        "Daily Living": 3000
-      });
-      setLocalPresets([
-        { label: '৳15 Bus', amount: 15, category: 'Transport', note: 'Bus fare', payment: 'Cash' },
-        { label: '৳50 Snack', amount: 50, category: 'Food & Dining', note: 'Snacks', payment: 'Cash' },
-        { label: '৳120 Lunch', amount: 120, category: 'Food & Dining', note: 'Lunch', payment: 'Cash' },
-        { label: '৳100 Mobile', amount: 100, category: 'Utilities & Bills', note: 'Mobile recharge', payment: 'bKash' }
-      ]);
-      setLocalRecurringBills([
-        { name: 'Home WiFi Bill', amount: 525, category: 'Utilities & Bills', dueDate: 20, payment: 'bKash' },
-        { name: 'Seat Rent', amount: 3000, category: 'Rent', dueDate: 5, payment: 'Cash' }
-      ]);
-      showToast('Settings reset to defaults. Click "Save All Settings" to commit the changes.', 'info');
-    }
+    showConfirm({
+      title: 'Reset Settings?',
+      message: 'Are you sure you want to reset all settings to defaults? This will reset base income, savings goals, categories, and category budgets. (Your transactions list will NOT be deleted)',
+      confirmLabel: 'Reset Settings',
+      variant: 'warning',
+      onConfirm: () => {
+        setBaseIncome(15000);
+        setSavingsGoal(3000);
+        setExpenseCategories(["Rent", "Utilities & Bills", "Food & Dining", "Transport", "Daily Living", "Education", "Other / Unexpected"]);
+        setIncomeCategories(["Allowance", "Bonus", "Other"]);
+        setCategoryBudgets({
+          "Rent": 3000,
+          "Transport": 500,
+          "Utilities & Bills": 850,
+          "Food & Dining": 3500,
+          "Daily Living": 3000
+        });
+        setSelectedCurrency('BDT');
+        const symbol = getCurrencySymbol();
+        setLocalPresets([
+          { label: `${symbol}15 Bus`, amount: 15, category: 'Transport', note: 'Bus fare', payment: 'Cash' },
+          { label: `${symbol}50 Snack`, amount: 50, category: 'Food & Dining', note: 'Snacks', payment: 'Cash' },
+          { label: `${symbol}120 Lunch`, amount: 120, category: 'Food & Dining', note: 'Lunch', payment: 'Cash' },
+          { label: `${symbol}100 Mobile`, amount: 100, category: 'Utilities & Bills', note: 'Mobile recharge', payment: 'bKash' }
+        ]);
+        setLocalRecurringBills([
+          { name: 'Home WiFi Bill', amount: 525, category: 'Utilities & Bills', dueDate: 20, payment: 'bKash' },
+          { name: 'Seat Rent', amount: 3000, category: 'Rent', dueDate: 5, payment: 'Cash' }
+        ]);
+        showToast('Settings reset to defaults. Click "Save All Settings" to commit the changes.', 'info');
+      }
+    });
   };
 
   useEffect(() => {
@@ -263,6 +283,13 @@ const SettingsPage = () => {
       setExpenseCategories(userSettings.expense_categories || []);
       setIncomeCategories(userSettings.income_categories || []);
       setCategoryBudgets(userSettings.category_budgets || {});
+      
+      const syncedAccent = userSettings.category_metadata?._theme_accent;
+      if (syncedAccent) {
+        setSelectedTheme(syncedAccent);
+      }
+      setSelectedCurrency(userSettings.currency || 'BDT');
+      setRolloverCategories(userSettings.category_metadata?._budget_rollover?.enabled_categories || []);
     }, 0);
   }, [userSettings]);
 
@@ -292,11 +319,19 @@ const SettingsPage = () => {
     await updateSettings({
       base_income: Number(baseIncome),
       savings_goal: Number(savingsGoal),
+      currency: selectedCurrency,
       expense_categories: finalExpenseCats,
       income_categories: finalIncomeCats,
       category_budgets: cleanedBudgets,
       presets: localPresets,
       recurring_bills: localRecurringBills,
+      category_metadata: {
+        ...(userSettings.category_metadata || {}),
+        _budget_rollover: {
+          ...(userSettings.category_metadata?._budget_rollover || {}),
+          enabled_categories: rolloverCategories
+        }
+      },
       notification_preferences: {
         daily_reminder: dailyReminder,
         daily_reminder_time: dailyReminderTime,
@@ -391,7 +426,7 @@ const SettingsPage = () => {
                 <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Financial Goals</h3>
                 
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Base Monthly Income (BDT)</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Base Monthly Income</label>
                   <input 
                     type="number" 
                     value={baseIncome} 
@@ -400,11 +435,25 @@ const SettingsPage = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Monthly Savings Goal (BDT)</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Monthly Savings Goal</label>
                   <input 
                     type="number" 
                     value={savingsGoal} 
                     onChange={(e) => setSavingsGoal(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Display Currency</label>
+                  <CustomSelect
+                    options={Object.keys(CURRENCIES).map(code => ({
+                      value: code,
+                      label: `${CURRENCIES[code].symbol} ${code} — ${CURRENCIES[code].name}`
+                    }))}
+                    value={selectedCurrency}
+                    onChange={(val) => setSelectedCurrency(val)}
+                    getCategoryStyle={() => null}
+                    label="Display Currency"
                   />
                 </div>
               </div>
@@ -422,7 +471,7 @@ const SettingsPage = () => {
                       <div className="flex-col" style={{ gap: '0.25rem' }}>
                         <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{preset.label}</span>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          ৳{preset.amount} • {preset.category} • {preset.payment} {preset.note ? `• ${preset.note}` : ''}
+                          {formatCurrency(preset.amount)} • {preset.category} • {preset.payment} {preset.note ? `• ${preset.note}` : ''}
                         </span>
                       </div>
                       <button 
@@ -453,7 +502,7 @@ const SettingsPage = () => {
                       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Preset Label</label>
                       <input 
                         type="text" 
-                        placeholder="e.g. ৳15 Bus" 
+                        placeholder={`e.g. ${getCurrencySymbol()}15 Bus`} 
                         value={newPresetLabel}
                         onChange={(e) => setNewPresetLabel(e.target.value)}
                       />
@@ -535,9 +584,23 @@ const SettingsPage = () => {
                   {localRecurringBills.map((bill, idx) => (
                     <div key={idx} className="flex items-center justify-between" style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)', gap: '0.5rem' }}>
                       <div className="flex-col" style={{ gap: '0.25rem' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{bill.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{bill.name}</span>
+                          {bill.autoLog && (
+                            <span style={{ 
+                              fontSize: '0.7rem', 
+                              backgroundColor: 'rgba(57, 211, 83, 0.15)', 
+                              color: '#39d353', 
+                              padding: '0.1rem 0.45rem', 
+                              borderRadius: 'var(--radius-sm)',
+                              fontWeight: 600
+                            }}>
+                              Auto
+                            </span>
+                          )}
+                        </div>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          ৳{bill.amount} • {bill.category} • Due on {bill.dueDate}th • {bill.payment}
+                          {formatCurrency(bill.amount)} • {bill.category} • Due on {bill.dueDate}th • {bill.payment}
                         </span>
                       </div>
                       <button 
@@ -615,6 +678,19 @@ const SettingsPage = () => {
                         label="Payment Method"
                       />
                     </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2" style={{ marginTop: '0.25rem' }}>
+                    <input 
+                      type="checkbox" 
+                      id="newBillAutoLog"
+                      checked={newBillAutoLog} 
+                      onChange={(e) => setNewBillAutoLog(e.target.checked)}
+                      style={{ width: 'auto', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="newBillAutoLog" style={{ fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer', userSelect: 'none' }}>
+                      Auto-log this bill on due date (recorded automatically on app open)
+                    </label>
                   </div>
 
                   <div className="flex justify-end" style={{ marginTop: '0.5rem' }}>
@@ -748,29 +824,57 @@ const SettingsPage = () => {
                   <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Category Budgets</h3>
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Set maximum monthly limits for specific expense categories.</p>
                   <div className="flex-col gap-3">
-                    {expenseCategories.map(cat => (
-                      <div key={cat} className="flex items-center justify-between" style={{ padding: '0.5rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{cat}</span>
-                        <div className="flex items-center gap-2">
-                          <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Limit:</span>
-                          <input 
-                            type="number" 
-                            placeholder="No Limit"
-                            value={categoryBudgets[cat] || ''}
-                            onChange={(e) => {
-                              const newBudgets = { ...categoryBudgets };
-                              if (e.target.value) {
-                                newBudgets[cat] = Number(e.target.value);
-                              } else {
-                                delete newBudgets[cat];
-                              }
-                              setCategoryBudgets(newBudgets);
-                            }}
-                            style={{ width: '100px', padding: '0.25rem 0.5rem' }}
-                          />
+                    {expenseCategories.map(cat => {
+                      const hasBudget = categoryBudgets[cat] !== undefined;
+                      const isRolloverEnabled = rolloverCategories.includes(cat);
+                      
+                      return (
+                        <div key={cat} className="flex items-center justify-between" style={{ padding: '0.5rem 0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{cat}</span>
+                          <div className="flex items-center gap-3" style={{ flexWrap: 'wrap' }}>
+                            {hasBudget && (
+                              <div className="flex items-center gap-1.5">
+                                <input 
+                                  type="checkbox"
+                                  id={`rollover-${cat}`}
+                                  checked={isRolloverEnabled}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setRolloverCategories([...rolloverCategories, cat]);
+                                    } else {
+                                      setRolloverCategories(rolloverCategories.filter(c => c !== cat));
+                                    }
+                                  }}
+                                  style={{ width: 'auto', cursor: 'pointer' }}
+                                />
+                                <label htmlFor={`rollover-${cat}`} style={{ fontSize: '0.75rem', color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}>
+                                  Rollover
+                                </label>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5">
+                              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Limit:</span>
+                              <input 
+                                type="number" 
+                                placeholder="No Limit"
+                                value={categoryBudgets[cat] || ''}
+                                onChange={(e) => {
+                                  const newBudgets = { ...categoryBudgets };
+                                  if (e.target.value) {
+                                    newBudgets[cat] = Number(e.target.value);
+                                  } else {
+                                    delete newBudgets[cat];
+                                    setRolloverCategories(rolloverCategories.filter(c => c !== cat));
+                                  }
+                                  setCategoryBudgets(newBudgets);
+                                }}
+                                style={{ width: '90px', padding: '0.25rem 0.5rem' }}
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 

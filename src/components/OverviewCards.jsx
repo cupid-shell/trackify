@@ -2,7 +2,7 @@ import { useAppContext } from '../context/AppContext';
 import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
 
 const OverviewCards = () => {
-  const { totalIncome, totalExpenses, balance, savingsGoal, baseIncome } = useAppContext();
+  const { totalIncome, totalExpenses, balance, savingsGoal, baseIncome, formatCurrency } = useAppContext();
 
   const cards = [
     {
@@ -18,7 +18,7 @@ const OverviewCards = () => {
       icon: <TrendingUp size={24} color="var(--success)" />,
       color: 'var(--success)',
       bg: 'var(--success-bg)',
-      subtitle: `Includes ৳${baseIncome.toLocaleString('en-IN')} base + allowances`
+      subtitle: `Includes ${formatCurrency(baseIncome)} base + allowances`
     },
     {
       title: 'Monthly Expenses',
@@ -80,7 +80,7 @@ const OverviewCards = () => {
               fontStretch: '105%',
               color: 'var(--text-main)'
             }}>
-              ৳{card.amount.toLocaleString('en-IN')}
+              {formatCurrency(card.amount)}
             </h2>
             {card.subtitle && (
               <div style={{ marginTop: '0.5rem' }}>

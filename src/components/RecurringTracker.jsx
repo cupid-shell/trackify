@@ -15,7 +15,8 @@ const RecurringTracker = () => {
     unskipBillForMonth,
     showToast,
     highlightedBill,
-    setHighlightedBill
+    setHighlightedBill,
+    formatCurrency
   } = useAppContext();
 
   // Clear highlighted bill after 4 seconds
@@ -188,7 +189,7 @@ const RecurringTracker = () => {
                     {bill.name}
                   </span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <Calendar size={12} /> Due on the {bill.dueDate}th • ৳{bill.amount.toLocaleString('en-IN')} via {bill.payment}
+                    <Calendar size={12} /> Due on the {bill.dueDate}th • {formatCurrency(bill.amount)} via {bill.payment}
                   </span>
                 </div>
               </div>

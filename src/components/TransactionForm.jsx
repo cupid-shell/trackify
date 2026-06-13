@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { PlusCircle, Trash2, Plus } from 'lucide-react';
+import { PlusCircle, Trash2, Plus, Camera } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 import { Capacitor } from '@capacitor/core';
 
@@ -67,6 +67,8 @@ const createRow = (defaults = {}) => {
     note: '',
     category: defaults.category || '',
     paymentMethod: defaults.paymentMethod || 'Cash',
+    receiptFile: null,
+    receiptPreview: null,
     ...defaults,
     date: dateStr,
     time: timeStr
@@ -91,19 +93,73 @@ const GridRow = ({
 
   return (
     <div className="grid-item-row">
-      {/* Row header: index badge + delete */}
-      <div className="grid-row-line" style={{ justifyContent: 'space-between' }}>
-        <span className="grid-row-index">{index + 1}</span>
-        {showDelete && (
-          <button
-            type="button"
-            className="grid-row-delete-btn"
-            onClick={() => onRemove(index)}
-            title="Remove this item"
+      {/* Row header: index badge + camera + delete */}
+      <div className="grid-row-line" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span className="grid-row-index">{index + 1}</span>
+          {row.receiptPreview && (
+            <div style={{ position: 'relative', width: '32px', height: '32px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+              <img src={row.receiptPreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="receipt preview" />
+              <button 
+                type="button" 
+                onClick={() => {
+                  onUpdate(index, 'receiptFile', null);
+                  onUpdate(index, 'receiptPreview', null);
+                }}
+                style={{
+                  position: 'absolute', top: 0, right: 0, background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', fontSize: '8px', cursor: 'pointer', padding: '0 2px', borderRadius: '50%'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <input
+            type="file"
+            id={`receipt-input-${row.id}`}
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                onUpdate(index, 'receiptFile', file);
+                onUpdate(index, 'receiptPreview', URL.createObjectURL(file));
+              }
+            }}
+          />
+          <label
+            htmlFor={`receipt-input-${row.id}`}
+            style={{
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: row.receiptFile ? 'var(--primary-glow)' : 'var(--bg-input)',
+              border: `1px solid ${row.receiptFile ? 'var(--primary)' : 'var(--border-color)'}`,
+              color: row.receiptFile ? 'var(--primary)' : 'var(--text-muted)',
+              transition: 'var(--transition)'
+            }}
+            title="Attach Receipt Photo"
           >
-            <Trash2 size={15} />
-          </button>
-        )}
+            <Camera size={14} />
+          </label>
+          
+          {showDelete && (
+            <button
+              type="button"
+              className="grid-row-delete-btn"
+              onClick={() => onRemove(index)}
+              title="Remove this item"
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Line 1: Note  |  Amount */}
@@ -179,10 +235,13 @@ const GridRow = ({
 const TransactionForm = () => {
   const {
     addTransactions,
+    uploadReceiptFile,
+    addReceiptAttachment,
     userSettings,
     presets,
     getCategoryStyle,
-    showToast
+    showToast,
+    formatCurrency
   } = useAppContext();
 
   const [type, setType] = useState('expense');
@@ -250,7 +309,7 @@ const TransactionForm = () => {
   }, [showToast]);
 
   // --- Submit ---
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const invalids = rows.filter(r => {
@@ -263,28 +322,66 @@ const TransactionForm = () => {
       return;
     }
 
-    const payload = rows.map(r => ({
-      type,
-      amount: Number(evaluateMath(r.amount)),
-      category: r.category,
-      note: r.note,
-      date: combineDateTime(r.date, r.time),
-      payment_method: r.paymentMethod
-    }));
+    try {
+      // 1. Upload files first if any
+      const uploadPromises = rows.map(async (row) => {
+        if (row.receiptFile) {
+          try {
+            const publicUrl = await uploadReceiptFile(row.receiptFile);
+            return { id: row.id, url: publicUrl };
+          } catch (err) {
+            showToast(`Error uploading receipt for row: ${row.note || 'item'}. ${err.message}`, 'error');
+            return { id: row.id, url: null };
+          }
+        }
+        return { id: row.id, url: null };
+      });
 
-    addTransactions(payload);
-    hapticMedium();
+      const uploadResults = await Promise.all(uploadPromises);
+      const receiptUrlsByRowId = {};
+      uploadResults.forEach(res => {
+        if (res.url) {
+          receiptUrlsByRowId[res.id] = res.url;
+        }
+      });
 
-    const count = payload.length;
-    showToast(
-      count === 1
-        ? `${type === 'expense' ? 'Expense' : 'Income'} of ৳${payload[0].amount} added!`
-        : `${count} transactions added successfully!`,
-      'success'
-    );
+      const payload = rows.map(r => ({
+        type,
+        amount: Number(evaluateMath(r.amount)),
+        category: r.category,
+        note: r.note,
+        date: combineDateTime(r.date, r.time),
+        payment_method: r.paymentMethod
+      }));
 
-    // Reset to a single blank row
-    setRows([createRow({ category: activeCategories[0] || '' })]);
+      const createdTxs = await addTransactions(payload);
+      hapticMedium();
+
+      const count = payload.length;
+      showToast(
+        count === 1
+          ? `${type === 'expense' ? 'Expense' : 'Income'} of ${formatCurrency(payload[0].amount)} added!`
+          : `${count} transactions added successfully!`,
+        'success'
+      );
+
+      // Associate receipt URLs with created transaction IDs
+      if (createdTxs && createdTxs.length > 0) {
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          const url = receiptUrlsByRowId[row.id];
+          if (url && createdTxs[i]) {
+            await addReceiptAttachment(createdTxs[i].id, url);
+          }
+        }
+      }
+
+      // Reset to a single blank row
+      setRows([createRow({ category: activeCategories[0] || '' })]);
+    } catch (error) {
+      console.error(error);
+      showToast('Error saving transactions: ' + error.message, 'error');
+    }
   };
 
   const btnStyle = (btnType) => ({
@@ -322,7 +419,7 @@ const TransactionForm = () => {
             borderRadius: 'var(--radius-full)',
             border: '1px solid var(--border-color)'
           }}>
-            Total: ৳{totalAmount.toFixed(2)}
+            Total: {formatCurrency(totalAmount)}
           </span>
         )}
       </div>

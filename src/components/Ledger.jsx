@@ -15,7 +15,7 @@ const typeOptions = [
 ];
 
 const LedgerPage = () => {
-  const { debts, addDebt, recordDebtRepayment, deleteDebt, showToast } = useAppContext();
+  const { debts, addDebt, recordDebtRepayment, deleteDebt, showToast, showConfirm, formatCurrency } = useAppContext();
 
   // Tab State: 'active' or 'settled'
   const [tab, setTab] = useState('active');
@@ -125,10 +125,18 @@ const LedgerPage = () => {
   };
 
   const handleFullSettlement = async (debtId, remainingAmount) => {
-    if (window.confirm(`Are you sure you want to fully settle this debt with a final payment of ৳${remainingAmount}?`)) {
-      const logTx = window.confirm('Would you like to log this final repayment in your main transaction history?');
-      await recordDebtRepayment(debtId, remainingAmount, 'Final settlement', logTx);
-    }
+    showConfirm({
+      title: 'Fully Settle Debt?',
+      message: `Are you sure you want to fully settle this debt with a final payment of ${formatCurrency(remainingAmount)}?`,
+      confirmLabel: 'Settle Debt',
+      checkbox: {
+        label: 'Log final repayment to main transaction history',
+        defaultValue: true
+      },
+      onConfirm: (logTx) => {
+        recordDebtRepayment(debtId, remainingAmount, 'Final settlement', logTx);
+      }
+    });
   };
 
   const getDueDateStatus = (dueDateStr) => {
@@ -169,7 +177,7 @@ const LedgerPage = () => {
             <div className="flex-col gap-1">
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Lent (Receivables)</span>
               <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--success)' }}>
-                ৳{metrics.totalLent.toLocaleString('en-IN')}
+                {formatCurrency(metrics.totalLent)}
               </span>
             </div>
             <div style={{
@@ -187,7 +195,7 @@ const LedgerPage = () => {
             <div className="flex-col gap-1">
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Borrowed (Payables)</span>
               <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--danger)' }}>
-                ৳{metrics.totalBorrowed.toLocaleString('en-IN')}
+                {formatCurrency(metrics.totalBorrowed)}
               </span>
             </div>
             <div style={{
@@ -212,7 +220,7 @@ const LedgerPage = () => {
                 fontWeight: 700, 
                 color: metrics.netPosition > 0 ? 'var(--success)' : metrics.netPosition < 0 ? 'var(--danger)' : 'var(--text-main)' 
               }}>
-                {metrics.netPosition > 0 ? '+' : ''}৳{metrics.netPosition.toLocaleString('en-IN')}
+                {metrics.netPosition > 0 ? '+' : ''}{formatCurrency(metrics.netPosition)}
               </span>
             </div>
             <div style={{
@@ -501,9 +509,12 @@ const LedgerPage = () => {
                       {/* Delete */}
                       <button
                         onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete this record for ${debt.person}?`)) {
-                            deleteDebt(debt.id);
-                          }
+                          showConfirm({
+                            title: 'Delete Debt Record?',
+                            message: `Are you sure you want to delete this record for ${debt.person}?`,
+                            confirmLabel: 'Delete',
+                            onConfirm: () => deleteDebt(debt.id)
+                          });
                         }}
                         style={{ 
                           color: 'var(--text-muted)', 
@@ -540,10 +551,10 @@ const LedgerPage = () => {
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Outstanding Balance</span>
                       <div className="flex items-baseline gap-1">
                         <span style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                          ৳{remaining.toLocaleString('en-IN')}
+                          {formatCurrency(remaining)}
                         </span>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          of ৳{target.toLocaleString('en-IN')}
+                          of {formatCurrency(target)}
                         </span>
                       </div>
                       {debt.note && (
@@ -699,7 +710,7 @@ const LedgerPage = () => {
                               {p.note && <span style={{ color: 'var(--text-main)', fontStyle: 'italic' }}>"{p.note}"</span>}
                             </div>
                             <span style={{ fontWeight: 600, color: typeColor }}>
-                              ৳{Number(p.amount).toLocaleString('en-IN')}
+                              {formatCurrency(p.amount)}
                             </span>
                           </div>
                         ))}
