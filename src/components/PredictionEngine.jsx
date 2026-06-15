@@ -3,33 +3,12 @@ import { useAppContext } from '../context/AppContext';
 import { Sparkles, AlertTriangle, CheckCircle, TrendingUp, Zap, Target, Calendar } from 'lucide-react';
 import {
   RadialBarChart, RadialBar, PolarAngleAxis,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell
+  ResponsiveContainer
 } from 'recharts';
-
-// CustomTooltip moved inside component to capture formatCurrency
+import CategoryIcon from './CategoryIcon';
 
 const PredictionEngine = () => {
   const { totalIncome, totalExpenses, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear, balance, getCategoryStyle, formatCurrency } = useAppContext();
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload?.length) {
-      return (
-        <div style={{
-          background: 'rgba(13,17,23,0.92)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: '8px',
-          padding: '0.4rem 0.7rem',
-          fontSize: '0.75rem',
-          color: '#fff',
-          backdropFilter: 'blur(8px)'
-        }}>
-          {payload[0].payload.name}: <strong>{formatCurrency(payload[0].value)}</strong>
-        </div>
-      );
-    }
-    return null;
-  };
 
   const prediction = useMemo(() => {
     const today = new Date();
@@ -62,7 +41,7 @@ const PredictionEngine = () => {
     const savingsPct = totalIncome > 0 ? Math.max(0, (balance / totalIncome) * 100) : 0;
     const projectedSavingsPct = totalIncome > 0 ? Math.max(0, Math.min(100, (projectedBalance / totalIncome) * 100)) : 0;
 
-    // Category breakdown for bar chart
+    // Category breakdown for chart
     const catMap = {};
     currentMonthTransactions.forEach(tx => {
       if (tx.type === 'expense') {
@@ -89,15 +68,12 @@ const PredictionEngine = () => {
     };
   }, [totalExpenses, totalIncome, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear, balance]);
 
-  const ringData = [{ value: prediction.spendPct, fill: prediction.isOnTrack ? '#58a6ff' : '#f85149' }];
-
-
-
+  const ringData = [{ value: prediction.spendPct, fill: prediction.isOnTrack ? '#3eb489' : 'var(--danger)' }];
 
   return (
     <div className="glass-card flex-col gap-0" style={{
-      background: 'linear-gradient(145deg, var(--bg-card) 0%, rgba(99,102,241,0.04) 100%)',
-      border: '1px solid rgba(99,102,241,0.18)',
+      background: 'linear-gradient(145deg, var(--bg-card) 0%, rgba(62,180,137,0.02) 100%)',
+      border: '1px solid rgba(62,180,137,0.12)',
       height: '100%'
     }}>
 
@@ -114,10 +90,10 @@ const PredictionEngine = () => {
       <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
 
         {/* Row 1: Radial gauge + key stats */}
-        <div className="pred-stats-row">
+        <div className="pred-stats-row" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
 
           {/* Radial gauge */}
-          <div style={{ position: 'relative', width: 110, height: 110, flexShrink: 0 }}>
+          <div style={{ position: 'relative', width: 110, height: 110, flexShrink: 0, margin: '0 auto' }}>
             <ResponsiveContainer width="100%" height="100%">
               <RadialBarChart
                 cx="50%" cy="50%"
@@ -147,16 +123,16 @@ const PredictionEngine = () => {
           </div>
 
           {/* Key stat tiles */}
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.6rem', width: '100%' }}>
             {[
               { label: 'Daily Burn', value: formatCurrency(Math.round(prediction.dailyBurnRate)), icon: <Zap size={13} />, color: 'var(--warning)' },
               { label: 'Days Left', value: prediction.isPastMonth ? '—' : prediction.daysRemaining, icon: <Calendar size={13} />, color: 'var(--primary)' },
               { label: 'Savings Rate', value: `${prediction.savingsPct}%`, icon: <TrendingUp size={13} />, color: 'var(--success)' },
               { label: 'Projected Save', value: `${prediction.projectedSavingsPct}%`, icon: <Target size={13} />, color: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)' },
-            ].map(stat => (
+            ].map(stat => ( stat.value !== undefined &&
               <div key={stat.label} style={{
                 padding: '0.55rem 0.7rem',
-                background: 'rgba(255,255,255,0.03)',
+                background: 'var(--bg-input)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-md)',
                 display: 'flex', flexDirection: 'column', gap: '0.2rem',
@@ -196,7 +172,7 @@ const PredictionEngine = () => {
 
         {/* Month progress bar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          <div style={{ display: 'flex', justifycontent: 'space-between', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
             <span>Month Progress</span>
             <span>Day {prediction.currentDay} / {prediction.totalDaysInMonth}</span>
           </div>
@@ -204,69 +180,83 @@ const PredictionEngine = () => {
             <div style={{
               height: '100%', borderRadius: '4px',
               width: `${(prediction.currentDay / prediction.totalDaysInMonth) * 100}%`,
-              background: 'linear-gradient(90deg, var(--primary), #a855f7)',
+              background: 'linear-gradient(90deg, var(--primary), var(--primary-hover))',
               transition: 'width 0.5s ease',
             }} />
           </div>
         </div>
 
-        {/* Top spending categories bar chart */}
+        {/* Top spending categories custom progress bars */}
         {prediction.topCats.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-main)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.25rem' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Top Spending Categories
             </span>
-            <div style={{ height: 150 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={prediction.topCats} margin={{ top: 5, right: 4, left: -22, bottom: 0 }}>
-                  <defs>
-                    {prediction.topCats.map((cat, idx) => {
-                      const style = getCategoryStyle(cat.name);
-                      const color = style.color || '#6366f1';
-                      return (
-                        <linearGradient key={idx} id={`predBarGrad-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={color} stopOpacity={0.85} />
-                          <stop offset="100%" stopColor={color} stopOpacity={0.15} />
-                        </linearGradient>
-                      );
-                    })}
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fill: 'var(--text-muted)', fontSize: 9, fontWeight: 500 }}
-                    axisLine={false}
-                    tickLine={false}
-                    angle={-22}
-                    textAnchor="end"
-                    height={38}
-                    interval={0}
-                    tickFormatter={(name) => name.length > 14 ? `${name.substring(0, 11)}...` : name}
-                  />
-                  <YAxis
-                    tick={{ fill: 'var(--text-muted)', fontSize: 9 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={45}
-                    tickFormatter={v => formatCurrency(v)}
-                  />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                  <Bar dataKey="value" radius={[5, 5, 0, 0]} barSize={20}>
-                    {prediction.topCats.map((entry, idx) => {
-                      const style = getCategoryStyle(entry.name);
-                      const color = style.color || '#6366f1';
-                      return (
-                        <Cell 
-                          key={`cell-${idx}`} 
-                          fill={`url(#predBarGrad-${idx})`} 
-                          stroke={color}
-                          strokeWidth={1.5}
-                        />
-                      );
-                    })}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="flex-col gap-2" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {prediction.topCats.map((cat, idx) => {
+                const style = getCategoryStyle(cat.name);
+                const color = style.color || 'var(--primary)';
+                const catMax = prediction.topCats[0]?.value || 1;
+                const pctOfMax = Math.max(4, (cat.value / catMax) * 100);
+                const pctOfTotal = totalExpenses > 0 ? Math.round((cat.value / totalExpenses) * 100) : 0;
+
+                return (
+                  <div 
+                    key={cat.name} 
+                    className="flex-col gap-1.5" 
+                    style={{ 
+                      padding: '0.65rem 0.85rem', 
+                      backgroundColor: 'var(--bg-input)', 
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border-color)',
+                      transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease',
+                      cursor: 'default'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-1.5px)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.borderColor = 'var(--border-color)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    {/* Category info header */}
+                    <div className="flex items-center justify-between" style={{ width: '100%' }}>
+                      <div className="flex items-center gap-1.5">
+                        <CategoryIcon category={cat.name} size={15} />
+                        <span style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-main)' }}>
+                          {cat.name}
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                          {formatCurrency(cat.value)}
+                        </span>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                          ({pctOfTotal}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div style={{ height: '6px', backgroundColor: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', width: '100%' }}>
+                      <div 
+                        style={{
+                          height: '100%',
+                          width: `${pctOfMax}%`,
+                          backgroundColor: color,
+                          borderRadius: 'var(--radius-sm)',
+                          transition: 'width 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                          boxShadow: `0 0 6px ${color}44`
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

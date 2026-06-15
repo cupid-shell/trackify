@@ -238,7 +238,19 @@ const SavingsGoals = () => {
                   backgroundColor: 'var(--bg-input)',
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid var(--border-color)',
-                  flexWrap: 'wrap'
+                  flexWrap: 'wrap',
+                  transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease',
+                  cursor: 'default',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
                 {/* SVG Progress Ring */}
