@@ -86,6 +86,8 @@ const GridRow = ({
   onRemove,
   getCategoryStyle
 }) => {
+  const { showToast } = useAppContext();
+
   const handleAmountBlur = () => {
     const result = evaluateMath(row.amount);
     if (result !== row.amount) onUpdate(index, 'amount', String(result));
@@ -119,11 +121,25 @@ const GridRow = ({
           <input
             type="file"
             id={`receipt-input-${row.id}`}
-            accept="image/*"
+            accept="image/*,application/pdf"
             style={{ display: 'none' }}
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) {
+                // Size validation: 5MB limit
+                const MAX_SIZE = 5 * 1024 * 1024;
+                if (file.size > MAX_SIZE) {
+                  showToast('File size exceeds the 5MB limit. Please choose a smaller file.', 'warning');
+                  e.target.value = '';
+                  return;
+                }
+                // Format/MIME type validation: JPG, PNG, WEBP, GIF, HEIC, PDF
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'application/pdf'];
+                if (!allowedTypes.includes(file.type)) {
+                  showToast('Invalid file format. Only JPG, PNG, WEBP, GIF, HEIC, and PDF are allowed.', 'warning');
+                  e.target.value = '';
+                  return;
+                }
                 onUpdate(index, 'receiptFile', file);
                 onUpdate(index, 'receiptPreview', URL.createObjectURL(file));
               }

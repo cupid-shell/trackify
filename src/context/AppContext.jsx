@@ -21,8 +21,17 @@ export const parseLocalDate = (dateStr) => {
     }
   }
   const datePart = dateStr.split(/[ T]/)[0];
-  const [year, month, day] = datePart.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  const parts = datePart.split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts.map(Number);
+    if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+      const parsed = new Date(year, month - 1, day);
+      if (!isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+  }
+  return new Date();
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -1073,7 +1082,22 @@ export const AppProvider = ({ children }) => {
 
   const uploadReceiptFile = async (file) => {
     if (!session?.user) throw new Error('User not logged in');
-    const fileExt = file.name.split('.').pop() || 'jpg';
+
+    // Security and stability check: size limit (5MB)
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      throw new Error('File size exceeds the 5MB limit. Please upload a smaller image.');
+    }
+
+    // Security check: allowed file extensions and MIME types
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'pdf'];
+    const allowedMIMETypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'application/pdf'];
+    
+    const fileExt = (file.name.split('.').pop() || '').toLowerCase();
+    if (!allowedExtensions.includes(fileExt) || !allowedMIMETypes.includes(file.type)) {
+      throw new Error('Invalid file type. Only JPG, PNG, WEBP, GIF, HEIC, and PDF are allowed.');
+    }
+
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
     const filePath = `${session.user.id}/${fileName}`;
 

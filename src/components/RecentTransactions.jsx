@@ -159,12 +159,37 @@ const RecentTransactions = ({
     // Create CSV headers
     const headers = ['Date', 'Type', 'Category', 'Payment Method', `Amount (${currency})`, 'Note'];
     
+    // CSV Field Sanitizer (Mitigates CSV Injection and escapes delimiters/quotes)
+    const escapeCSVField = (val) => {
+      if (val === undefined || val === null) return '';
+      let str = String(val);
+      // Mitigate CSV Formula Injection: prepend a single quote if starting with =, +, -, @
+      if (/^[=+\-@]/.test(str)) {
+        str = `'${str}`;
+      }
+      // Escape double quotes and enclose in quotes if it contains commas, double quotes, or newlines
+      if (/[",\n\r]/.test(str)) {
+        str = `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
     // Map transactions to CSV rows
     const csvRows = sortedTx.map(tx => {
-      const formattedDate = format(new Date(tx.date), 'yyyy-MM-dd');
-      // Escape notes with quotes in case they contain commas
-      const escapedNote = tx.note ? `"${tx.note.replace(/"/g, '""')}"` : '';
-      return [formattedDate, tx.type, tx.category, tx.payment_method || 'Cash', tx.amount, escapedNote].join(',');
+      let formattedDate = '';
+      try {
+        formattedDate = format(new Date(tx.date), 'yyyy-MM-dd');
+      } catch {
+        formattedDate = tx.date;
+      }
+      return [
+        escapeCSVField(formattedDate),
+        escapeCSVField(tx.type),
+        escapeCSVField(tx.category),
+        escapeCSVField(tx.payment_method || 'Cash'),
+        escapeCSVField(tx.amount),
+        escapeCSVField(tx.note)
+      ].join(',');
     });
 
     // Combine headers and rows
