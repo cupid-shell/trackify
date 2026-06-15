@@ -84,6 +84,12 @@ export const AppProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Tracks whether a user_settings row was positively found in the database.
+  // null = unknown/not yet confirmed (e.g. fetch in flight or failed),
+  // true = an existing row was loaded, false = confirmed no row (genuinely new user).
+  // Used to prevent returning users from ever being shown new-user onboarding
+  // after a transient session/network hiccup.
+  const [settingsRowExists, setSettingsRowExists] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [confirmDialog, setConfirmDialog] = useState({
     isOpen: false,
@@ -261,8 +267,10 @@ export const AppProvider = ({ children }) => {
       .single();
 
     if (!error && data) {
+      // Positively confirmed this user already has a settings row → returning user.
+      setSettingsRowExists(true);
       const categoryMetadata = data.category_metadata || {};
-      
+
       const loadedPresets = data.presets !== undefined && data.presets !== null
         ? data.presets
         : (categoryMetadata._presets !== undefined ? categoryMetadata._presets : defaultPresets);
@@ -332,7 +340,12 @@ export const AppProvider = ({ children }) => {
       document.documentElement.style.setProperty('--primary', selected.primary);
       document.documentElement.style.setProperty('--primary-hover', selected.hover);
       document.documentElement.style.setProperty('--primary-glow', selected.glow);
+    } else if (error && error.code === 'PGRST116') {
+      // PGRST116 = no row found via .single() → genuinely a brand-new user.
+      setSettingsRowExists(false);
     }
+    // Any other error (network/auth) leaves settingsRowExists unchanged (unknown),
+    // so we never misclassify an existing user as new after a failed fetch.
   }
 
 
@@ -545,10 +558,12 @@ export const AppProvider = ({ children }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
+        setSettingsRowExists(null);
         fetchTransactions(session.user.id);
         fetchSettings(session.user.id);
         fetchDebts(session.user.id);
       } else {
+        setSettingsRowExists(null);
         resetStateToDefaults();
         setLoading(false);
       }
@@ -557,10 +572,12 @@ export const AppProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session) {
+        setSettingsRowExists(null);
         fetchTransactions(session.user.id, true);
         fetchSettings(session.user.id);
         fetchDebts(session.user.id, true);
       } else {
+        setSettingsRowExists(null);
         setTransactions([]);
         setDebts([]);
         resetStateToDefaults();
@@ -1881,18 +1898,27 @@ export const AppProvider = ({ children }) => {
     const completed = userSettings.category_metadata?._onboarding_completed;
     if (completed === true) return false;
     if (completed === false) return true;
-    
-    // If it's undefined, let's look at transactions or budgets
+
+    // The flag is undefined (e.g. an account that predates the onboarding feature).
+    // CRITICAL: a returning user must never be shown new-user onboarding just
+    // because a fetch was slow or failed after a session/network hiccup. Only
+    // proceed once we have POSITIVELY confirmed there is no settings row.
+    // settingsRowExists === true  -> existing user, skip onboarding
+    // settingsRowExists === null  -> unknown (fetch in flight or failed), skip onboarding to be safe
+    // settingsRowExists === false -> confirmed no row, fall through to the data checks below
+    if (settingsRowExists !== false) return false;
+
+    // Confirmed no settings row — corroborate with any other existing data.
     const hasTransactions = transactions.length > 0;
     const hasBudgets = Object.keys(userSettings.category_budgets || {}).length > 0;
     const hasSavingsGoals = (userSettings.savings_goals || []).length > 0;
-    
+
     if (hasTransactions || hasBudgets || hasSavingsGoals) {
       return false;
     }
-    
+
     return true; // Brand new user
-  }, [loading, session, userSettings, transactions]);
+  }, [loading, session, userSettings, transactions, settingsRowExists]);
 
   const value = {
     session,
