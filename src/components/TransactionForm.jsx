@@ -1,7 +1,8 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { PlusCircle, Trash2, Plus, Camera, Clock } from 'lucide-react';
+import { PlusCircle, Trash2, Plus, Camera } from 'lucide-react';
 import CustomSelect from './CustomSelect';
+import TimePicker from './TimePicker';
 import { Capacitor } from '@capacitor/core';
 
 // Light haptic tap — safe no-op on web
@@ -227,49 +228,7 @@ const GridRow = ({
           required
           style={{ flex: 1 }}
         />
-        <div style={{ position: 'relative', width: '150px', flexShrink: 0 }}>
-          <input
-            type="time"
-            className="grid-time-input"
-            value={row.time}
-            onChange={e => onUpdate(index, 'time', e.target.value)}
-            required
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              paddingRight: '2.25rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)',
-              backgroundColor: 'var(--bg-input)',
-              color: 'var(--text-main)'
-            }}
-          />
-          <button
-            type="button"
-            onClick={e => {
-              const input = e.currentTarget.previousElementSibling;
-              if (!input) return;
-              input.focus();
-              try { input.showPicker?.(); } catch { /* picker unavailable — field is focused for typing */ }
-            }}
-            title="Open time picker"
-            aria-label="Open time picker"
-            style={{
-              position: 'absolute',
-              right: '0.4rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '4px',
-              color: 'var(--text-muted)',
-              cursor: 'pointer'
-            }}
-          >
-            <Clock size={16} />
-          </button>
-        </div>
+        <TimePicker value={row.time} onChange={val => onUpdate(index, 'time', val)} />
       </div>
     </div>
   );

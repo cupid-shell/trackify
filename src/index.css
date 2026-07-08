@@ -358,12 +358,6 @@ body.light-theme input[type="time"]::-webkit-calendar-picker-indicator {
   filter: none;
 }
 
-/* The add-transaction time field has a custom clock button next to it, so hide
-   its native picker indicator to avoid a doubled icon where the browser draws one. */
-.grid-time-input::-webkit-calendar-picker-indicator {
-  display: none;
-}
-
 /* Google/Material-style toggle switch — replaces native checkboxes app-wide.
    !important overrides the inline width/height set on individual checkboxes. */
 input[type="checkbox"] {
