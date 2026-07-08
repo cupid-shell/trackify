@@ -1,11 +1,11 @@
 :root {
-  /* Mint Dark Theme (Default) */
-  --bg-main: #070c0a;
-  --bg-grid: #0b1411;
-  --bg-card: #0d1915;
-  --bg-input: #12241f;
-  --bg-hover: #19332c;
-  --bg-header: rgba(7, 12, 10, 0.85);
+  /* Slate Dark Theme (Default) */
+  --bg-main: #0f141b;
+  --bg-grid: #141b24;
+  --bg-card: #161d27;
+  --bg-input: #1c2530;
+  --bg-hover: #243040;
+  --bg-header: rgba(15, 20, 27, 0.85);
   
   --text-main: #ecfdf5;
   --text-muted: #829c90;
@@ -330,11 +330,46 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
+/* Google/Material-style toggle switch — replaces native checkboxes app-wide.
+   !important overrides the inline width/height set on individual checkboxes. */
 input[type="checkbox"] {
-  accent-color: var(--primary);
-  width: 1.15rem;
-  height: 1.15rem;
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  position: relative;
+  width: 36px !important;
+  height: 20px !important;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  background-color: var(--bg-hover);
   cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Sliding thumb */
+input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+input[type="checkbox"]:checked::before {
+  background-color: #fff;
+  transform: translateX(16px);
 }
 
 
