@@ -68,7 +68,7 @@ const Login = () => {
               borderRadius: 'var(--radius-md)', 
               boxShadow: 'var(--shadow-glow)',
               marginBottom: '0.75rem',
-              border: '1px solid rgba(88, 166, 255, 0.3)'
+              border: '1px solid rgb(from var(--primary) r g b / 0.3)'
             }} 
           />
           <h1 style={{ 

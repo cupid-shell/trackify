@@ -119,7 +119,7 @@ const Header = () => {
           color: var(--primary);
           font-stretch: 105%;
           font-weight: 600;
-          box-shadow: inset 0 0 10px rgba(88, 166, 255, 0.05);
+          box-shadow: inset 0 0 10px rgb(from var(--primary) r g b / 0.05);
         }
         .nav-link:hover {
           color: var(--primary-hover);
@@ -534,6 +534,9 @@ const Header = () => {
                   boxShadow: unreadCount > 0 ? 'var(--shadow-glow)' : 'none'
                 }}
                 title="Notifications"
+                aria-label="Notifications"
+                aria-haspopup="true"
+                aria-expanded={isOpen}
               >
                 <Bell size={18} />
                 {unreadCount > 0 && (
@@ -570,6 +573,7 @@ const Header = () => {
                       }}
                       className="notif-clear-btn"
                       title="Clear all"
+                      aria-label="Clear all notifications"
                     >
                       <Trash2 size={14} />
                     </button>

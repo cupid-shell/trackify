@@ -565,7 +565,7 @@ const LedgerPage = () => {
                         }}
                         onMouseOver={e => {
                           e.currentTarget.style.color = 'var(--primary)';
-                          e.currentTarget.style.borderColor = 'rgba(88, 166, 255, 0.3)';
+                          e.currentTarget.style.borderColor = 'rgb(from var(--primary) r g b / 0.3)';
                         }}
                         onMouseOut={e => {
                           e.currentTarget.style.color = editingDebtId === debt.id ? 'var(--primary)' : 'var(--text-muted)';

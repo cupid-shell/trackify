@@ -234,7 +234,7 @@ const GridRow = ({
           onChange={e => onUpdate(index, 'time', e.target.value)}
           required
           style={{
-            width: '120px',
+            width: '150px',
             padding: '0.75rem',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-color)',

@@ -1,4 +1,8 @@
 :root {
+  /* Render native controls (date pickers + their popups, scrollbars,
+     spinners) in dark mode so they match the theme. */
+  color-scheme: dark;
+
   /* Slate Dark Theme (Default) */
   --bg-main: #0f141b;
   --bg-grid: #141b24;
@@ -39,6 +43,7 @@
 
 /* Mint Light Theme Overrides */
 body.light-theme {
+  color-scheme: light;
   --bg-main: #e2f2e9;
   --bg-grid: #f4f9f6;
   --bg-card: #ffffff;
@@ -245,7 +250,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(600px circle at var(--mx, 50vw) var(--my, 50vh), rgba(88, 166, 255, 0.05), transparent 75%);
+  background: radial-gradient(600px circle at var(--mx, 50vw) var(--my, 50vh), rgb(from var(--primary) r g b / 0.05), transparent 75%);
   z-index: -1;
   pointer-events: none;
   transition: background 0.1s ease-out;
@@ -298,7 +303,7 @@ a {
 
 a:hover {
   color: var(--primary-hover);
-  text-shadow: 0 0 8px rgba(121, 192, 255, 0.3);
+  text-shadow: 0 0 8px rgb(from var(--primary) r g b / 0.3);
 }
 
 button {
@@ -328,6 +333,16 @@ input:focus, select:focus, textarea:focus {
   border-color: var(--primary);
   background-color: var(--bg-hover);
   box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Visible keyboard-focus ring for interactive controls (a11y).
+   :focus-visible targets keyboard navigation, so mouse clicks stay clean. */
+button:focus-visible,
+a:focus-visible,
+input[type="checkbox"]:focus-visible,
+.cs-trigger:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 /* Google/Material-style toggle switch — replaces native checkboxes app-wide.
@@ -413,7 +428,7 @@ input[type="checkbox"]:checked::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(400px circle at var(--card-mx, 0px) var(--card-my, 0px), rgba(88, 166, 255, 0.08), transparent 60%);
+  background: radial-gradient(400px circle at var(--card-mx, 0px) var(--card-my, 0px), rgb(from var(--primary) r g b / 0.08), transparent 60%);
   opacity: 0;
   transition: opacity 0.4s ease;
   z-index: 1;
@@ -421,9 +436,9 @@ input[type="checkbox"]:checked::before {
 }
 
 .glass-card:hover {
-  border-color: rgba(88, 166, 255, 0.22);
+  border-color: rgb(from var(--primary) r g b / 0.22);
   transform: translateY(-3px) scale(1.005);
-  box-shadow: var(--shadow-lg), 0 0 30px rgba(88, 166, 255, 0.08);
+  box-shadow: var(--shadow-lg), 0 0 30px rgb(from var(--primary) r g b / 0.08);
 }
 
 .glass-card:hover::before {
@@ -631,9 +646,9 @@ input[type="checkbox"]:checked::before {
 .ac-card--active .glass-card {
   border-color: var(--primary) !important;
   box-shadow:
-    0 0 0 1px rgba(88, 166, 255, 0.45),
-    0 0 28px rgba(88, 166, 255, 0.32),
-    0 0 60px rgba(88, 166, 255, 0.10),
+    0 0 0 1px rgb(from var(--primary) r g b / 0.45),
+    0 0 28px rgb(from var(--primary) r g b / 0.32),
+    0 0 60px rgb(from var(--primary) r g b / 0.10),
     var(--shadow-lg) !important;
 }
 
@@ -686,7 +701,7 @@ input[type="checkbox"]:checked::before {
 .ac-pill.active {
   background: var(--primary-glow);
   color: var(--primary);
-  border-color: rgba(88, 166, 255, 0.4);
+  border-color: rgb(from var(--primary) r g b / 0.4);
   font-weight: 700;
   box-shadow: 0 0 10px var(--primary-glow);
 }
@@ -788,12 +803,12 @@ input[type="checkbox"]:checked::before {
 
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 10px rgba(88, 166, 255, 0.1);
+    box-shadow: 0 0 10px rgb(from var(--primary) r g b / 0.1);
     border-color: var(--border-color);
   }
   50% {
-    box-shadow: 0 0 20px rgba(88, 166, 255, 0.25);
-    border-color: rgba(88, 166, 255, 0.3);
+    box-shadow: 0 0 20px rgb(from var(--primary) r g b / 0.25);
+    border-color: rgb(from var(--primary) r g b / 0.3);
   }
 }
 
@@ -1154,8 +1169,8 @@ body.light-theme .toast-alert {
 }
 
 .toast-alert.toast-info {
-  border-color: rgba(88, 166, 255, 0.25);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(88, 166, 255, 0.05);
+  border-color: rgb(from var(--primary) r g b / 0.25);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgb(from var(--primary) r g b / 0.05);
 }
 .toast-alert.toast-info::before {
   background-color: var(--primary);
@@ -1434,7 +1449,7 @@ body.light-theme .toast-close {
 
 .cs-trigger:hover {
   background-color: var(--bg-hover);
-  border-color: rgba(88, 166, 255, 0.25);
+  border-color: rgb(from var(--primary) r g b / 0.25);
 }
 
 .cs-trigger:focus {
