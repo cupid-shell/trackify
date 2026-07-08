@@ -248,8 +248,9 @@ const GridRow = ({
             type="button"
             onClick={e => {
               const input = e.currentTarget.previousElementSibling;
-              if (input?.showPicker) input.showPicker();
-              else input?.focus();
+              if (!input) return;
+              input.focus();
+              try { input.showPicker?.(); } catch { /* picker unavailable — field is focused for typing */ }
             }}
             title="Open time picker"
             aria-label="Open time picker"
