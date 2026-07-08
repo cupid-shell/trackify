@@ -1,8 +1,4 @@
 :root {
-  /* Render native controls (date pickers + their popups, scrollbars,
-     spinners) in dark mode so they match the theme. */
-  color-scheme: dark;
-
   /* Slate Dark Theme (Default) */
   --bg-main: #0f141b;
   --bg-grid: #141b24;
@@ -43,7 +39,6 @@
 
 /* Mint Light Theme Overrides */
 body.light-theme {
-  color-scheme: light;
   --bg-main: #e2f2e9;
   --bg-grid: #f4f9f6;
   --bg-card: #ffffff;
@@ -343,6 +338,24 @@ input[type="checkbox"]:focus-visible,
 .cs-trigger:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+/* Native date/time picker icons: lighten them so the calendar/clock button
+   shows on the dark input fields (done without color-scheme, which hid the
+   time picker's clock in some browsers). Left default on the light theme. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.65;
+  filter: invert(0.8);
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+body.light-theme input[type="date"]::-webkit-calendar-picker-indicator,
+body.light-theme input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: none;
 }
 
 /* Google/Material-style toggle switch — replaces native checkboxes app-wide.
