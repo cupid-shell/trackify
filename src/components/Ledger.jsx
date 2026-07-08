@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useAppContext, parseLocalDate } from '../context/AppContext';
-import { 
-  Plus, Trash2, Calendar, PlusCircle, 
-  ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Coins 
+import {
+  Plus, Trash2, Calendar, PlusCircle,
+  ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Coins, Pencil
 } from 'lucide-react';
 import Header from './Header';
 import Footer from './Footer';
@@ -15,7 +15,7 @@ const typeOptions = [
 ];
 
 const LedgerPage = () => {
-  const { debts, addDebt, recordDebtRepayment, deleteDebt, showToast, showConfirm, formatCurrency } = useAppContext();
+  const { debts, addDebt, recordDebtRepayment, updateDebt, deleteDebt, showToast, showConfirm, formatCurrency } = useAppContext();
 
   // Tab State: 'active' or 'settled'
   const [tab, setTab] = useState('active');
@@ -46,6 +46,10 @@ const LedgerPage = () => {
   const [repayLogAsTx, setRepayLogAsTx] = useState({});
   const [showRepayFormId, setShowRepayFormId] = useState(null);
   const [expandedDebtId, setExpandedDebtId] = useState(null);
+
+  // Edit form state: which debt is being edited + its working values
+  const [editingDebtId, setEditingDebtId] = useState(null);
+  const [editForm, setEditForm] = useState({ person: '', type: 'lent', amount: '', dueDate: '', note: '', date: '' });
 
   // Calculate Metrics
   const metrics = useMemo(() => {
@@ -122,6 +126,38 @@ const LedgerPage = () => {
     setRepayNote(prev => ({ ...prev, [debtId]: '' }));
     setRepayLogAsTx(prev => ({ ...prev, [debtId]: true }));
     setShowRepayFormId(null);
+  };
+
+  const startEdit = (debt) => {
+    setShowRepayFormId(null);
+    setEditingDebtId(debt.id);
+    setEditForm({
+      person: debt.person || '',
+      type: debt.type || 'lent',
+      amount: String(debt.amount ?? ''),
+      dueDate: debt.due_date || '',
+      note: debt.note || '',
+      date: debt.date || new Date().toISOString().split('T')[0]
+    });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editForm.person.trim() || !editForm.amount || isNaN(editForm.amount) || Number(editForm.amount) <= 0) {
+      showToast('Please enter a valid person and positive amount.', 'warning');
+      return;
+    }
+
+    await updateDebt(editingDebtId, {
+      type: editForm.type,
+      person: editForm.person.trim(),
+      amount: Number(editForm.amount),
+      due_date: editForm.dueDate || null,
+      note: editForm.note.trim() || null,
+      date: editForm.date
+    });
+
+    setEditingDebtId(null);
   };
 
   const handleFullSettlement = async (debtId, remainingAmount) => {
@@ -506,6 +542,40 @@ const LedgerPage = () => {
                         </div>
                       )}
                       
+                      {/* Edit */}
+                      <button
+                        onClick={() => {
+                          if (editingDebtId === debt.id) {
+                            setEditingDebtId(null);
+                          } else {
+                            startEdit(debt);
+                          }
+                        }}
+                        style={{
+                          color: editingDebtId === debt.id ? 'var(--primary)' : 'var(--text-muted)',
+                          padding: '0.4rem',
+                          borderRadius: 'var(--radius-full)',
+                          backgroundColor: 'var(--bg-input)',
+                          border: '1px solid var(--border-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          transition: 'var(--transition)'
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.color = 'var(--primary)';
+                          e.currentTarget.style.borderColor = 'rgba(88, 166, 255, 0.3)';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.color = editingDebtId === debt.id ? 'var(--primary)' : 'var(--text-muted)';
+                          e.currentTarget.style.borderColor = 'var(--border-color)';
+                        }}
+                        title="Edit record"
+                      >
+                        <Pencil size={14} />
+                      </button>
+
                       {/* Delete */}
                       <button
                         onClick={() => {
@@ -544,6 +614,105 @@ const LedgerPage = () => {
                       </button>
                     </div>
                   </div>
+
+                  {/* Inline Edit form */}
+                  {editingDebtId === debt.id && (
+                    <form onSubmit={handleEditSubmit} style={{
+                      padding: '1rem',
+                      borderRadius: 'var(--radius-md)',
+                      backgroundColor: 'var(--bg-input)',
+                      border: '1px solid var(--border-color)',
+                      marginTop: '0.5rem'
+                    }} className="flex-col gap-3">
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Edit Record</span>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Type</label>
+                          <CustomSelect
+                            options={typeOptions}
+                            value={editForm.type}
+                            onChange={val => setEditForm(prev => ({ ...prev, type: val }))}
+                            label="Transaction Type"
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Person / Contact Name</label>
+                          <input
+                            type="text"
+                            value={editForm.person}
+                            onChange={e => setEditForm(prev => ({ ...prev, person: e.target.value }))}
+                            style={{ padding: '0.4rem', fontSize: '0.8rem' }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Amount</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={editForm.amount}
+                            onChange={e => setEditForm(prev => ({ ...prev, amount: e.target.value }))}
+                            style={{ padding: '0.4rem', fontSize: '0.8rem' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Date Lent/Borrowed</label>
+                          <input
+                            type="date"
+                            value={editForm.date}
+                            onChange={e => setEditForm(prev => ({ ...prev, date: e.target.value }))}
+                            style={{ padding: '0.4rem', fontSize: '0.8rem' }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Due Date (Optional)</label>
+                          <input
+                            type="date"
+                            value={editForm.dueDate}
+                            onChange={e => setEditForm(prev => ({ ...prev, dueDate: e.target.value }))}
+                            style={{ padding: '0.4rem', fontSize: '0.8rem' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Description / Note (Optional)</label>
+                          <input
+                            type="text"
+                            value={editForm.note}
+                            onChange={e => setEditForm(prev => ({ ...prev, note: e.target.value }))}
+                            style={{ padding: '0.4rem', fontSize: '0.8rem' }}
+                          />
+                        </div>
+                      </div>
+
+                      {Number(editForm.amount) < Number(debt.settled_amount || 0) && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--warning)' }}>
+                          Amount is below the {formatCurrency(debt.settled_amount)} already repaid — this record will be marked settled.
+                        </span>
+                      )}
+
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setEditingDebtId(null)}
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)' }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--primary)', color: 'white', fontWeight: 600 }}
+                        >
+                          Save Changes
+                        </button>
+                      </div>
+                    </form>
+                  )}
 
                   {/* Summary / Progress block */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -630,6 +799,7 @@ const LedgerPage = () => {
                             if (isRepaying) {
                               setShowRepayFormId(null);
                             } else {
+                              setEditingDebtId(null);
                               setShowRepayFormId(debt.id);
                               // set default checkboxes
                               setRepayLogAsTx(prev => ({ ...prev, [debt.id]: true }));

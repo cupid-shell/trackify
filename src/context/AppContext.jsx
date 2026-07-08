@@ -7,32 +7,14 @@ import { version as currentVersion } from '../../package.json';
 import { X } from 'lucide-react';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { formatCurrency, getCurrencySymbol } from '../utils/currency';
+import { isVersionNewer } from '../utils/version';
+import { parseLocalDate } from '../utils/date';
 
 const AppContext = createContext();
 
+// Re-exported so the many components that import it from this context keep working.
 // eslint-disable-next-line react-refresh/only-export-components
-export const parseLocalDate = (dateStr) => {
-  if (!dateStr) return new Date();
-  const hasTime = /[T ]\d/.test(dateStr);
-  if (hasTime) {
-    const parsed = new Date(dateStr);
-    if (!isNaN(parsed.getTime())) {
-      return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
-    }
-  }
-  const datePart = dateStr.split(/[ T]/)[0];
-  const parts = datePart.split('-');
-  if (parts.length === 3) {
-    const [year, month, day] = parts.map(Number);
-    if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-      const parsed = new Date(year, month - 1, day);
-      if (!isNaN(parsed.getTime())) {
-        return parsed;
-      }
-    }
-  }
-  return new Date();
-};
+export { parseLocalDate };
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAppContext = () => useContext(AppContext);
@@ -726,21 +708,9 @@ export const AppProvider = ({ children }) => {
 
         if (!latestVersion) return;
 
-        const isNewer = (latest, current) => {
-          const lParts = latest.split('.').map(Number);
-          const cParts = current.split('.').map(Number);
-          for (let i = 0; i < Math.max(lParts.length, cParts.length); i++) {
-            const l = lParts[i] || 0;
-            const c = cParts[i] || 0;
-            if (l > c) return true;
-            if (l < c) return false;
-          }
-          return false;
-        };
-
         const cleanCurrent = currentVersion.replace(/^v/, '');
 
-        if (isNewer(latestVersion, cleanCurrent)) {
+        if (isVersionNewer(latestVersion, cleanCurrent)) {
           const ignoredVersion = localStorage.getItem('trackify_ignored_update_version');
           if (ignoredVersion === latestVersion) return;
 
@@ -1076,6 +1046,49 @@ export const AppProvider = ({ children }) => {
         debt_id: debtId
       });
     }
+  };
+
+  const updateDebt = async (debtId, fields) => {
+    if (!session?.user) return;
+
+    const debt = debts.find(d => d.id === debtId);
+    if (!debt) return;
+
+    // Editing the principal can flip a record between active/settled, so
+    // recompute status against the amount already settled.
+    const newAmount = Number(fields.amount);
+    const settled = Number(debt.settled_amount || 0);
+    const newStatus = settled >= newAmount ? 'settled' : 'active';
+
+    const updatePayload = {
+      type: fields.type,
+      person: fields.person,
+      amount: newAmount,
+      due_date: fields.due_date || null,
+      note: fields.note || null,
+      date: fields.date,
+      status: newStatus,
+      updated_at: new Date().toISOString()
+    };
+
+    const originalDebts = [...debts];
+    setDebts(prev => prev.map(d => d.id === debtId ? { ...d, ...updatePayload } : d));
+
+    const { data, error } = await supabase
+      .from('debts')
+      .update(updatePayload)
+      .eq('id', debtId)
+      .eq('user_id', session.user.id)
+      .select();
+
+    if (error || !data || data.length === 0) {
+      setDebts(originalDebts);
+      showToast('Error updating debt record: ' + (error?.message || 'Update failed'), 'error');
+      return;
+    }
+
+    setDebts(prev => prev.map(d => d.id === debtId ? data[0] : d));
+    showToast('Debt record updated.', 'success');
   };
 
   const deleteDebt = async (debtId) => {
@@ -1963,6 +1976,7 @@ export const AppProvider = ({ children }) => {
     getCategoryStyle,
     addDebt,
     recordDebtRepayment,
+    updateDebt,
     deleteDebt,
     skippedBills,
     skipBillForMonth,
