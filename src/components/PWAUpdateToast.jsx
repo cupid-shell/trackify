@@ -6,9 +6,6 @@ const PWAUpdateToast = () => {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegistered(r) {
-      console.log('SW Registered: ', r);
-    },
     onRegisterError(error) {
       console.error('SW Registration Error: ', error);
     }
