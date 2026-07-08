@@ -340,21 +340,17 @@ input[type="checkbox"]:focus-visible,
   outline-offset: 2px;
 }
 
-/* Native date/time picker icons: lighten them so the calendar/clock button
-   shows on the dark input fields (done without color-scheme, which hid the
-   time picker's clock in some browsers). Left default on the light theme. */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
+/* Native date picker icon: lighten it so the calendar button shows on the dark
+   input fields. Left default on the light theme. (Time fields use TimePicker.) */
+input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.65;
   filter: invert(0.8);
 }
-input[type="date"]::-webkit-calendar-picker-indicator:hover,
-input[type="time"]::-webkit-calendar-picker-indicator:hover {
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
-body.light-theme input[type="date"]::-webkit-calendar-picker-indicator,
-body.light-theme input[type="time"]::-webkit-calendar-picker-indicator {
+body.light-theme input[type="date"]::-webkit-calendar-picker-indicator {
   filter: none;
 }
 

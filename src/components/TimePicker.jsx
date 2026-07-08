@@ -33,7 +33,7 @@ const colStyle = {
   padding: '2px',
 };
 
-const TimePicker = ({ value, onChange }) => {
+const TimePicker = ({ value, onChange, style }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const { h12, m, ampm } = parseTime(value);
@@ -60,7 +60,7 @@ const TimePicker = ({ value, onChange }) => {
   });
 
   return (
-    <div ref={ref} style={{ position: 'relative', width: '150px', flexShrink: 0 }}>
+    <div ref={ref} style={{ position: 'relative', width: '150px', flexShrink: 0, ...style }}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

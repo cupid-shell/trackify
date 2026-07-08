@@ -9,6 +9,7 @@ import CategoryIcon from './CategoryIcon';
 import Header from './Header';
 import Footer from './Footer';
 import CustomSelect from './CustomSelect';
+import TimePicker from './TimePicker';
 
 const SettingsPage = () => {
   const { 
@@ -1108,12 +1109,7 @@ const SettingsPage = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid var(--border-color)', marginTop: '0.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Reminder Time:</span>
-                          <input 
-                            type="time" 
-                            value={dailyReminderTime} 
-                            onChange={(e) => setDailyReminderTime(e.target.value)}
-                            style={{ width: '120px', padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
-                          />
+                          <TimePicker value={dailyReminderTime} onChange={val => setDailyReminderTime(val)} style={{ width: '120px' }} />
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
                           <div>

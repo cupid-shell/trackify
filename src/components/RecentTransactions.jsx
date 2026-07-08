@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { Trash2, TrendingUp, Download, Edit2, X } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 import CustomSelect from './CustomSelect';
+import TimePicker from './TimePicker';
 
 const RecentTransactions = ({ 
   selectedDay = null, 
@@ -628,12 +629,7 @@ const RecentTransactions = ({
                       </div>
                       <div style={{ width: '100px' }}>
                         <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Time</label>
-                        <input 
-                          type="time" 
-                          value={editTime} 
-                          onChange={e => setEditTime(e.target.value)} 
-                          style={{ padding: '0.5rem', fontSize: '0.875rem', width: '100%', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}
-                        />
+                        <TimePicker value={editTime} onChange={val => setEditTime(val)} style={{ width: '100%' }} />
                       </div>
                     </div>
                   </div>
