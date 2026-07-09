@@ -206,13 +206,14 @@ const LedgerPage = () => {
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
           gap: '1rem',
-          marginBottom: '2rem'
+          marginBottom: '2rem',
+          fontVariantNumeric: 'tabular-nums'
         }}>
           {/* Total Lent Card */}
           <div className="glass-card flex items-center justify-between" style={{ padding: '1.25rem 1.5rem' }}>
             <div className="flex-col gap-1">
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Lent (Receivables)</span>
-              <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--success)' }}>
+              <span style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--success)' }}>
                 {formatCurrency(metrics.totalLent)}
               </span>
             </div>
@@ -230,7 +231,7 @@ const LedgerPage = () => {
           <div className="glass-card flex items-center justify-between" style={{ padding: '1.25rem 1.5rem' }}>
             <div className="flex-col gap-1">
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Borrowed (Payables)</span>
-              <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--danger)' }}>
+              <span style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--danger)' }}>
                 {formatCurrency(metrics.totalBorrowed)}
               </span>
             </div>
@@ -247,14 +248,15 @@ const LedgerPage = () => {
           {/* Net Position Card */}
           <div className="glass-card flex items-center justify-between" style={{ 
             padding: '1.25rem 1.5rem',
-            border: metrics.netPosition !== 0 ? `1px solid ${metrics.netPosition > 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` : '1px solid rgba(255,255,255,0.05)'
+            border: metrics.netPosition !== 0 ? `1px solid ${metrics.netPosition > 0 ? 'rgb(from var(--success) r g b / 0.2)' : 'rgb(from var(--danger) r g b / 0.2)'}` : '1px solid rgba(255,255,255,0.05)'
           }}>
             <div className="flex-col gap-1">
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Net Position</span>
-              <span style={{ 
-                fontSize: '1.75rem', 
-                fontWeight: 700, 
-                color: metrics.netPosition > 0 ? 'var(--success)' : metrics.netPosition < 0 ? 'var(--danger)' : 'var(--text-main)' 
+              <span style={{
+                fontSize: '1.75rem',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                color: metrics.netPosition > 0 ? 'var(--success)' : metrics.netPosition < 0 ? 'var(--danger)' : 'var(--text-main)'
               }}>
                 {metrics.netPosition > 0 ? '+' : ''}{formatCurrency(metrics.netPosition)}
               </span>
@@ -457,7 +459,7 @@ const LedgerPage = () => {
         </div>
 
         {/* Ledger Items List */}
-        <div style={{ maxWidth: '750px', margin: '0 auto' }} className="flex-col gap-4 animate-fade-in stagger-4">
+        <div style={{ maxWidth: '750px', margin: '0 auto', fontVariantNumeric: 'tabular-nums' }} className="flex-col gap-4 animate-fade-in stagger-4">
           {displayDebts.length === 0 ? (
             <div className="glass-card" style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
               <Coins size={36} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: '0.75rem' }} />
@@ -503,7 +505,7 @@ const LedgerPage = () => {
                   <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div className="flex-col gap-1">
                       <div className="flex items-center gap-2.5" style={{ flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)' }}>{debt.person}</span>
+                        <span style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-main)' }}>{debt.person}</span>
                         <span style={{ 
                           fontSize: '0.65rem', 
                           fontWeight: 700, 
@@ -600,7 +602,7 @@ const LedgerPage = () => {
                         }}
                         onMouseOver={e => {
                           e.currentTarget.style.color = 'var(--danger)';
-                          e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                          e.currentTarget.style.borderColor = 'rgb(from var(--danger) r g b / 0.3)';
                           e.currentTarget.style.backgroundColor = 'var(--danger-bg)';
                         }}
                         onMouseOut={e => {
@@ -870,7 +872,7 @@ const LedgerPage = () => {
                       fontSize: '0.8rem',
                       border: '1px solid var(--border-color)'
                     }} className="flex-col gap-2">
-                      <span style={{ fontWeight: 600, fontSize: '0.725rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Repayment Log</span>
+                      <span style={{ fontWeight: 600, fontSize: '0.725rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Repayment Log</span>
                       <div className="flex-col gap-1.5" style={{ maxHeight: '150px', overflowY: 'auto' }}>
                         {debt.payments.map((p, idx) => (
                           <div key={idx} className="flex justify-between" style={{ padding: '0.25rem 0', borderBottom: idx < debt.payments.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
