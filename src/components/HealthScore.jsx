@@ -1,6 +1,17 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useAppContext, parseLocalDate } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';
 import { Shield, Flame, Award, Heart } from 'lucide-react';
+import { computeHealthScore } from '../utils/healthScore';
+
+// Achievement id -> icon. The scoring logic (utils/healthScore) is icon-free;
+// the component layers these on by id after computing the metrics.
+const ACHIEVEMENT_ICONS = {
+  budget_shield: <Shield size={18} />,
+  streak_star: <Flame size={18} />,
+  super_saver: <Award size={18} />,
+  log_legend: <Heart size={18} />,
+  recurring_master: <Award size={18} />,
+};
 
 const HealthScore = () => {
   const { 
@@ -19,174 +30,22 @@ const HealthScore = () => {
 
   const [confettiParticles, setConfettiParticles] = useState([]);
 
-  // Calculations for health score & achievements
+  // Calculations for health score & achievements (pure logic in utils/healthScore).
   const metrics = useMemo(() => {
-    const today = new Date();
-    const isCurrentMonth = selectedMonth === today.getMonth() && selectedYear === today.getFullYear();
-    const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-    const activeDays = isCurrentMonth ? Math.max(1, today.getDate()) : daysInMonth;
-
-    // 1. Budget Adherence Score
-    const budgets = userSettings.category_budgets || {};
-    const budgetedCategories = Object.keys(budgets);
-    
-    let budgetScore;
-    let exceededCount = 0;
-
-    if (budgetedCategories.length > 0) {
-      const spentByCategory = {};
-      currentMonthTransactions
-        .filter(tx => tx.type === 'expense')
-        .forEach(tx => {
-          spentByCategory[tx.category] = (spentByCategory[tx.category] || 0) + Number(tx.amount);
-        });
-
-      budgetedCategories.forEach(cat => {
-        if ((spentByCategory[cat] || 0) > budgets[cat]) {
-          exceededCount++;
-        }
-      });
-      budgetScore = Math.max(0, 100 * (1 - exceededCount / budgetedCategories.length));
-    } else {
-      // Default fallback: spending vs income
-      const ratio = totalIncome > 0 ? totalExpenses / totalIncome : 1;
-      budgetScore = Math.max(0, (1 - ratio) * 100);
-    }
-
-    // 2. Savings Rate Score (Gold standard is 30% savings rate)
-    const savingsRate = totalIncome > 0 ? balance / totalIncome : 0;
-    const savingsScore = Math.min(100, Math.max(0, (savingsRate / 0.3) * 100));
-
-    // 3. No-Spend Days Score (Target is 8 days per month)
-    const uniqueSpendDates = new Set(
-      currentMonthTransactions
-        .filter(tx => tx.type === 'expense')
-        .map(tx => parseLocalDate(tx.date).getDate())
-    );
-    const noSpendDays = Math.max(0, activeDays - uniqueSpendDates.size);
-    const noSpendScore = Math.min(100, (noSpendDays / 8) * 100);
-
-    // Calculate overall score (50% budget, 30% savings, 20% no-spend)
-    const overallScore = Math.round((budgetScore * 0.5) + (savingsScore * 0.3) + (noSpendScore * 0.2));
-
-    // Consecutive no-spend days calculation
-    const spendDaysMap = Array(daysInMonth + 1).fill(false); // true if spend occurred
-    currentMonthTransactions
-      .filter(tx => tx.type === 'expense')
-      .forEach(tx => {
-        const day = parseLocalDate(tx.date).getDate();
-        if (day >= 1 && day <= daysInMonth) {
-          spendDaysMap[day] = true;
-        }
-      });
-
-    let maxStreak = 0;
-    let currentStreak = 0;
-    for (let d = 1; d <= activeDays; d++) {
-      if (!spendDaysMap[d]) {
-        currentStreak++;
-        if (currentStreak > maxStreak) {
-          maxStreak = currentStreak;
-        }
-      } else {
-        currentStreak = 0;
-      }
-    }
-
-    // Achievements Conditions
-    const achievements = [
-      {
-        id: 'budget_shield',
-        name: 'Budget Shield',
-        desc: 'Keep all budgeted categories within their limits this month.',
-        icon: <Shield size={18} />,
-        unlocked: budgetedCategories.length > 0 && exceededCount === 0,
-        progress: budgetedCategories.length > 0 ? Math.round(((budgetedCategories.length - exceededCount) / budgetedCategories.length) * 100) : 100,
-        statusLabel: budgetedCategories.length > 0 ? `${budgetedCategories.length - exceededCount}/${budgetedCategories.length} categories` : 'No active budgets',
-        color: '#10b981'
-      },
-      {
-        id: 'streak_star',
-        name: 'Streak Star',
-        desc: 'Log a streak of 3+ consecutive no-spend days.',
-        icon: <Flame size={18} />,
-        unlocked: maxStreak >= 3,
-        progress: Math.min(100, Math.round((maxStreak / 3) * 100)),
-        statusLabel: `${maxStreak}/3 days streak`,
-        color: '#f59e0b'
-      },
-      {
-        id: 'super_saver',
-        name: 'Super Saver',
-        desc: 'Save more than 30% of your total income.',
-        icon: <Award size={18} />,
-        unlocked: savingsRate >= 0.3,
-        progress: Math.min(100, Math.round((savingsRate / 0.3) * 100)),
-        statusLabel: `${Math.round(savingsRate * 100)}% / 30% goal`,
-        color: '#06b6d4'
-      },
-      {
-        id: 'log_legend',
-        name: 'Log Legend',
-        desc: 'Log 15 or more transactions in a single month.',
-        icon: <Heart size={18} />,
-        unlocked: currentMonthTransactions.length >= 15,
-        progress: Math.min(100, Math.round((currentMonthTransactions.length / 15) * 100)),
-        statusLabel: `${currentMonthTransactions.length}/15 transactions`,
-        color: '#a855f7'
-      },
-      {
-        id: 'recurring_master',
-        name: 'Punctual Saver',
-        desc: 'Have active recurring bills set up for automatic logging.',
-        icon: <Award size={18} />,
-        unlocked: recurringBills.length > 0,
-        progress: recurringBills.length > 0 ? 100 : 0,
-        statusLabel: recurringBills.length > 0 ? 'Active' : 'No bills configured',
-        color: '#f43f5e'
-      }
-    ];
-
-    // Grade and Feedback
-    let grade;
-    let feedback;
-    let glowColor;
-
-    if (overallScore >= 95) {
-      grade = 'A+';
-      feedback = 'Outstanding financial discipline! You have immaculate budgeting and exceptional saving habits.';
-      glowColor = 'rgba(16, 185, 129, 0.5)';
-    } else if (overallScore >= 90) {
-      grade = 'A';
-      feedback = 'Excellent habits! Budget is under full control, and you are saving a healthy chunk of your income.';
-      glowColor = 'rgba(16, 185, 129, 0.4)';
-    } else if (overallScore >= 80) {
-      grade = 'B';
-      feedback = 'Solid performance. You maintain a good financial cushion, but look for small areas to optimize.';
-      glowColor = 'rgba(6, 182, 212, 0.4)';
-    } else if (overallScore >= 70) {
-      grade = 'C';
-      feedback = 'Fair health. Some budgets are getting tight or exceeded. Keep check of discretionary expenses.';
-      glowColor = 'rgba(245, 158, 11, 0.4)';
-    } else if (overallScore >= 60) {
-      grade = 'D';
-      feedback = 'Vulnerable status. Saving rate is low and/or multiple budgets are exceeded. Action is advised.';
-      glowColor = 'rgba(239, 68, 68, 0.3)';
-    } else {
-      grade = 'F';
-      feedback = 'Critical alert. Your expenditures exceed your targets/income. Time to review habits immediately!';
-      glowColor = 'rgba(239, 68, 68, 0.5)';
-    }
-
+    const m = computeHealthScore({
+      currentMonthTransactions,
+      budgets: userSettings.category_budgets || {},
+      totalIncome,
+      totalExpenses,
+      balance,
+      selectedMonth,
+      selectedYear,
+      recurringBillsCount: recurringBills.length,
+      now: new Date(),
+    });
     return {
-      overallScore,
-      grade,
-      feedback,
-      glowColor,
-      achievements,
-      noSpendDays,
-      maxStreak,
-      savingsRate: Math.round(savingsRate * 100)
+      ...m,
+      achievements: m.achievements.map(a => ({ ...a, icon: ACHIEVEMENT_ICONS[a.id] })),
     };
   }, [currentMonthTransactions, userSettings, totalIncome, totalExpenses, balance, selectedMonth, selectedYear, recurringBills]);
 
