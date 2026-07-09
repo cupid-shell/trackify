@@ -47,10 +47,12 @@ const OverviewCards = () => {
       {cards.map((card, idx) => (
         <div key={idx} className="glass-card flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h3 style={{ 
-              color: 'var(--text-muted)', 
-              fontSize: '0.85rem', 
-              fontWeight: 500,
+            <h3 style={{
+              color: 'var(--text-muted)',
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
               fontFamily: "'Mona Sans Variable', sans-serif"
             }}>
               {card.title}
@@ -72,27 +74,20 @@ const OverviewCards = () => {
           </div>
           
           <div>
-            <h2 style={{ 
-              fontSize: '1.75rem', 
+            <h2 style={{
+              fontSize: '2.1rem',
               fontWeight: 800,
               fontFamily: "'Hubot Sans Variable', sans-serif",
-              letterSpacing: '-0.02em',
-              fontStretch: '105%',
+              letterSpacing: '-0.03em',
+              fontVariantNumeric: 'tabular-nums',
+              lineHeight: 1.1,
               color: 'var(--text-main)'
             }}>
               {formatCurrency(card.amount)}
             </h2>
             {card.subtitle && (
-              <div style={{ marginTop: '0.5rem' }}>
-                <span className="tech-badge" style={{ 
-                  fontSize: '0.65rem', 
-                  color: 'var(--text-muted)',
-                  border: '1px solid var(--border-color)',
-                  padding: '2px 6px',
-                  borderRadius: 'var(--radius-sm)'
-                }}>
-                  {card.subtitle}
-                </span>
+              <div style={{ marginTop: '0.4rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                {card.subtitle}
               </div>
             )}
           </div>
