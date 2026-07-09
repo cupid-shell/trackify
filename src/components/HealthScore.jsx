@@ -256,10 +256,10 @@ const HealthScore = () => {
             justifyContent: 'center',
             pointerEvents: 'none'
           }}>
-            <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-main)', lineHeight: 1 }}>
+            <span style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {metrics.grade}
             </span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>
+            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px', fontVariantNumeric: 'tabular-nums' }}>
               Score: {metrics.overallScore}
             </span>
           </div>
@@ -267,10 +267,10 @@ const HealthScore = () => {
 
         {/* Breakdown details */}
         <div style={{ flex: 1, minWidth: 0, width: '100%' }} className="flex-col gap-2">
-          <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-main)', lineHeight: 1.5, textAlign: 'justify' }}>
+          <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-main)', lineHeight: 1.55 }}>
             {metrics.feedback}
           </p>
-          <div style={{ display: 'flex', gap: '0.65rem', fontSize: '0.72rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.65rem', fontSize: '0.72rem', color: 'var(--text-muted)', flexWrap: 'wrap', fontVariantNumeric: 'tabular-nums' }}>
             <span>Savings Rate: <strong style={{ color: 'var(--text-main)' }}>{metrics.savingsRate}%</strong></span>
             <span>•</span>
             <span>No-Spend: <strong style={{ color: 'var(--text-main)' }}>{metrics.noSpendDays} days</strong></span>
@@ -282,7 +282,7 @@ const HealthScore = () => {
 
       {/* Progress meter */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
           <span>Financial Health Progress</span>
           <span>{metrics.overallScore}%</span>
         </div>
@@ -305,7 +305,7 @@ const HealthScore = () => {
 
       {/* Badges and Achievements */}
       <div className="flex-col gap-2" style={{ marginTop: '0.25rem' }}>
-        <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)' }}>
+        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           Achievements &amp; Goals
         </span>
         <div className="ach-list">
@@ -354,7 +354,7 @@ const HealthScore = () => {
               {/* Middle: Title, Progress track, and Description */}
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.825rem', color: ach.unlocked ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                  <span style={{ fontWeight: 600, fontSize: '0.825rem', color: ach.unlocked ? 'var(--text-main)' : 'var(--text-muted)' }}>
                     {ach.name}
                   </span>
                   <span style={{ fontSize: '0.68rem', color: ach.unlocked ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: 500 }}>
@@ -379,7 +379,7 @@ const HealthScore = () => {
                   }} />
                 </div>
                 
-                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.45, textAlign: 'justify' }}>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.45 }}>
                   {ach.desc}
                 </span>
               </div>
