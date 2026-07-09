@@ -39,6 +39,12 @@ export const togglePinned = (cat, sorted, pinnedList = []) => {
   return { order, pinned };
 };
 
+// Convert a visual drop slot (0..len, where the dragged item still occupies its
+// original slot during the drag) into the array index to insert at *after* the
+// item is removed. Moving down needs a -1 because removal shifts later indices.
+export const dropInsertIndex = (fromIndex, targetIndex) =>
+  targetIndex > fromIndex ? targetIndex - 1 : targetIndex;
+
 // Move `cat` to `targetIndex` within a list (used during a drag). Returns the
 // same reference unchanged when there is nothing to move.
 export const moveInList = (list, cat, targetIndex) => {

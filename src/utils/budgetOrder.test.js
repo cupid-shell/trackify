@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyOrder, splitPinned, togglePinned, moveInList } from './budgetOrder';
+import { applyOrder, splitPinned, togglePinned, moveInList, dropInsertIndex } from './budgetOrder';
 
 const CATS = ['Rent', 'Transport', 'Daily Living', 'Food & Dining', 'Utilities'];
 
@@ -62,6 +62,40 @@ describe('togglePinned', () => {
     expect(pinned).toEqual(['Rent']);
     // pinned [Rent], then unpinned starting with the just-unpinned Food & Dining
     expect(order).toEqual(['Rent', 'Food & Dining', 'Transport', 'Utilities']);
+  });
+});
+
+describe('dropInsertIndex', () => {
+  it('shifts down-moves back by one (the item is removed first)', () => {
+    expect(dropInsertIndex(0, 3)).toBe(2);
+    expect(dropInsertIndex(1, 4)).toBe(3);
+  });
+
+  it('leaves up-moves unchanged', () => {
+    expect(dropInsertIndex(3, 1)).toBe(1);
+    expect(dropInsertIndex(2, 0)).toBe(0);
+  });
+
+  it('is a no-op for the same slot or the slot just below', () => {
+    expect(dropInsertIndex(2, 2)).toBe(2);
+    expect(dropInsertIndex(2, 3)).toBe(2);
+  });
+});
+
+// Full drag simulation: drop slot -> insert index -> reordered list.
+describe('drag drop end-to-end (dropInsertIndex + moveInList)', () => {
+  const drop = (list, cat, from, target) => moveInList(list, cat, dropInsertIndex(from, target));
+
+  it('drags the first item to the bottom', () => {
+    expect(drop(['A', 'B', 'C', 'D'], 'A', 0, 4)).toEqual(['B', 'C', 'D', 'A']);
+  });
+
+  it('drags the last item near the top', () => {
+    expect(drop(['A', 'B', 'C', 'D'], 'D', 3, 1)).toEqual(['A', 'D', 'B', 'C']);
+  });
+
+  it('drops into the middle', () => {
+    expect(drop(['A', 'B', 'C', 'D'], 'A', 0, 3)).toEqual(['B', 'C', 'A', 'D']);
   });
 });
 
