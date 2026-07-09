@@ -434,15 +434,15 @@ const RecentTransactions = ({
           alignItems: 'center',
           gap: '0.5rem',
           padding: '0.45rem 0.85rem',
-          background: 'rgba(99, 102, 241, 0.1)',
-          border: '1px solid rgba(99, 102, 241, 0.3)',
+          background: 'var(--primary-glow)',
+          border: '1px solid rgb(from var(--primary) r g b / 0.3)',
           borderRadius: 'var(--radius-md)',
           color: 'var(--primary)',
           fontSize: '0.82rem',
           fontWeight: 600,
           width: 'fit-content',
           marginTop: '-0.5rem',
-          boxShadow: '0 0 10px rgba(99, 102, 241, 0.05)'
+          boxShadow: '0 0 10px rgb(from var(--primary) r g b / 0.05)'
         }}>
           <span>Filtered by Date: {format(new Date(selectedYear, selectedMonth, selectedDay), 'MMMM dd, yyyy')}</span>
           <button 
@@ -569,7 +569,7 @@ const RecentTransactions = ({
           </p>
         </div>
       ) : (
-        <div className="flex-col gap-4">
+        <div className="flex-col gap-3">
           {sortedTx.map((tx) => {
             const isEditing = editingId === tx.id;
             
@@ -688,7 +688,7 @@ const RecentTransactions = ({
                     justifyContent: 'center',
                     borderRadius: 'var(--radius-full)',
                     backgroundColor: tx.type === 'income' ? 'var(--success-bg)' : `${getCategoryStyle(tx.category).color}15`,
-                    border: `1px solid ${tx.type === 'income' ? 'rgba(16, 185, 129, 0.2)' : `${getCategoryStyle(tx.category).color}30`}`,
+                    border: `1px solid ${tx.type === 'income' ? 'rgb(from var(--success) r g b / 0.2)' : `${getCategoryStyle(tx.category).color}30`}`,
                     fontSize: tx.type === 'income' ? '1rem' : '1.25rem',
                     flexShrink: 0
                   }}>

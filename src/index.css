@@ -1380,9 +1380,18 @@ body.light-theme .toast-close {
   justify-content: space-between;
   padding: 1rem;
   background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   transition: var(--transition);
   gap: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tx-row:hover {
+  border-color: rgb(from var(--primary) r g b / 0.35);
+  background-color: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
 }
 
 .tx-left-col {
