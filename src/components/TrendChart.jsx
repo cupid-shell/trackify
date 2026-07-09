@@ -139,16 +139,16 @@ const TrendChart = () => {
             <AreaChart data={trendData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <defs>
                 <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25}/>
-                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0.01}/>
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.25}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.01}/>
                 </linearGradient>
                 <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25}/>
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.01}/>
+                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.25}/>
+                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.01}/>
                 </linearGradient>
                 <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.25}/>
-                  <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.01}/>
+                  <stop offset="5%" stopColor="var(--warning)" stopOpacity={0.25}/>
+                  <stop offset="95%" stopColor="var(--warning)" stopOpacity={0.01}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
@@ -159,7 +159,7 @@ const TrendChart = () => {
               <Area 
                 type="monotone" 
                 dataKey="Income" 
-                stroke="#22c55e" 
+                stroke="#10b981" 
                 fillOpacity={1}
                 fill="url(#colorIncome)"
                 strokeWidth={2.5}
@@ -167,15 +167,15 @@ const TrendChart = () => {
               <Area 
                 type="monotone" 
                 dataKey="Expenses" 
-                stroke="#ef4444" 
+                stroke="#f43f5e" 
                 fillOpacity={1}
                 fill="url(#colorExpenses)"
                 strokeWidth={2.5}
               />
               <Area 
                 type="monotone" 
-                dataKey="Savings" 
-                stroke="var(--primary)" 
+                dataKey="Savings"
+                stroke="var(--warning)"
                 fillOpacity={1}
                 fill="url(#colorSavings)"
                 strokeWidth={2}

@@ -111,7 +111,9 @@ const ExpenseChart = () => {
     return data.reduce((sum, item) => sum + item.value, 0);
   }, [data]);
 
-  const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+  // Categorical palette led by the emerald brand, then a harmonious sequence
+  // around the wheel (uses the app's rose --danger tone instead of a stray red).
+  const colors = ['#10b981', '#06b6d4', '#6366f1', '#f59e0b', '#f43f5e', '#a855f7', '#ec4899'];
 
   return (
     <div className="glass-card flex-col gap-0" style={{ height: '100%' }}>

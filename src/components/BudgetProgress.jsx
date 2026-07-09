@@ -227,7 +227,7 @@ const BudgetProgress = () => {
             background: isOver
               ? 'var(--danger)'
               : isWarning
-                ? 'linear-gradient(90deg, #f59e0b, #ef4444)'
+                ? 'linear-gradient(90deg, #f59e0b, #f43f5e)'
                 : `linear-gradient(90deg, ${getCategoryStyle(cat).color}, ${getCategoryStyle(cat).color}dd)`,
             transition: 'width 0.5s ease'
           }} />
