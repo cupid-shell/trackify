@@ -227,11 +227,10 @@ body.theme-transitioning *::after {
 body {
   font-family: 'Mona Sans Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   background-color: var(--bg-main);
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-position: center;
+  /* Refined calm backdrop: a soft top vignette for depth, replacing the old
+     techy 32px checkered grid. */
+  background-image: radial-gradient(1200px 700px at 50% -12%, rgba(255, 255, 255, 0.025), transparent 70%);
+  background-attachment: fixed;
   color: var(--text-main);
   line-height: 1.6;
   min-height: 100vh;

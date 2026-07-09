@@ -47,10 +47,7 @@ const Login = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '1.5rem',
-      background: 'var(--bg-main)',
-      backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px)',
-      backgroundSize: '32px 32px'
+      padding: '1.5rem'
     }}>
       <div className="glass-card flex-col gap-6" style={{ 
         width: '100%', 
