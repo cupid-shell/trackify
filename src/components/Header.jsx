@@ -93,7 +93,8 @@ const Header = () => {
       <header className="site-header" style={{
         borderBottom: '1px solid var(--border-color)',
         backgroundColor: 'var(--bg-header)',
-        backdropFilter: 'blur(16px)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         position: 'sticky',
         top: 0,
         zIndex: 200,
@@ -117,15 +118,12 @@ const Header = () => {
           background-color: var(--bg-hover);
           border-color: var(--border-color);
           color: var(--primary);
-          font-stretch: 105%;
           font-weight: 600;
-          box-shadow: inset 0 0 10px rgb(from var(--primary) r g b / 0.05);
         }
         .nav-link:hover {
           color: var(--primary-hover);
-          font-stretch: 112%;
-          background-color: rgba(255, 255, 255, 0.02);
-          border-color: rgba(255, 255, 255, 0.05);
+          background-color: rgba(255, 255, 255, 0.03);
+          border-color: rgba(255, 255, 255, 0.06);
         }
         @media (min-width: 640px) {
           .site-header {

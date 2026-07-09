@@ -852,11 +852,13 @@ button {
 }
 
 button:not(.nav-link):not(.ac-float-arrow):hover {
-  transform: translateY(-1px) scale(1.015);
+  transform: translateY(-1px);
+  filter: brightness(1.06);
 }
 
 button:not(.nav-link):not(.ac-float-arrow):active {
-  transform: translateY(1px) scale(0.985);
+  transform: translateY(0);
+  filter: brightness(0.97);
 }
 
 /* Pulse animation utility */
