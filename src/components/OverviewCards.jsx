@@ -50,8 +50,8 @@ const OverviewCards = () => {
           key={idx}
           className="glass-card flex-col gap-4"
           style={card.hero ? {
-            background: 'linear-gradient(135deg, var(--primary-glow), transparent 65%)',
-            border: '1px solid rgb(from var(--primary) r g b / 0.28)'
+            background: 'linear-gradient(0deg, rgb(from var(--primary) r g b / 0.06), rgb(from var(--primary) r g b / 0.06)), var(--bg-card)',
+            border: '1px solid rgb(from var(--primary) r g b / 0.25)'
           } : undefined}
         >
           <div className="flex items-center justify-between">
