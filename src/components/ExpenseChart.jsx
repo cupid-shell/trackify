@@ -184,7 +184,7 @@ const ExpenseChart = () => {
         )}
       </div>
 
-      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', fontVariantNumeric: 'tabular-nums' }}>
         {data.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
             <p>No expenses to analyze yet.</p>
@@ -236,7 +236,7 @@ const ExpenseChart = () => {
 
             {/* Category Breakdown List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.25rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category Breakdown</span>
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Category Breakdown</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {data.map((item, idx) => {
                   const pct = totalExpenseValue > 0 ? (item.value / totalExpenseValue) * 100 : 0;
@@ -289,7 +289,7 @@ const ExpenseChart = () => {
         ) : (
           /* Bar chart list view: Shows all categories in a full visual list of custom progress cards */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingBottom: '1.5rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category Spending Progress</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Category Spending Progress</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {data.map((item, idx) => {
                 const pct = totalExpenseValue > 0 ? (item.value / totalExpenseValue) * 100 : 0;
@@ -323,7 +323,7 @@ const ExpenseChart = () => {
                     <div className="flex items-center justify-between" style={{ width: '100%' }}>
                       <div className="flex items-center gap-2">
                         <CategoryIcon category={item.name} size={16} />
-                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)' }}>
+                        <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>
                           {item.name}
                         </span>
                       </div>

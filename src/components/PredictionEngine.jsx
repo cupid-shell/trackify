@@ -72,8 +72,8 @@ const PredictionEngine = () => {
 
   return (
     <div className="glass-card flex-col gap-0" style={{
-      background: 'linear-gradient(145deg, var(--bg-card) 0%, rgba(62,180,137,0.02) 100%)',
-      border: '1px solid rgba(62,180,137,0.12)',
+      background: 'linear-gradient(145deg, var(--bg-card) 0%, rgb(from var(--primary) r g b / 0.03) 100%)',
+      border: '1px solid rgb(from var(--primary) r g b / 0.14)',
       height: '100%'
     }}>
 
@@ -81,13 +81,13 @@ const PredictionEngine = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
         <Sparkles size={20} color="var(--primary)" />
         <div>
-          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--primary)' }}>AI Prediction Engine</h2>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--primary)' }}>AI Prediction Engine</h2>
           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Real-time burn rate & end-of-month forecast</span>
         </div>
       </div>
 
       {/* ── Scrollable body ─────────────────────────────── */}
-      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.1rem', fontVariantNumeric: 'tabular-nums' }}>
 
         {/* Row 1: Radial gauge + key stats */}
         <div className="pred-stats-row" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -151,7 +151,7 @@ const PredictionEngine = () => {
           padding: '0.7rem 0.9rem',
           borderRadius: 'var(--radius-md)',
           background: prediction.isOnTrack ? 'var(--success-bg)' : 'var(--danger-bg)',
-          border: `1px solid ${prediction.isOnTrack ? 'rgba(16,185,129,0.25)' : 'rgba(248,81,73,0.25)'}`,
+          border: `1px solid ${prediction.isOnTrack ? 'rgb(from var(--success) r g b / 0.25)' : 'rgb(from var(--danger) r g b / 0.25)'}`,
           display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
         }}>
           {prediction.isOnTrack
@@ -189,7 +189,7 @@ const PredictionEngine = () => {
         {/* Top spending categories custom progress bars */}
         {prediction.topCats.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.25rem' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Top Spending Categories
             </span>
             <div className="flex-col gap-2" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

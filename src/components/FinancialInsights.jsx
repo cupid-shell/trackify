@@ -252,7 +252,7 @@ const FinancialInsights = () => {
         </span>
       </div>
 
-      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', fontVariantNumeric: 'tabular-nums' }}>
 
       <div style={{
         display: 'grid',

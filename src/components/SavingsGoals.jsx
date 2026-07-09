@@ -106,7 +106,7 @@ const SavingsGoals = () => {
       </div>
 
       {/* Scrollable body: form + goals list */}
-      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', fontVariantNumeric: 'tabular-nums' }}>
 
       {showAddForm && (
         <form onSubmit={handleAddGoal} className="flex-col gap-3" style={{
@@ -362,7 +362,7 @@ const SavingsGoals = () => {
                     onClick={() => handleContribution(goal.id, true)}
                     style={{
                       padding: '0.35rem 0.6rem',
-                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      backgroundColor: 'var(--success-bg)',
                       color: 'var(--success)',
                       borderRadius: 'var(--radius-sm)',
                       fontWeight: 600,
@@ -378,7 +378,7 @@ const SavingsGoals = () => {
                     onClick={() => handleContribution(goal.id, false)}
                     style={{
                       padding: '0.35rem 0.6rem',
-                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      backgroundColor: 'var(--danger-bg)',
                       color: 'var(--danger)',
                       borderRadius: 'var(--radius-sm)',
                       fontWeight: 600,

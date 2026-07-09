@@ -133,7 +133,7 @@ const TrendChart = () => {
         </span>
       </div>
 
-      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', fontVariantNumeric: 'tabular-nums' }}>
         <div className="relative-container" style={{ width: '100%', height: 260 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={trendData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>

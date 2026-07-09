@@ -163,7 +163,7 @@ const MonthComparison = () => {
       </div>
 
       {/* Scrollable body */}
-      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', fontVariantNumeric: 'tabular-nums' }}>
         
         {/* Summary Stats Row */}
         <div className="grid-summary" style={{
@@ -378,7 +378,7 @@ const MonthComparison = () => {
                   <div className="flex items-center justify-between" style={{ width: '100%' }}>
                     <div className="flex items-center gap-2">
                       <CategoryIcon category={item.category} size={18} />
-                      <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>
+                      <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>
                         {item.category}
                       </span>
                     </div>
