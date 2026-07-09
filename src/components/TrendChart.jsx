@@ -4,31 +4,31 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { format, subMonths } from 'date-fns';
 import { Wallet, TrendingUp, Calendar, Award } from 'lucide-react';
 
-// CustomTooltip moved inside component to capture formatCurrency
+// Declared at module scope (not inside the component) so it isn't recreated on
+// every render. formatCurrency is passed in as a prop by the <Tooltip>.
+const CustomTooltip = ({ active, payload, label, formatCurrency }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{
+        backgroundColor: 'var(--bg-card)',
+        border: '1px solid var(--border-color)',
+        borderRadius: 'var(--radius-md)',
+        padding: '0.75rem 1rem',
+      }}>
+        <p style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.8rem' }}>{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} style={{ color: entry.color, fontSize: '0.75rem', marginTop: '0.2rem' }}>
+            {entry.name}: {formatCurrency(entry.value)}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 const TrendChart = () => {
   const { transactions, baseIncome, formatCurrency } = useAppContext();
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div style={{
-          backgroundColor: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-md)',
-          padding: '0.75rem 1rem',
-        }}>
-          <p style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.8rem' }}>{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.color, fontSize: '0.75rem', marginTop: '0.2rem' }}>
-              {entry.name}: {formatCurrency(entry.value)}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
 
   const trendData = useMemo(() => {
     const data = [];
@@ -154,7 +154,7 @@ const TrendChart = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} />
               <YAxis stroke="var(--text-muted)" fontSize={11} width={55} tickFormatter={(v) => `${formatCurrency(v/1000)}k`} />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
               <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '0.75rem' }} />
               <Area 
                 type="monotone" 

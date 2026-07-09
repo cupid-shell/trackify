@@ -177,7 +177,7 @@ const RecentTransactions = ({
 
     // Map transactions to CSV rows
     const csvRows = sortedTx.map(tx => {
-      let formattedDate = '';
+      let formattedDate;
       try {
         formattedDate = format(new Date(tx.date), 'yyyy-MM-dd');
       } catch {

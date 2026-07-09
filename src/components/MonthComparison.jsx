@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { subMonths, format } from 'date-fns';
-import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 import CategoryIcon from './CategoryIcon';
 
 const MonthComparison = () => {
-  const { transactions, formatCurrency, getCurrencySymbol } = useAppContext();
+  const { transactions, formatCurrency } = useAppContext();
 
   // Create options list for the past 12 months
   const monthOptions = useMemo(() => {

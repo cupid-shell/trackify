@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { Shield, Flame, Award, Heart } from 'lucide-react';
 
@@ -228,6 +228,17 @@ const HealthScore = () => {
     }, 4000);
   };
 
+  // Track initial-load completion so achievements don't fire during the first
+  // data hydration. Declared before the achievement effect that reads it.
+  const [loadingSettingsAndTxs, setLoadingSettingsAndTxs] = useState(true);
+  useEffect(() => {
+    if (userSettings && transactions.length !== undefined) {
+      // Small timeout to let things settle
+      const t = setTimeout(() => setLoadingSettingsAndTxs(false), 800);
+      return () => clearTimeout(t);
+    }
+  }, [userSettings, currentMonthTransactions]);
+
   useEffect(() => {
     if (loadingSettingsAndTxs) return; // wait till loaded
 
@@ -247,23 +258,16 @@ const HealthScore = () => {
       });
 
       nextHistory[monthKey] = currentUnlocked;
-      
+
       const currentMetadata = { ...(userSettings.category_metadata || {}) };
       currentMetadata._achievements_history = nextHistory;
       updateSettings({ category_metadata: currentMetadata });
-      spawnConfetti();
+      // Defer the celebration one tick so its setState doesn't cascade renders
+      // synchronously inside this effect.
+      const celebrate = setTimeout(spawnConfetti, 0);
+      return () => clearTimeout(celebrate);
     }
   }, [metrics.achievements, unlockedThisMonthInHistory, monthKey, history, userSettings.category_metadata, updateSettings, showToast]);
-
-  // Small helper to check if loaded (to avoid triggering achievements during initial load)
-  const [loadingSettingsAndTxs, setLoadingSettingsAndTxs] = useState(true);
-  useEffect(() => {
-    if (userSettings && transactions.length !== undefined) {
-      // Small timeout to let things settle
-      const t = setTimeout(() => setLoadingSettingsAndTxs(false), 800);
-      return () => clearTimeout(t);
-    }
-  }, [userSettings, currentMonthTransactions]);
 
   const progressColor = useMemo(() => {
     if (metrics.overallScore >= 90) return 'var(--success)';

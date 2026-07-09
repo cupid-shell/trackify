@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { ArrowRight, ArrowLeft, Check, Sparkles, Plus, X } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Sparkles, Plus } from 'lucide-react';
 
 const Onboarding = () => {
-  const { updateSettings, showToast, formatCurrency, userSettings } = useAppContext();
+  const { updateSettings, showToast, userSettings } = useAppContext();
   const [step, setStep] = useState(1);
   const [baseIncome, setBaseIncome] = useState(15000);
   const [currency, setCurrency] = useState('BDT');

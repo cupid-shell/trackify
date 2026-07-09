@@ -15,17 +15,26 @@ const ConfirmDialog = ({
 }) => {
   const [checkboxChecked, setCheckboxChecked] = useState(checkbox ? !!checkbox.defaultValue : false);
   const [animate, setAnimate] = useState(false);
+  const [wasOpen, setWasOpen] = useState(isOpen);
 
-  useEffect(() => {
+  // Handle open/close transitions during render (React's recommended pattern)
+  // rather than in an effect, so they don't cascade an extra render pass.
+  // On open: reset the checkbox. On close: reset the entrance animation.
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
     if (isOpen) {
       setCheckboxChecked(checkbox ? !!checkbox.defaultValue : false);
-      // Let render happen first, then trigger entrance animation in next frame
-      const timer = setTimeout(() => setAnimate(true), 20);
-      return () => clearTimeout(timer);
     } else {
       setAnimate(false);
     }
-  }, [isOpen, checkbox]);
+  }
+
+  useEffect(() => {
+    if (!isOpen) return;
+    // Let render happen first, then trigger the entrance animation next frame.
+    const timer = setTimeout(() => setAnimate(true), 20);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

@@ -193,7 +193,7 @@ const PredictionEngine = () => {
               Top Spending Categories
             </span>
             <div className="flex-col gap-2" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {prediction.topCats.map((cat, idx) => {
+              {prediction.topCats.map((cat) => {
                 const style = getCategoryStyle(cat.name);
                 const color = style.color || 'var(--primary)';
                 const catMax = prediction.topCats[0]?.value || 1;
