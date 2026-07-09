@@ -9,6 +9,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { formatCurrency, getCurrencySymbol } from '../utils/currency';
 import { isVersionNewer } from '../utils/version';
 import { parseLocalDate } from '../utils/date';
+import { filterByMonth, computeMonthTotals, computeRollovers } from '../utils/finance';
 
 const AppContext = createContext();
 
@@ -1822,81 +1823,17 @@ export const AppProvider = ({ children }) => {
   const [selectedMonth, setSelectedMonth] = useState(currentRealDate.getMonth());
   const [selectedYear, setSelectedYear] = useState(currentRealDate.getFullYear());
 
-  const currentMonthTransactions = transactions.filter(tx => {
-    const txDate = parseLocalDate(tx.date);
-    return txDate.getMonth() === selectedMonth && txDate.getFullYear() === selectedYear;
-  });
+  const currentMonthTransactions = filterByMonth(transactions, selectedMonth, selectedYear);
 
-  const totalAllowances = currentMonthTransactions
-    .filter(tx => tx.type === 'income')
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+  const { totalIncome, totalExpenses, balance } = computeMonthTotals(currentMonthTransactions, userSettings.base_income);
 
-  const totalIncome = Number(userSettings.base_income) + totalAllowances;
-
-  const totalExpenses = currentMonthTransactions
-    .filter(tx => tx.type === 'expense')
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
-
-  const balance = totalIncome - totalExpenses;
-
-  const rolloverData = useMemo(() => {
-    const enabledCategories = userSettings.category_metadata?._budget_rollover?.enabled_categories || [];
-    if (enabledCategories.length === 0 || transactions.length === 0) return {};
-
-    const sortedTxs = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
-    if (sortedTxs.length === 0) return {};
-
-    const oldestDate = parseLocalDate(sortedTxs[0].date);
-    const currentDate = new Date(selectedYear, selectedMonth, 1);
-
-    const monthsList = [];
-    let d = new Date(oldestDate.getFullYear(), oldestDate.getMonth(), 1);
-    while (d <= currentDate) {
-      monthsList.push({ month: d.getMonth(), year: d.getFullYear() });
-      d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-    }
-
-    const rollovers = {};
-    const previousRollover = {};
-
-    enabledCategories.forEach(cat => {
-      previousRollover[cat] = 0;
-    });
-
-    const budgets = userSettings.category_budgets || {};
-
-    monthsList.forEach(({ month, year }) => {
-      const monthKey = `${year}-${month}`;
-      
-      rollovers[monthKey] = { ...previousRollover };
-
-      const monthTxs = transactions.filter(tx => {
-        const txDate = parseLocalDate(tx.date);
-        return tx.type === 'expense' && txDate.getMonth() === month && txDate.getFullYear() === year;
-      });
-
-      const spentByCategory = {};
-      monthTxs.forEach(tx => {
-        spentByCategory[tx.category] = (spentByCategory[tx.category] || 0) + Number(tx.amount);
-      });
-
-      enabledCategories.forEach(cat => {
-        const baseLimit = Number(budgets[cat] || 0);
-        if (baseLimit > 0) {
-          const appliedRollover = previousRollover[cat] || 0;
-          const effectiveLimit = baseLimit + appliedRollover;
-          const spent = spentByCategory[cat] || 0;
-          const surplus = effectiveLimit - spent;
-          
-          previousRollover[cat] = Math.max(0, surplus);
-        } else {
-          previousRollover[cat] = 0;
-        }
-      });
-    });
-
-    return rollovers;
-  }, [transactions, userSettings.category_budgets, userSettings.category_metadata?._budget_rollover?.enabled_categories, selectedMonth, selectedYear]);
+  const rolloverData = useMemo(() => computeRollovers({
+    transactions,
+    enabledCategories: userSettings.category_metadata?._budget_rollover?.enabled_categories || [],
+    budgets: userSettings.category_budgets || {},
+    selectedYear,
+    selectedMonth,
+  }), [transactions, userSettings.category_budgets, userSettings.category_metadata?._budget_rollover?.enabled_categories, selectedMonth, selectedYear]);
 
   const activeRolloverData = useMemo(() => {
     return rolloverData[`${selectedYear}-${selectedMonth}`] || {};
