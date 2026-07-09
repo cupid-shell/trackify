@@ -408,7 +408,7 @@ const Header = () => {
         }
 
         .notif-item.unread {
-          background-color: rgba(139, 92, 246, 0.04);
+          background-color: rgba(16, 185, 129, 0.04);
         }
 
         body.light-theme .notif-item.unread {

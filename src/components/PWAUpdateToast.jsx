@@ -55,21 +55,21 @@ const PWAUpdateToast = () => {
           background: rgba(255, 255, 255, 0.9);
           border: 1px solid rgba(11, 26, 19, 0.08);
           border-top: 1px solid rgba(255, 255, 255, 0.6);
-          box-shadow: 0 12px 28px rgba(11, 26, 19, 0.08), 0 0 20px rgba(139, 92, 246, 0.06);
+          box-shadow: 0 12px 28px rgba(11, 26, 19, 0.08), 0 0 20px rgba(16, 185, 129, 0.06);
         }
 
         .pwa-icon-wrapper {
           width: 38px;
           height: 38px;
           border-radius: 50%;
-          background: rgba(139, 92, 246, 0.15);
+          background: rgba(16, 185, 129, 0.15);
           color: var(--primary);
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          border: 1px solid rgba(139, 92, 246, 0.25);
-          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+          border: 1px solid rgba(16, 185, 129, 0.25);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
         }
 
         body.light-theme .pwa-icon-wrapper {

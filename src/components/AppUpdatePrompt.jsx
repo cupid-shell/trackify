@@ -45,7 +45,7 @@ const AppUpdatePrompt = () => {
           max-width: 420px;
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 24px;
-          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(139, 92, 246, 0.15);
+          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(16, 185, 129, 0.15);
           position: relative;
           overflow: hidden;
           background: rgba(13, 25, 21, 0.75);
@@ -59,7 +59,7 @@ const AppUpdatePrompt = () => {
           background: rgba(255, 255, 255, 0.85);
           border: 1px solid rgba(11, 26, 19, 0.08);
           border-top: 1px solid rgba(255, 255, 255, 0.6);
-          box-shadow: 0 20px 40px rgba(11, 26, 19, 0.12), 0 0 30px rgba(139, 92, 246, 0.1);
+          box-shadow: 0 20px 40px rgba(11, 26, 19, 0.12), 0 0 30px rgba(16, 185, 129, 0.1);
         }
 
         /* Top background glow sphere */
@@ -70,7 +70,7 @@ const AppUpdatePrompt = () => {
           transform: translateX(-50%);
           width: 240px;
           height: 240px;
-          background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, rgba(139, 92, 246, 0) 70%);
+          background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0) 70%);
           pointer-events: none;
           z-index: 0;
         }
@@ -114,7 +114,7 @@ const AppUpdatePrompt = () => {
           width: 72px;
           height: 72px;
           border-radius: 50%;
-          border: 1px dashed rgba(139, 92, 246, 0.4);
+          border: 1px dashed rgba(16, 185, 129, 0.4);
           animation: spinDashed 12s linear infinite;
         }
 
@@ -131,13 +131,13 @@ const AppUpdatePrompt = () => {
           width: 56px;
           height: 56px;
           border-radius: 50%;
-          background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.05) 100%);
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 100%);
           color: var(--primary);
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid rgba(139, 92, 246, 0.3);
-          box-shadow: 0 8px 20px rgba(139, 92, 246, 0.15);
+          border: 1px solid rgba(16, 185, 129, 0.3);
+          box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
         }
 
         body.light-theme .update-icon-inner {
