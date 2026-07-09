@@ -419,7 +419,7 @@ const SettingsPage = () => {
           </aside>
 
           {/* Active Tab Panel */}
-          <div className="settings-content flex-col gap-6" style={{ flex: 1, minWidth: 0 }}>
+          <div className="settings-content flex-col gap-6" style={{ flex: 1, minWidth: 0, fontVariantNumeric: 'tabular-nums' }}>
             
             {/* Tab 0: Financials */}
             {activeTab === 0 && (
@@ -481,7 +481,7 @@ const SettingsPage = () => {
                           color: 'var(--danger)', 
                           padding: '0.5rem', 
                           backgroundColor: 'var(--danger-bg)', 
-                          border: '1px solid rgba(255, 123, 114, 0.2)', 
+                          border: '1px solid rgb(from var(--danger) r g b / 0.2)', 
                           borderRadius: 'var(--radius-md)',
                           display: 'flex',
                           alignItems: 'center',
@@ -590,8 +590,8 @@ const SettingsPage = () => {
                           {bill.autoLog && (
                             <span style={{ 
                               fontSize: '0.7rem', 
-                              backgroundColor: 'rgba(57, 211, 83, 0.15)', 
-                              color: '#39d353', 
+                              backgroundColor: 'var(--success-bg)',
+                              color: 'var(--success)',
                               padding: '0.1rem 0.45rem', 
                               borderRadius: 'var(--radius-sm)',
                               fontWeight: 600
@@ -610,7 +610,7 @@ const SettingsPage = () => {
                           color: 'var(--danger)', 
                           padding: '0.5rem', 
                           backgroundColor: 'var(--danger-bg)', 
-                          border: '1px solid rgba(255, 123, 114, 0.2)', 
+                          border: '1px solid rgb(from var(--danger) r g b / 0.2)', 
                           borderRadius: 'var(--radius-md)',
                           display: 'flex',
                           alignItems: 'center',

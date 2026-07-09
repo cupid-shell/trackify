@@ -1079,8 +1079,7 @@ div:hover > div[style*="width: 32px"] svg {
 .settings-tab-btn.active {
   color: var(--primary);
   background-color: var(--primary-glow);
-  border-color: var(--border-focus);
-  box-shadow: 0 0 12px var(--primary-glow);
+  border-color: rgb(from var(--primary) r g b / 0.35);
 }
 
 .justify-end {
