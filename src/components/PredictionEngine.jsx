@@ -68,7 +68,7 @@ const PredictionEngine = () => {
     };
   }, [totalExpenses, totalIncome, savingsGoal, currentMonthTransactions, selectedMonth, selectedYear, balance]);
 
-  const ringData = [{ value: prediction.spendPct, fill: prediction.isOnTrack ? '#3eb489' : 'var(--danger)' }];
+  const ringData = [{ value: prediction.spendPct, fill: prediction.isOnTrack ? 'var(--success)' : 'var(--danger)' }];
 
   return (
     <div className="glass-card flex-col gap-0" style={{

@@ -169,12 +169,12 @@ const BudgetProgress = () => {
             <span style={{ fontWeight: 500, fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cat}</span>
           </div>
           <div className="flex items-center gap-2">
-            {(isOver || isWarning) && <AlertTriangle size={14} color={isOver ? 'var(--danger)' : '#f59e0b'} />}
+            {(isOver || isWarning) && <AlertTriangle size={14} color={isOver ? 'var(--danger)' : 'var(--warning)'} />}
             <div className="flex-col" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
               <span style={{
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: isOver ? 'var(--danger)' : isWarning ? '#f59e0b' : 'var(--text-main)',
+                color: isOver ? 'var(--danger)' : isWarning ? 'var(--warning)' : 'var(--text-main)',
                 display: 'block'
               }}>
                 {formatCurrency(spent)} / {formatCurrency(limit)}
@@ -227,7 +227,7 @@ const BudgetProgress = () => {
             background: isOver
               ? 'var(--danger)'
               : isWarning
-                ? 'linear-gradient(90deg, #f59e0b, #f43f5e)'
+                ? 'linear-gradient(90deg, var(--warning), var(--danger))'
                 : `linear-gradient(90deg, ${getCategoryStyle(cat).color}, ${getCategoryStyle(cat).color}dd)`,
             transition: 'width 0.5s ease'
           }} />

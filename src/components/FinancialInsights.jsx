@@ -207,7 +207,7 @@ const FinancialInsights = () => {
       list.push({
         type: 'success',
         text: `Impressive! You logged ${stats.noSpendDays} "No-Spend Days" this month. That is keeping your minor costs in check.`,
-        icon: <Sparkles size={16} style={{ color: '#f59e0b' }} />
+        icon: <Sparkles size={16} style={{ color: 'var(--warning)' }} />
       });
     } else {
       list.push({
@@ -362,7 +362,7 @@ const FinancialInsights = () => {
 
       <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }} className="flex-col gap-3">
         <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          <Sparkles size={14} style={{ color: '#f59e0b' }} /> Smart Tips & Suggestions
+          <Sparkles size={14} style={{ color: 'var(--warning)' }} /> Smart Tips & Suggestions
         </span>
         <div className="flex-col gap-2">
           {tips.map((tip, idx) => (

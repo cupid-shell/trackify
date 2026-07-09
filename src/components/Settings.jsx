@@ -1074,10 +1074,10 @@ const SettingsPage = () => {
                     alignItems: 'flex-start',
                     gap: '0.75rem',
                     padding: '0.75rem 1rem',
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    backgroundColor: 'var(--danger-bg)',
+                    border: '1px solid rgb(from var(--danger) r g b / 0.3)',
                     borderRadius: 'var(--radius-md)',
-                    color: '#ef4444',
+                    color: 'var(--danger)',
                     fontSize: '0.8rem',
                     marginTop: '0.5rem',
                     lineHeight: '1.4'

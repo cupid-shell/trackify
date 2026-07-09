@@ -8,9 +8,10 @@ const OverviewCards = () => {
     {
       title: 'Current Balance',
       amount: balance,
-      icon: <DollarSign size={24} color="var(--primary)" />,
-      color: 'var(--primary)',
-      bg: 'var(--primary-glow)',
+      icon: <DollarSign size={24} color="#fff" />,
+      color: '#fff',
+      bg: 'var(--primary)',
+      hero: true,
     },
     {
       title: 'Monthly Income',
@@ -45,7 +46,14 @@ const OverviewCards = () => {
       marginBottom: '2rem'
     }}>
       {cards.map((card, idx) => (
-        <div key={idx} className="glass-card flex-col gap-4">
+        <div
+          key={idx}
+          className="glass-card flex-col gap-4"
+          style={card.hero ? {
+            background: 'linear-gradient(135deg, var(--primary-glow), transparent 65%)',
+            border: '1px solid rgb(from var(--primary) r g b / 0.28)'
+          } : undefined}
+        >
           <div className="flex items-center justify-between">
             <h3 style={{
               color: 'var(--text-muted)',
@@ -81,7 +89,7 @@ const OverviewCards = () => {
               letterSpacing: '-0.03em',
               fontVariantNumeric: 'tabular-nums',
               lineHeight: 1.1,
-              color: 'var(--text-main)'
+              color: card.hero && card.amount < 0 ? 'var(--danger)' : 'var(--text-main)'
             }}>
               {formatCurrency(card.amount)}
             </h2>
