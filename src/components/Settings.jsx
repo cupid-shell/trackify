@@ -1109,7 +1109,7 @@ const SettingsPage = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid var(--border-color)', marginTop: '0.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Reminder Time:</span>
-                          <TimePicker value={dailyReminderTime} onChange={val => setDailyReminderTime(val)} style={{ width: '120px' }} />
+                          <TimePicker value={dailyReminderTime} onChange={val => setDailyReminderTime(val)} compact style={{ width: '120px' }} />
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
                           <div>

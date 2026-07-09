@@ -1,28 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Clock } from 'lucide-react';
+import { pad, parseTime, compose } from '../utils/time';
 
 // A browser-agnostic time picker. Native <input type="time"> has no popup
 // picker in Firefox (and its picker icon is WebKit-only), so this renders its
 // own dropdown. Value in/out is 24-hour "HH:MM" — same as a native time input.
+// The pad/parseTime/compose helpers live in ../utils/time so they're unit-tested.
 
-const pad = (n) => String(n).padStart(2, '0');
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
-
-const parseTime = (value) => {
-  const [hStr, mStr] = String(value || '00:00').split(':');
-  let h = parseInt(hStr, 10);
-  let m = parseInt(mStr, 10);
-  if (isNaN(h)) h = 0;
-  if (isNaN(m)) m = 0;
-  return { h12: h % 12 === 0 ? 12 : h % 12, m, ampm: h >= 12 ? 'PM' : 'AM' };
-};
-
-const compose = (h12, m, ampm) => {
-  let h = h12 % 12;
-  if (ampm === 'PM') h += 12;
-  return `${pad(h)}:${pad(m)}`;
-};
 
 const colStyle = {
   display: 'flex',
@@ -33,7 +19,7 @@ const colStyle = {
   padding: '2px',
 };
 
-const TimePicker = ({ value, onChange, style }) => {
+const TimePicker = ({ value, onChange, style, compact = false }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const { h12, m, ampm } = parseTime(value);
@@ -69,8 +55,8 @@ const TimePicker = ({ value, onChange, style }) => {
         aria-label="Choose time"
         style={{
           width: '100%',
-          padding: '0.75rem',
-          paddingRight: '2.25rem',
+          padding: compact ? '0.5rem 0.65rem' : '0.75rem',
+          paddingRight: compact ? '1.9rem' : '2.25rem',
           borderRadius: 'var(--radius-md)',
           border: '1px solid var(--border-color)',
           backgroundColor: 'var(--bg-input)',
@@ -78,13 +64,13 @@ const TimePicker = ({ value, onChange, style }) => {
           textAlign: 'left',
           position: 'relative',
           cursor: 'pointer',
-          fontSize: '0.9rem',
+          fontSize: compact ? '0.8rem' : '0.9rem',
         }}
       >
         {pad(h12)}:{pad(m)} {ampm}
         <Clock
-          size={16}
-          style={{ position: 'absolute', right: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
+          size={compact ? 14 : 16}
+          style={{ position: 'absolute', right: compact ? '0.5rem' : '0.6rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
         />
       </button>
 
