@@ -1331,7 +1331,7 @@ body.light-theme .toast-close {
 .grid-add-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(99, 102, 241, 0.05);
+  background: rgb(from var(--primary) r g b / 0.05);
 }
 
 .grid-submit-btn {
@@ -1339,12 +1339,12 @@ body.light-theme .toast-close {
   color: white;
   padding: 0.9rem 1rem;
   border-radius: var(--radius-md);
-  font-weight: 700;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  box-shadow: var(--shadow-glow);
+  box-shadow: 0 2px 12px var(--primary-glow);
   transition: var(--transition);
   font-size: 1rem;
   width: 100%;
