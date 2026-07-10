@@ -103,42 +103,36 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
   const getHeatmapStyle = (dayInfo, isActive) => {
     if (dayInfo.totalExpense === 0) {
       return {
-        background: 'rgba(16, 185, 129, 0.015)',
-        border: `1px solid ${isActive ? 'var(--primary)' : 'rgba(16, 185, 129, 0.12)'}`,
-        boxShadow: isActive 
-          ? '0 0 14px var(--primary-glow), inset 0 0 4px rgba(16, 185, 129, 0.05)' 
-          : 'inset 0 0 3px rgba(16, 185, 129, 0.01)',
+        background: 'rgba(16, 185, 129, 0.04)',
+        border: `1px solid ${isActive ? 'var(--primary)' : 'rgba(16, 185, 129, 0.18)'}`,
+        boxShadow: isActive ? '0 0 0 2px var(--primary-glow)' : 'none',
         color: 'var(--success)'
       };
     }
     
     const ratio = maxDailyExpense > 0 ? dayInfo.totalExpense / maxDailyExpense : 0;
     
-    let baseColor;
+    // Sequential rose ramp (matches --danger) — opacity encodes spend intensity.
+    const baseColor = '244, 63, 94';
     let bgOpacity;
     let borderOpacity;
-    let glow = 'none';
 
     if (ratio < 0.25) {
-      baseColor = '99, 102, 241'; // Cyber Blue/Purple
-      bgOpacity = 0.08;
-      borderOpacity = 0.25;
+      bgOpacity = 0.10;
+      borderOpacity = 0.22;
     } else if (ratio < 0.70) {
-      baseColor = '244, 63, 94'; // Cyber Rose
-      bgOpacity = 0.26;
+      bgOpacity = 0.28;
       borderOpacity = 0.45;
     } else {
-      baseColor = '239, 68, 68'; // Neon Crimson
-      bgOpacity = 0.62;
-      borderOpacity = 0.85;
-      glow = '0 0 12px rgba(239, 68, 68, 0.22)';
+      bgOpacity = 0.58;
+      borderOpacity = 0.80;
     }
 
     if (isActive) {
       return {
         background: `rgba(${baseColor}, ${Math.min(0.9, bgOpacity + 0.18)})`,
         border: '2px solid var(--primary)',
-        boxShadow: `0 0 16px var(--primary-glow), ${glow}`,
+        boxShadow: '0 0 0 2px var(--primary-glow)',
         color: '#fff',
         zIndex: 5
       };
@@ -147,7 +141,7 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
     return {
       background: `rgba(${baseColor}, ${bgOpacity})`,
       border: `1px solid rgba(${baseColor}, ${borderOpacity})`,
-      boxShadow: glow,
+      boxShadow: 'none',
       color: ratio >= 0.7 ? '#ffffff' : `rgb(${baseColor})`
     };
   };
@@ -215,7 +209,7 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
   const modalTransactions = localSelectedDay ? [...dailyData[localSelectedDay].expenses, ...dailyData[localSelectedDay].income] : [];
 
   return (
-    <div className="glass-card expense-calendar-card flex-col gap-0" style={{ padding: '1.25rem 1.5rem', background: 'linear-gradient(180deg, var(--bg-card) 0%, rgba(255,255,255,0.01) 100%)' }}>
+    <div className="glass-card expense-calendar-card flex-col gap-0" style={{ padding: '1.25rem 1.5rem', background: 'linear-gradient(180deg, var(--bg-card) 0%, rgba(255,255,255,0.01) 100%)', fontVariantNumeric: 'tabular-nums' }}>
       <style>{`
         .calendar-scroll-container {
           width: 100%;
@@ -242,7 +236,7 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
         .weekday-header {
           text-align: center;
           font-size: 0.72rem;
-          font-weight: 700;
+          font-weight: 600;
           color: var(--text-muted);
           padding-bottom: 0.4rem;
           border-bottom: 1px solid var(--border-color);
@@ -270,10 +264,9 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
           transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .calendar-day-cell:hover {
-          transform: translateY(-2px) scale(1.06);
-          filter: brightness(1.15);
+          transform: translateY(-2px);
           z-index: 10;
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5) !important;
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32) !important;
         }
         .calendar-day-cell-number {
           font-size: 0.72rem;
@@ -292,10 +285,9 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
         }
         .calendar-day-cell-win {
           font-size: 0.55rem;
-          font-weight: 900;
+          font-weight: 700;
           letter-spacing: 0.06em;
           color: var(--success);
-          text-shadow: 0 0 6px rgba(16, 185, 129, 0.45);
           background: rgba(16, 185, 129, 0.08);
           padding: 0.05rem 0.25rem;
           border-radius: 4px;
@@ -343,8 +335,8 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
         flexShrink: 0
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <CalendarIcon size={16} color="var(--primary)" style={{ filter: 'drop-shadow(0 0 4px var(--primary-glow))' }} />
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>Monthly Spend Calendar</h3>
+          <CalendarIcon size={16} color="var(--primary)" />
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 600, margin: 0 }}>Monthly Spend Calendar</h3>
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
@@ -353,15 +345,15 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
             <span>Savings</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.25)' }} />
+            <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'rgba(244, 63, 94, 0.10)', border: '1px solid rgba(244, 63, 94, 0.22)' }} />
             <span>Low</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'rgba(244, 63, 94, 0.26)', border: '1px solid rgba(244, 63, 94, 0.45)' }} />
+            <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'rgba(244, 63, 94, 0.28)', border: '1px solid rgba(244, 63, 94, 0.45)' }} />
             <span>Medium</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'rgba(239, 68, 68, 0.62)', border: '1px solid rgba(239, 68, 68, 0.85)' }} />
+            <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'rgba(244, 63, 94, 0.58)', border: '1px solid rgba(244, 63, 94, 0.80)' }} />
             <span>High</span>
           </div>
         </div>
@@ -370,7 +362,7 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
       {/* Heatmap Insights Dashboard */}
       <div style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap', marginTop: '0.65rem', width: '100%', flexShrink: 0 }}>
         <div style={{ flex: 1, minWidth: '95px', padding: '0.45rem 0.6rem', background: 'rgba(255,255,255,0.015)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <ShieldCheck size={14} color="var(--success)" style={{ filter: 'drop-shadow(0 0 3px rgba(16, 185, 129, 0.3))' }} />
+          <ShieldCheck size={14} color="var(--success)" />
           <div>
             <span style={{ display: 'block', fontSize: '0.62rem', color: 'var(--text-muted)', lineHeight: 1.1 }}>Saving Wins</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--success)' }}>{noSpendCount} / {daysInMonth} d</span>
@@ -378,7 +370,7 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
         </div>
         
         <div style={{ flex: 1, minWidth: '95px', padding: '0.45rem 0.6rem', background: 'rgba(255,255,255,0.015)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <Flame size={14} color="var(--primary)" style={{ filter: 'drop-shadow(0 0 3px var(--primary-glow))' }} />
+          <Flame size={14} color="var(--primary)" />
           <div>
             <span style={{ display: 'block', fontSize: '0.62rem', color: 'var(--text-muted)', lineHeight: 1.1 }}>Active Streak</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--primary)' }}>{streakInfo.currentStreak} Days</span>
@@ -386,7 +378,7 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
         </div>
         
         <div style={{ flex: 1, minWidth: '95px', padding: '0.45rem 0.6rem', background: 'rgba(255,255,255,0.015)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <Award size={14} color="var(--warning)" style={{ filter: 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.3))' }} />
+          <Award size={14} color="var(--warning)" />
           <div>
             <span style={{ display: 'block', fontSize: '0.62rem', color: 'var(--text-muted)', lineHeight: 1.1 }}>Max Streak</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--warning)' }}>{streakInfo.maxStreak} Days</span>
