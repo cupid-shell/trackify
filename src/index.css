@@ -273,8 +273,6 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.02em;
-  font-stretch: var(--scroll-stretch, 100%);
-  transition: font-stretch 0.1s ease-out, font-weight 0.3s ease;
 }
 
 h1 { font-size: 2.5rem; }
@@ -422,21 +420,6 @@ input[type="checkbox"]:checked::before {
   z-index: 3;
 }
 
-/* Very soft spotlight that follows the cursor inside the card. */
-.glass-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(380px circle at var(--card-mx, 0px) var(--card-my, 0px), rgb(from var(--primary) r g b / 0.05), transparent 60%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: 1;
-  pointer-events: none;
-}
-
 .glass-card:hover {
   border-color: rgb(from var(--primary) r g b / 0.28);
   transform: translateY(-2px);
@@ -445,10 +428,6 @@ input[type="checkbox"]:checked::before {
 
 .glass-card:hover::before {
   opacity: 0.6;
-}
-
-.glass-card:hover::after {
-  opacity: 1;
 }
 
 /* Force card inner contents above the spotlight overlay */
@@ -1760,5 +1739,25 @@ body.light-theme .cs-sheet-option:hover {
   100% {
     transform: translateY(105vh) rotate(720deg) translateX(var(--drift, 50px));
     opacity: 0;
+  }
+}
+
+/* Respect users who ask for less motion. We settle every animation and
+   transition on its final frame near-instantly rather than removing it —
+   entry animations start at opacity: 0 and rely on the animation to become
+   visible, so disabling outright would hide content. .animate-fade-in is
+   pinned visible as a belt-and-suspenders guarantee. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-fade-in {
+    opacity: 1 !important;
   }
 }
