@@ -186,8 +186,10 @@ const ExpenseChart = () => {
 
       <div className="ac-card-body" style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', fontVariantNumeric: 'tabular-nums' }}>
         {data.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
-            <p>No expenses to analyze yet.</p>
+          <div className="empty-state">
+            <div className="empty-state-icon">🍩</div>
+            <h3>No expenses yet</h3>
+            <p>Log an expense this month to see the category breakdown.</p>
           </div>
         ) : chartType === 'donut' ? (
           <>

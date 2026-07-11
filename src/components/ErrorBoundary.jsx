@@ -111,7 +111,7 @@ const ErrorFallback = ({ error, onReload, onReset }) => {
         .eb-details-title {
           font-size: 0.7rem;
           text-transform: uppercase;
-          font-weight: 700;
+          font-weight: 600;
           color: var(--text-muted);
           margin-bottom: 0.5rem;
           letter-spacing: 0.05em;
@@ -137,7 +137,7 @@ const ErrorFallback = ({ error, onReload, onReset }) => {
           gap: 0.5rem;
           padding: 0.75rem 1.25rem;
           font-size: 0.875rem;
-          font-weight: 700;
+          font-weight: 600;
           border-radius: 14px;
           cursor: pointer;
           transition: var(--transition);

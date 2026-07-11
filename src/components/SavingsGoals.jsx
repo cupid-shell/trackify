@@ -202,8 +202,10 @@ const SavingsGoals = () => {
       )}
 
       {goals.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
-          <p style={{ fontSize: '0.875rem' }}>No savings goals created yet. Plan your next milestone!</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">🎯</div>
+          <h3>No savings goals yet</h3>
+          <p>Create your first goal to start tracking milestones.</p>
         </div>
       ) : (
         <div className="flex-col gap-4">
