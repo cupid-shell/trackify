@@ -110,7 +110,10 @@ const ExpenseCalendar = ({ selectedDay = null, setSelectedDay = null }) => {
       };
     }
     
-    const ratio = maxDailyExpense > 0 ? dayInfo.totalExpense / maxDailyExpense : 0;
+    // Perceptual (sqrt) scale so one outlier day doesn't crush every other
+    // day to the same faint tint — spreads the low/mid range so it's legible.
+    const linearRatio = maxDailyExpense > 0 ? dayInfo.totalExpense / maxDailyExpense : 0;
+    const ratio = Math.sqrt(linearRatio);
     
     // Sequential rose ramp (matches --danger) — opacity encodes spend intensity.
     const baseColor = '244, 63, 94';
