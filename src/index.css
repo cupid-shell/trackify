@@ -1174,6 +1174,24 @@ body.light-theme .toast-alert {
   line-height: 1.4;
 }
 
+.toast-action {
+  flex-shrink: 0;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgb(from var(--primary) r g b / 0.12);
+  border: 1px solid rgb(from var(--primary) r g b / 0.3);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.toast-action:hover {
+  background: rgb(from var(--primary) r g b / 0.2);
+  border-color: var(--primary);
+}
+
 .toast-close {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);

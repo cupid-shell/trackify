@@ -13,6 +13,11 @@ import { filterByMonth, computeMonthTotals, computeRollovers } from '../utils/fi
 
 const AppContext = createContext();
 
+// Transient registry for undoable transaction deletes: id -> { tx, timer }.
+// Kept at module scope (not a React ref) so it stays out of the compiler's
+// render/immutability analysis; there is only one AppProvider, so sharing is safe.
+const pendingTxDeletes = {};
+
 // Re-exported so the many components that import it from this context keep working.
 // eslint-disable-next-line react-refresh/only-export-components
 export { parseLocalDate };
@@ -103,12 +108,13 @@ export const AppProvider = ({ children }) => {
 
   // toggleThemeMode moved below updateSettings to avoid TDZ
 
-  const showToast = useCallback((message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success', options = {}) => {
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    setToasts(prev => [...prev, { id, message, type }]);
+    const { action = null, duration = 3500 } = options;
+    setToasts(prev => [...prev, { id, message, type, action }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, 3500);
+    }, duration);
   }, []);
 
   const showConfirm = useCallback(({ title, message, confirmLabel, cancelLabel, variant, checkbox, onConfirm }) => {
@@ -1240,9 +1246,15 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const deleteTransaction = async (id) => {
-    const originalTransactions = [...transactions];
-    setTransactions(prev => prev.filter(tx => tx.id !== id));
+  // A deleted row disappears from the UI immediately, but the Supabase delete is
+  // deferred (see pendingTxDeletes) so an "Undo" toast can cancel it. Nothing
+  // leaves the database during the window, so undo keeps the original row id —
+  // and its receipt attachment — intact.
+  const commitDelete = async (id) => {
+    const pending = pendingTxDeletes[id];
+    if (!pending) return;
+    clearTimeout(pending.timer);
+    delete pendingTxDeletes[id];
 
     const { error } = await supabase
       .from('transactions')
@@ -1250,9 +1262,34 @@ export const AppProvider = ({ children }) => {
       .eq('id', id);
 
     if (error) {
-      setTransactions(originalTransactions);
+      // The delete never landed — restore the row so the UI matches the DB.
+      setTransactions(prev => (prev.some(t => t.id === id) ? prev : [...prev, pending.tx]));
       showToast('Error deleting transaction: ' + error.message, 'error');
     }
+  };
+
+  const undoDelete = (id) => {
+    const pending = pendingTxDeletes[id];
+    if (!pending) return;
+    clearTimeout(pending.timer);
+    delete pendingTxDeletes[id];
+    setTransactions(prev => (prev.some(t => t.id === id) ? prev : [...prev, pending.tx]));
+    showToast('Deletion undone', 'success');
+  };
+
+  const deleteTransaction = (id) => {
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
+
+    // Hide immediately; defer the real delete so it can be undone.
+    setTransactions(prev => prev.filter(t => t.id !== id));
+    const timer = setTimeout(() => commitDelete(id), 5000);
+    pendingTxDeletes[id] = { tx, timer };
+
+    showToast('Transaction deleted', 'info', {
+      duration: 5000,
+      action: { label: 'Undo', onClick: () => undoDelete(id) },
+    });
   };
 
   const updateTransaction = async (id, updatedFields) => {
@@ -1945,6 +1982,17 @@ export const AppProvider = ({ children }) => {
               {t.type === 'info' && 'ℹ️'}
             </div>
             <div className="toast-message">{t.message}</div>
+            {t.action && (
+              <button
+                className="toast-action"
+                onClick={() => {
+                  t.action.onClick();
+                  setToasts(prev => prev.filter(item => item.id !== t.id));
+                }}
+              >
+                {t.action.label}
+              </button>
+            )}
             <button className="toast-close" onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))} aria-label="Close">
               <X size={14} />
             </button>
