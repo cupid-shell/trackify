@@ -22,14 +22,15 @@ const RecentTransactions = ({
     currentMonthTransactions, 
     deleteTransaction, 
     updateTransaction, 
-    userSettings, 
-    getCategoryStyle, 
+    userSettings,
+    getCategoryStyle,
     showToast,
     showConfirm,
     selectedMonth,
     selectedYear,
     formatCurrency,
-    currency
+    currency,
+    paymentMethods
   } = useAppContext();
   
   const [localSearchTerm, localSetSearchTerm] = useState('');
@@ -610,7 +611,7 @@ const RecentTransactions = ({
                     <div style={{ flex: '1 1 120px' }}>
                       <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Payment Method</label>
                       <CustomSelect
-                        options={['Cash', 'Card', 'bKash', 'Nagad', 'Rocket']}
+                        options={paymentMethods.includes(editPaymentMethod) ? paymentMethods : [editPaymentMethod, ...paymentMethods]}
                         value={editPaymentMethod}
                         onChange={val => setEditPaymentMethod(val)}
                         label="Payment Method"

@@ -13,12 +13,13 @@ import TimePicker from './TimePicker';
 
 const SettingsPage = () => {
   const { 
-    userSettings, 
-    updateSettings, 
-    renameCategory, 
-    transactions, 
-    presets, 
-    recurringBills, 
+    userSettings,
+    updateSettings,
+    renameCategory,
+    transactions,
+    presets,
+    paymentMethods: savedPaymentMethods,
+    recurringBills,
     updateCategoryMetadata,
     getCategoryStyle,
     rescheduleNotifications,
@@ -103,6 +104,9 @@ const SettingsPage = () => {
   const [categoryBudgets, setCategoryBudgets] = useState(userSettings.category_budgets || {});
   const [newExpenseCat, setNewExpenseCat] = useState('');
   const [newIncomeCat, setNewIncomeCat] = useState('');
+
+  const [paymentMethods, setPaymentMethods] = useState(savedPaymentMethods);
+  const [newPaymentMethod, setNewPaymentMethod] = useState('');
   
   const [editingExpenseCat, setEditingExpenseCat] = useState(null);
   const [editExpenseCatName, setEditExpenseCatName] = useState('');
@@ -309,6 +313,13 @@ const SettingsPage = () => {
       setNewIncomeCat('');
     }
 
+    // Flush a payment method left unsaved in the add field.
+    let finalPaymentMethods = [...paymentMethods];
+    if (newPaymentMethod.trim() && !finalPaymentMethods.includes(newPaymentMethod.trim())) {
+      finalPaymentMethods.push(newPaymentMethod.trim());
+      setNewPaymentMethod('');
+    }
+
     // Clean up category budgets for deleted categories
     const cleanedBudgets = { ...categoryBudgets };
     Object.keys(cleanedBudgets).forEach(cat => {
@@ -328,6 +339,7 @@ const SettingsPage = () => {
       recurring_bills: localRecurringBills,
       category_metadata: {
         ...(userSettings.category_metadata || {}),
+        _payment_methods: finalPaymentMethods,
         _budget_rollover: {
           ...(userSettings.category_metadata?._budget_rollover || {}),
           enabled_categories: rolloverCategories
@@ -378,6 +390,22 @@ const SettingsPage = () => {
 
   const removeIncomeCat = (cat) => {
     setIncomeCategories(incomeCategories.filter(c => c !== cat));
+  };
+
+  const addPaymentMethod = () => {
+    const val = newPaymentMethod.trim();
+    if (val && !paymentMethods.includes(val)) {
+      setPaymentMethods([...paymentMethods, val]);
+      setNewPaymentMethod('');
+    }
+  };
+
+  const removePaymentMethod = (method) => {
+    if (paymentMethods.length <= 1) {
+      showToast('Keep at least one payment method.', 'warning');
+      return;
+    }
+    setPaymentMethods(paymentMethods.filter(m => m !== method));
   };
 
   const handleRenameExpense = async (oldName) => {
@@ -533,7 +561,7 @@ const SettingsPage = () => {
                     <div className="flex-col" style={{ gap: '0.25rem' }}>
                       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Payment Method</label>
                       <CustomSelect
-                        options={['Cash', 'bKash', 'Bank']}
+                        options={paymentMethods}
                         value={newPresetPayment}
                         onChange={val => setNewPresetPayment(val)}
                         label="Payment Method"
@@ -673,7 +701,7 @@ const SettingsPage = () => {
                     <div className="flex-col" style={{ gap: '0.25rem' }}>
                       <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Payment Method</label>
                       <CustomSelect
-                        options={['Cash', 'bKash', 'Bank']}
+                        options={paymentMethods}
                         value={newBillPayment}
                         onChange={val => setNewBillPayment(val)}
                         label="Payment Method"
@@ -815,6 +843,38 @@ const SettingsPage = () => {
                       onKeyPress={(e) => e.key === 'Enter' && addIncomeCat()}
                     />
                     <button onClick={addIncomeCat} style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>
+                      <Plus size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Payment Methods */}
+                <div className="glass-card flex-col gap-4">
+                  <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Payment Methods</h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Shown in the transaction, preset, and recurring-bill forms. Removing one leaves past transactions untouched.</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', width: '100%' }}>
+                    {paymentMethods.map(method => (
+                      <div key={method} style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        backgroundColor: 'var(--bg-input)', padding: '0.5rem 0.75rem',
+                        borderRadius: 'var(--radius-md)',
+                        maxWidth: '100%',
+                        flexShrink: 0
+                      }}>
+                        <span style={{ fontSize: '0.875rem', wordBreak: 'break-word' }}>{method}</span>
+                        <button onClick={() => removePaymentMethod(method)} style={{ color: 'var(--danger)', flexShrink: 0, cursor: 'pointer' }} aria-label={`Remove ${method}`}><Trash2 size={14}/></button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="New Payment Method"
+                      value={newPaymentMethod}
+                      onChange={(e) => setNewPaymentMethod(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addPaymentMethod()}
+                    />
+                    <button onClick={addPaymentMethod} style={{ padding: '0.75rem', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>
                       <Plus size={20} />
                     </button>
                   </div>

@@ -242,6 +242,7 @@ const TransactionForm = () => {
     addReceiptAttachment,
     userSettings,
     presets,
+    paymentMethods,
     getCategoryStyle,
     showToast,
     formatCurrency
@@ -256,8 +257,6 @@ const TransactionForm = () => {
     const activeCats = userSettings.expense_categories || [];
     return activeCats.length > 0 ? [createRow({ category: activeCats[0] })] : [];
   });
-
-  const paymentMethods = ['Cash', 'bKash', 'Bank'];
 
   const activeCategories = type === 'expense' ? expenseCategories : incomeCategories;
 

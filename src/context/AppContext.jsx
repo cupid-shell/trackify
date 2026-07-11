@@ -53,6 +53,11 @@ const defaultNotificationPrefs = {
   weekly_savings_motivation: true
 };
 
+// Union of every payment method that used to be hardcoded across the app, in a
+// sensible order for the BD user. Stored per-user in category_metadata
+// (._payment_methods) so it needs no DB schema change; this is the fallback.
+const DEFAULT_PAYMENT_METHODS = ['Cash', 'bKash', 'Nagad', 'Rocket', 'Card', 'Bank'];
+
 const defaultSettings = {
   base_income: 15000,
   savings_goal: 3000,
@@ -1917,6 +1922,7 @@ export const AppProvider = ({ children }) => {
     userSettings,
     updateSettings,
     presets,
+    paymentMethods: userSettings.category_metadata?._payment_methods || DEFAULT_PAYMENT_METHODS,
     updatePresets,
     recurringBills,
     updateRecurringBills,
