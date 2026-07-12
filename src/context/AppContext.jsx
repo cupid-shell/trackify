@@ -1315,9 +1315,11 @@ export const AppProvider = ({ children }) => {
       setTransactions(prev => (prev.some(t => t.id === id) ? prev : [...prev, pending.tx]));
       showToast('Error deleting transaction: ' + error.message, 'error');
     } else {
-      // Drop any reimbursable link (the Ledger receivable stays — the money is
-      // still owed even if the expense record is gone).
+      // Always drop the reimbursable link. By default the Ledger receivable
+      // stays (the money is still owed even if the expense record is gone); if
+      // the user opted to remove it on delete, drop it too.
       unmarkReimbursable(id);
+      if (pending.debtId) await deleteDebt(pending.debtId);
     }
   };
 
@@ -1330,14 +1332,16 @@ export const AppProvider = ({ children }) => {
     showToast('Deletion undone', 'success');
   };
 
-  const deleteTransaction = (id) => {
+  const deleteTransaction = (id, opts = {}) => {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
+    // If asked, also remove the linked Ledger receivable when the delete commits.
+    const debtId = opts.alsoDeleteDebt ? (userSettings.category_metadata?._reimbursable?.[id] || null) : null;
 
     // Hide immediately; defer the real delete so it can be undone.
     setTransactions(prev => prev.filter(t => t.id !== id));
     const timer = setTimeout(() => commitDelete(id), 5000);
-    pendingTxDeletes[id] = { tx, timer };
+    pendingTxDeletes[id] = { tx, timer, debtId };
 
     showToast('Transaction deleted', 'info', {
       duration: 5000,

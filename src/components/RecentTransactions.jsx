@@ -843,11 +843,16 @@ const RecentTransactions = ({
                     </button>
                     <button 
                       onClick={() => {
+                        const rDebt = reimburseDebtFor(tx.id);
+                        const hasPayments = rDebt && (Number(rDebt.settled_amount) > 0 || (rDebt.payments && rDebt.payments.length > 0));
                         showConfirm({
                           title: 'Delete Transaction?',
-                          message: 'Are you sure you want to permanently delete this transaction record?',
+                          message: rDebt
+                            ? `This expense has a linked receivable in your Ledger — ${rDebt.person} owes ${formatCurrency(Math.max(Number(rDebt.amount) - Number(rDebt.settled_amount || 0), 0))}.`
+                            : 'Are you sure you want to permanently delete this transaction record?',
                           confirmLabel: 'Delete',
-                          onConfirm: () => deleteTransaction(tx.id)
+                          checkbox: rDebt ? { label: 'Also remove the linked Ledger receivable', defaultValue: !hasPayments } : undefined,
+                          onConfirm: (alsoDeleteDebt) => deleteTransaction(tx.id, { alsoDeleteDebt: !!alsoDeleteDebt })
                         });
                       }}
                       style={{ color: 'var(--text-muted)' }}
