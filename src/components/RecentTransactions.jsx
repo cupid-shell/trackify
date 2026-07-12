@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { format } from 'date-fns';
-import { Trash2, TrendingUp, Download, Edit2, X } from 'lucide-react';
+import { Trash2, TrendingUp, Download, Edit2, X, Repeat } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 import CustomSelect from './CustomSelect';
 import TimePicker from './TimePicker';
@@ -30,13 +31,19 @@ const RecentTransactions = ({
     selectedYear,
     formatCurrency,
     currency,
-    paymentMethods
+    paymentMethods,
+    reimbursements,
+    debts,
+    recordDebtRepayment
   } = useAppContext();
-  
+
+  const navigate = useNavigate();
+
   const [localSearchTerm, localSetSearchTerm] = useState('');
   const [localSelectedCategory, localSetSelectedCategory] = useState('All');
   const [localStartDate, localSetStartDate] = useState('');
   const [localEndDate, localSetEndDate] = useState('');
+  const [showReimbursableOnly, setShowReimbursableOnly] = useState(false);
   const [activeReceiptUrl, setActiveReceiptUrl] = useState(null);
 
   const searchTerm = propSearchTerm !== undefined ? propSearchTerm : localSearchTerm;
@@ -115,16 +122,24 @@ const RecentTransactions = ({
   // Get unique categories for the current month to populate the dropdown
   const uniqueCategories = ['All', ...new Set(currentMonthTransactions.map(tx => tx.category))].sort();
 
+  // Resolve the linked Ledger receivable (a 'lent' debt) for a reimbursable tx.
+  const reimburseDebtFor = (txId) => {
+    const debtId = reimbursements[txId];
+    return debtId ? debts.find(d => d.id === debtId) : null;
+  };
+
   // Filter by search term AND selected category AND calendar day click
   const filteredTx = currentMonthTransactions.filter(tx => {
     const txDate = parseLocalDate(tx.date);
-    
+
     // Day filter
     if (selectedDay !== null) {
       if (txDate.getDate() !== selectedDay) {
         return false;
       }
     }
+
+    if (showReimbursableOnly && !reimbursements[tx.id]) return false;
 
     const matchesSearch = 
       tx.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -550,21 +565,42 @@ const RecentTransactions = ({
               Clear Dates
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => setShowReimbursableOnly(v => !v)}
+            aria-pressed={showReimbursableOnly}
+            title="Show only expenses someone owes you back"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              padding: '0.5rem 0.85rem',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              color: showReimbursableOnly ? 'var(--primary)' : 'var(--text-muted)',
+              backgroundColor: showReimbursableOnly ? 'var(--primary-glow)' : 'var(--bg-input)',
+              border: `1px solid ${showReimbursableOnly ? 'rgb(from var(--primary) r g b / 0.35)' : 'var(--border-color)'}`,
+            }}
+          >
+            <Repeat size={13} /> Reimbursable
+          </button>
         </div>
       </div>
-      
+
       {sortedTx.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">
-            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null ? '🔍' : '📭'}
+            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null || showReimbursableOnly ? '🔍' : '📭'}
           </div>
           <h3>
-            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null
+            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null || showReimbursableOnly
               ? 'No matching transactions'
               : 'No transactions yet'}
           </h3>
           <p>
-            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null
+            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null || showReimbursableOnly
               ? 'Try adjusting your filters or search term.'
               : 'Add your first transaction above to start tracking your finances.'}
           </p>
@@ -729,6 +765,44 @@ const RecentTransactions = ({
                           📷 Receipt
                         </button>
                       )}
+                      {reimbursements[tx.id] && (() => {
+                        const rDebt = reimburseDebtFor(tx.id);
+                        // Linked debt gone (deleted in the Ledger) → treat as resolved.
+                        const settled = !rDebt || rDebt.status === 'settled';
+                        const remaining = rDebt ? Math.max(Number(rDebt.amount) - Number(rDebt.settled_amount || 0), 0) : 0;
+                        return (
+                          <button
+                            onClick={() => {
+                              if (settled) { navigate('/ledger'); return; }
+                              showConfirm({
+                                title: 'Mark as repaid?',
+                                message: `Settle the ${formatCurrency(remaining)} ${rDebt.person} owes you for this expense.`,
+                                confirmLabel: 'Mark repaid',
+                                variant: 'info',
+                                checkbox: { label: `Also log ${formatCurrency(remaining)} as income` },
+                                onConfirm: (logIncome) => recordDebtRepayment(rDebt.id, remaining, 'Reimbursed', logIncome),
+                              });
+                            }}
+                            title={settled ? 'Reimbursed — view in Ledger' : 'Owed back — tap to mark repaid'}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              background: settled ? 'var(--success-bg)' : 'var(--warning-bg)',
+                              border: `1px solid ${settled ? 'rgb(from var(--success) r g b / 0.3)' : 'rgb(from var(--warning) r g b / 0.35)'}`,
+                              color: settled ? 'var(--success)' : 'var(--warning)',
+                              borderRadius: '4px',
+                              padding: '1px 5px',
+                              fontSize: '0.7rem',
+                              cursor: 'pointer',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Repeat size={11} />
+                            {settled ? 'Reimbursed' : `Owed ${formatCurrency(remaining)}`}
+                          </button>
+                        );
+                      })()}
                       {tx.note && (
                         <>
                           <span style={{ flexShrink: 0, opacity: 0.5 }}>•</span>

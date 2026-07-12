@@ -992,9 +992,11 @@ export const AppProvider = ({ children }) => {
           debt_id: data.id
         });
       }
+      return data;
     } else {
       setDebts(prev => prev.filter(d => d.id !== tempId));
       showToast('Error adding debt record: ' + error?.message, 'error');
+      return null;
     }
   };
 
@@ -1251,6 +1253,48 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // --- Reimbursable expenses ------------------------------------------------
+  // A reimbursable expense is bridged to the Ledger as a real `lent` receivable.
+  // The link lives in category_metadata._reimbursable ({ [txId]: debtId }) — NOT
+  // the transactions.debt_id column, whose FK is ON DELETE CASCADE (deleting the
+  // receivable would delete the expense). Badge status/amount are read live from
+  // `debts`, so the two can never drift out of sync.
+  const reimbursements = userSettings.category_metadata?._reimbursable || {};
+
+  const markTransactionsReimbursable = async (pairs) => {
+    if (!pairs || pairs.length === 0) return;
+    const newLinks = {};
+    for (const { tx, person, amount, dueDate } of pairs) {
+      // logAsTransaction:false — the expense already exists; we don't want a
+      // second "Lent to X" transaction, only the receivable.
+      const debt = await addDebt({
+        type: 'lent',
+        person: (person || '').trim() || 'Someone',
+        amount: Number(amount),
+        note: `Reimbursable: ${tx.category}`,
+        date: (tx.date || '').split('T')[0] || new Date().toISOString().split('T')[0],
+        due_date: dueDate || null,
+      }, false);
+      if (debt?.id) newLinks[tx.id] = debt.id;
+    }
+    if (Object.keys(newLinks).length === 0) return;
+    const meta = userSettings.category_metadata || {};
+    await updateSettings({
+      category_metadata: {
+        ...meta,
+        _reimbursable: { ...(meta._reimbursable || {}), ...newLinks },
+      },
+    });
+  };
+
+  const unmarkReimbursable = async (txId) => {
+    const meta = userSettings.category_metadata || {};
+    if (!meta._reimbursable || !(txId in meta._reimbursable)) return;
+    const next = { ...meta._reimbursable };
+    delete next[txId];
+    await updateSettings({ category_metadata: { ...meta, _reimbursable: next } });
+  };
+
   // A deleted row disappears from the UI immediately, but the Supabase delete is
   // deferred (see pendingTxDeletes) so an "Undo" toast can cancel it. Nothing
   // leaves the database during the window, so undo keeps the original row id —
@@ -1270,6 +1314,10 @@ export const AppProvider = ({ children }) => {
       // The delete never landed — restore the row so the UI matches the DB.
       setTransactions(prev => (prev.some(t => t.id === id) ? prev : [...prev, pending.tx]));
       showToast('Error deleting transaction: ' + error.message, 'error');
+    } else {
+      // Drop any reimbursable link (the Ledger receivable stays — the money is
+      // still owed even if the expense record is gone).
+      unmarkReimbursable(id);
     }
   };
 
@@ -1935,6 +1983,9 @@ export const AppProvider = ({ children }) => {
     addTransactions,
     deleteTransaction,
     updateTransaction,
+    reimbursements,
+    markTransactionsReimbursable,
+    unmarkReimbursable,
     renameCategory,
     currentMonthTransactions,
     selectedMonth,

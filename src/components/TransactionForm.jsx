@@ -70,6 +70,10 @@ const createRow = (defaults = {}) => {
     paymentMethod: defaults.paymentMethod || 'Cash',
     receiptFile: null,
     receiptPreview: null,
+    reimbursable: false,
+    reimbursePerson: '',
+    reimburseAmount: '',
+    reimburseDue: '',
     ...defaults,
     date: dateStr,
     time: timeStr
@@ -230,6 +234,46 @@ const GridRow = ({
         />
         <TimePicker value={row.time} onChange={val => onUpdate(index, 'time', val)} />
       </div>
+
+      {/* Line 4: Reimbursable — creates a linked 'lent' receivable in the Ledger */}
+      <div className="grid-row-line" style={{ flexDirection: 'column', gap: '0.5rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}>
+          <input
+            type="checkbox"
+            checked={row.reimbursable}
+            onChange={e => onUpdate(index, 'reimbursable', e.target.checked)}
+            style={{ width: 'auto', cursor: 'pointer' }}
+          />
+          Someone owes me back
+        </label>
+        {row.reimbursable && (
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              value={row.reimbursePerson}
+              onChange={e => onUpdate(index, 'reimbursePerson', e.target.value)}
+              placeholder="Who owes you?"
+              style={{ flex: '1 1 120px', padding: '0.5rem', fontSize: '0.8rem' }}
+            />
+            <input
+              type="text"
+              inputMode="decimal"
+              value={row.reimburseAmount}
+              onChange={e => onUpdate(index, 'reimburseAmount', e.target.value)}
+              placeholder="Owed (full)"
+              title="Amount owed back — leave blank for the full amount"
+              style={{ width: '110px', padding: '0.5rem', fontSize: '0.8rem' }}
+            />
+            <input
+              type="date"
+              value={row.reimburseDue}
+              onChange={e => onUpdate(index, 'reimburseDue', e.target.value)}
+              title="Due date (optional)"
+              style={{ width: '150px', padding: '0.5rem', fontSize: '0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -240,6 +284,7 @@ const TransactionForm = () => {
     addTransactions,
     uploadReceiptFile,
     addReceiptAttachment,
+    markTransactionsReimbursable,
     userSettings,
     presets,
     paymentMethods,
@@ -376,6 +421,20 @@ const TransactionForm = () => {
             await addReceiptAttachment(createdTxs[i].id, url);
           }
         }
+      }
+
+      // Bridge any reimbursable expenses to the Ledger as 'lent' receivables.
+      if (type === 'expense' && createdTxs && createdTxs.length > 0) {
+        const pairs = [];
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          const tx = createdTxs[i];
+          if (!row.reimbursable || !tx) continue;
+          const owedRaw = Number(evaluateMath(row.reimburseAmount));
+          const amount = owedRaw > 0 ? owedRaw : payload[i].amount; // blank => full amount
+          pairs.push({ tx, person: row.reimbursePerson, amount, dueDate: row.reimburseDue });
+        }
+        if (pairs.length > 0) await markTransactionsReimbursable(pairs);
       }
 
       // Reset to a single blank row
