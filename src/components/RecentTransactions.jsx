@@ -17,7 +17,9 @@ const RecentTransactions = ({
   startDate: propStartDate,
   setStartDate: propSetStartDate,
   endDate: propEndDate,
-  setEndDate: propSetEndDate
+  setEndDate: propSetEndDate,
+  reimbursableOnly: propReimbursableOnly,
+  setReimbursableOnly: propSetReimbursableOnly
 }) => {
   const { 
     currentMonthTransactions, 
@@ -43,7 +45,7 @@ const RecentTransactions = ({
   const [localSelectedCategory, localSetSelectedCategory] = useState('All');
   const [localStartDate, localSetStartDate] = useState('');
   const [localEndDate, localSetEndDate] = useState('');
-  const [showReimbursableOnly, setShowReimbursableOnly] = useState(false);
+  const [localReimbursableOnly, localSetReimbursableOnly] = useState(false);
   const [activeReceiptUrl, setActiveReceiptUrl] = useState(null);
 
   const searchTerm = propSearchTerm !== undefined ? propSearchTerm : localSearchTerm;
@@ -57,6 +59,9 @@ const RecentTransactions = ({
 
   const endDate = propEndDate !== undefined ? propEndDate : localEndDate;
   const setEndDate = propSetEndDate !== undefined ? propSetEndDate : localSetEndDate;
+
+  const showReimbursableOnly = propReimbursableOnly !== undefined ? propReimbursableOnly : localReimbursableOnly;
+  const setShowReimbursableOnly = propSetReimbursableOnly !== undefined ? propSetReimbursableOnly : localSetReimbursableOnly;
 
   // Edit mode states
   const [editingId, setEditingId] = useState(null);
@@ -567,7 +572,7 @@ const RecentTransactions = ({
           )}
           <button
             type="button"
-            onClick={() => setShowReimbursableOnly(v => !v)}
+            onClick={() => setShowReimbursableOnly(!showReimbursableOnly)}
             aria-pressed={showReimbursableOnly}
             title="Show only expenses someone owes you back"
             style={{

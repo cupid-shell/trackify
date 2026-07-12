@@ -73,6 +73,19 @@ const HistoryPage = () => {
     }, { replace: true });
   };
 
+  const reimbursableOnly = searchParams.get('owed') === '1';
+  const setReimbursableOnly = (val) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (!val) {
+        next.delete('owed');
+      } else {
+        next.set('owed', '1');
+      }
+      return next;
+    }, { replace: true });
+  };
+
   return (
     <>
       <Header />
@@ -99,6 +112,8 @@ const HistoryPage = () => {
             setStartDate={setStartDate}
             endDate={endDate}
             setEndDate={setEndDate}
+            reimbursableOnly={reimbursableOnly}
+            setReimbursableOnly={setReimbursableOnly}
           />
         </div>
       </main>
