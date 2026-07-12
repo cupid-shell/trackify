@@ -5,6 +5,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { useAppContext } from './context/AppContext';
 import Header from './components/Header';
 import OverviewCards from './components/OverviewCards';
+import DashboardSnapshots from './components/DashboardSnapshots';
 import TransactionForm from './components/TransactionForm';
 import Login from './components/Login';
 import BudgetProgress from './components/BudgetProgress';
@@ -39,6 +40,10 @@ const Dashboard = () => (
 
       <div className="animate-fade-in stagger-3">
         <OverviewCards />
+      </div>
+
+      <div className="animate-fade-in stagger-3">
+        <DashboardSnapshots />
       </div>
 
       <div className="dashboard-grid animate-fade-in stagger-4">

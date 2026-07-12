@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
 
 const OverviewCards = () => {
   const { totalIncome, totalExpenses, balance, savingsGoal, baseIncome, formatCurrency } = useAppContext();
+  const navigate = useNavigate();
 
   const cards = [
     {
@@ -27,6 +29,7 @@ const OverviewCards = () => {
       icon: <TrendingDown size={24} color="var(--danger)" />,
       color: 'var(--danger)',
       bg: 'var(--danger-bg)',
+      to: '/history',
     },
     {
       title: 'Savings Goal',
@@ -49,10 +52,15 @@ const OverviewCards = () => {
         <div
           key={idx}
           className="glass-card flex-col gap-4"
-          style={card.hero ? {
-            background: 'linear-gradient(0deg, rgb(from var(--primary) r g b / 0.06), rgb(from var(--primary) r g b / 0.06)), var(--bg-card)',
-            border: '1px solid rgb(from var(--primary) r g b / 0.25)'
-          } : undefined}
+          onClick={card.to ? () => navigate(card.to) : undefined}
+          title={card.to ? 'View expense history' : undefined}
+          style={{
+            ...(card.hero ? {
+              background: 'linear-gradient(0deg, rgb(from var(--primary) r g b / 0.06), rgb(from var(--primary) r g b / 0.06)), var(--bg-card)',
+              border: '1px solid rgb(from var(--primary) r g b / 0.25)'
+            } : {}),
+            ...(card.to ? { cursor: 'pointer' } : {})
+          }}
         >
           <div className="flex items-center justify-between">
             <h3 style={{

@@ -500,6 +500,26 @@ input[type="checkbox"]:checked::before {
   flex: 1;
 }
 
+/* --- Dashboard section-snapshot cards (tap through to a section) --- */
+.snapshot-card {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+}
+.snapshot-arrow {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.snapshot-card:hover .snapshot-arrow {
+  color: var(--primary);
+  transform: translate(2px, -2px);
+}
+
+/* Budget Tracker category name → History filter affordance */
+.budget-cat-link:hover span {
+  color: var(--primary);
+}
+
 /* ─────────────────────────────────────────────────────────────
    Analytics Carousel  —  Flex-Track Cover-flow
    ───────────────────────────────────────────────────────────── */

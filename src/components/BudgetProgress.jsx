@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { AlertTriangle, GripVertical, Pin, Eye, EyeOff } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
@@ -6,6 +7,7 @@ import { applyOrder, splitPinned, togglePinned, moveInList, dropInsertIndex } fr
 
 const BudgetProgress = () => {
   const { userSettings, currentMonthTransactions, getCategoryStyle, formatCurrency, rolloverData, updateSettings } = useAppContext();
+  const navigate = useNavigate();
   const budgets = userSettings.category_budgets || {};
   const expenseCategories = userSettings.expense_categories || [];
   const metadata = userSettings.category_metadata || {};
@@ -165,8 +167,16 @@ const BudgetProgress = () => {
                 <GripVertical size={15} />
               </span>
             )}
-            <CategoryIcon category={cat} size={16} />
-            <span style={{ fontWeight: 500, fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cat}</span>
+            <button
+              type="button"
+              className="budget-cat-link"
+              onClick={() => navigate(`/history?cat=${encodeURIComponent(cat)}`)}
+              title={`View ${cat} transactions this month`}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', font: 'inherit', textAlign: 'left' }}
+            >
+              <CategoryIcon category={cat} size={16} />
+              <span style={{ fontWeight: 500, fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cat}</span>
+            </button>
           </div>
           <div className="flex items-center gap-2">
             {(isOver || isWarning) && <AlertTriangle size={14} color={isOver ? 'var(--danger)' : 'var(--warning)'} />}
