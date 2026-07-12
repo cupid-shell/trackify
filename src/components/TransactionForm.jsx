@@ -89,7 +89,8 @@ const GridRow = ({
   paymentMethods,
   onUpdate,
   onRemove,
-  getCategoryStyle
+  getCategoryStyle,
+  isExpense
 }) => {
   const { showToast } = useAppContext();
 
@@ -235,7 +236,8 @@ const GridRow = ({
         <TimePicker value={row.time} onChange={val => onUpdate(index, 'time', val)} />
       </div>
 
-      {/* Line 4: Reimbursable — creates a linked 'lent' receivable in the Ledger */}
+      {/* Line 4: Reimbursable (expenses only) — creates a linked 'lent' receivable in the Ledger */}
+      {isExpense && (
       <div className="grid-row-line" style={{ flexDirection: 'column', gap: '0.5rem' }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}>
           <input
@@ -274,6 +276,7 @@ const GridRow = ({
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };
@@ -546,6 +549,7 @@ const TransactionForm = () => {
             onUpdate={updateRow}
             onRemove={removeRow}
             getCategoryStyle={getCategoryStyle}
+            isExpense={type === 'expense'}
           />
         ))}
 
