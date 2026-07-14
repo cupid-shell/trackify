@@ -86,6 +86,17 @@ const HistoryPage = () => {
     }, { replace: true });
   };
 
+  // Clear every filter in ONE setSearchParams call. Calling the individual
+  // setters in sequence doesn't work: React Router's functional updater reads
+  // the same base params for each synchronous call, so only the last wins.
+  const clearFilters = () => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      ['q', 'cat', 'from', 'to', 'owed', 'day'].forEach((k) => next.delete(k));
+      return next;
+    }, { replace: true });
+  };
+
   return (
     <>
       <Header />
@@ -114,6 +125,7 @@ const HistoryPage = () => {
             setEndDate={setEndDate}
             reimbursableOnly={reimbursableOnly}
             setReimbursableOnly={setReimbursableOnly}
+            clearFilters={clearFilters}
           />
         </div>
       </main>

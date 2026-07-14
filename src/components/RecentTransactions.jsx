@@ -30,7 +30,8 @@ const RecentTransactions = ({
   endDate: propEndDate,
   setEndDate: propSetEndDate,
   reimbursableOnly: propReimbursableOnly,
-  setReimbursableOnly: propSetReimbursableOnly
+  setReimbursableOnly: propSetReimbursableOnly,
+  clearFilters: propClearFilters
 }) => {
   const { 
     currentMonthTransactions, 
@@ -188,6 +189,9 @@ const RecentTransactions = ({
 
   const anyFilterActive = !!(searchTerm || (selectedCategory && selectedCategory !== 'All') || startDate || endDate || showReimbursableOnly || selectedDay !== null);
   const clearAllFilters = () => {
+    // On the History page the setters write to the URL and can't be batched
+    // (see HistoryPage.clearFilters); use the single-call prop when provided.
+    if (propClearFilters) { propClearFilters(); return; }
     setSearchTerm('');
     setSelectedCategory('All');
     setStartDate('');
