@@ -2,10 +2,21 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { format } from 'date-fns';
-import { Trash2, TrendingUp, Download, Edit2, X, Repeat } from 'lucide-react';
+import { Trash2, TrendingUp, Download, Edit2, X, Repeat, Search } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 import CustomSelect from './CustomSelect';
 import TimePicker from './TimePicker';
+
+// Shared base so every filter control (search, category, dates, reimbursable)
+// lines up at the same height and shares one visual language.
+const CONTROL_BASE = {
+  height: '2.75rem',
+  borderRadius: 'var(--radius-md)',
+  border: '1px solid var(--border-color)',
+  backgroundColor: 'var(--bg-input)',
+  color: 'var(--text-main)',
+  fontSize: '0.875rem',
+};
 
 const RecentTransactions = ({ 
   selectedDay = null, 
@@ -174,6 +185,16 @@ const RecentTransactions = ({
 
   // Sort by newest first
   const sortedTx = [...filteredTx].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const anyFilterActive = !!(searchTerm || (selectedCategory && selectedCategory !== 'All') || startDate || endDate || showReimbursableOnly || selectedDay !== null);
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('All');
+    setStartDate('');
+    setEndDate('');
+    setShowReimbursableOnly(false);
+    if (setSelectedDay) setSelectedDay(null);
+  };
 
   const handleExportCSV = () => {
     if (currentMonthTransactions.length === 0) return;
@@ -488,109 +509,100 @@ const RecentTransactions = ({
         </div>
       )}
 
-      <div className="flex-col gap-4" style={{ marginBottom: '1rem' }}>
-        <div className="flex gap-4" style={{ flexWrap: 'wrap' }}>
-          <div style={{ flex: '1 1 200px' }}>
-            <input 
-              type="text" 
-              placeholder="Search by category, note, or amount..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem 1rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-input)',
-                color: 'var(--text-main)'
-              }}
-            />
-          </div>
+      <div className="flex-col gap-3" style={{ marginBottom: '1.25rem' }}>
+        {/* Search — full width with a leading icon */}
+        <div style={{ position: 'relative', width: '100%' }}>
+          <Search
+            size={16}
+            style={{ position: 'absolute', left: '0.95rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}
+          />
+          <input
+            type="text"
+            placeholder="Search by category, note, or amount…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ ...CONTROL_BASE, width: '100%', padding: '0 1rem 0 2.5rem' }}
+          />
+        </div>
+
+        {/* Facets — one height-aligned row: category · reimbursable · date range · clear */}
+        <div className="flex items-center" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
           <CustomSelect
             options={uniqueCategories}
             value={selectedCategory}
             onChange={val => setSelectedCategory(val)}
             getCategoryStyle={getCategoryStyle}
             label="Category"
-            style={{
-              flex: '0 0 auto',
-              width: 'auto',
-              minWidth: '150px'
-            }}
+            style={{ flex: '0 0 auto', width: 'auto', minWidth: '180px' }}
+            triggerStyle={{ height: '2.75rem', padding: '0 1rem', fontSize: '0.875rem' }}
           />
-        </div>
 
-        <div className="flex gap-4 items-center" style={{ flexWrap: 'wrap', fontSize: '0.875rem' }}>
-          <div className="flex items-center gap-2" style={{ flex: '1 1 150px' }}>
-            <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>From:</span>
-            <input 
-              type="date" 
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-input)',
-                color: 'var(--text-main)'
-              }}
-            />
-          </div>
-          <div className="flex items-center gap-2" style={{ flex: '1 1 150px' }}>
-            <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>To:</span>
-            <input 
-              type="date" 
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-input)',
-                color: 'var(--text-main)'
-              }}
-            />
-          </div>
-          {(startDate || endDate) && (
-            <button
-              onClick={() => { setStartDate(''); setEndDate(''); }}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '0.75rem',
-                color: 'var(--danger)',
-                backgroundColor: 'var(--danger-bg)',
-                borderRadius: 'var(--radius-sm)',
-                fontWeight: 600,
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              Clear Dates
-            </button>
-          )}
           <button
             type="button"
             onClick={() => setShowReimbursableOnly(!showReimbursableOnly)}
             aria-pressed={showReimbursableOnly}
             title="Show only expenses someone owes you back"
             style={{
+              ...CONTROL_BASE,
               display: 'flex',
               alignItems: 'center',
-              gap: '0.35rem',
-              padding: '0.5rem 0.85rem',
-              fontSize: '0.75rem',
+              gap: '0.4rem',
+              padding: '0 1rem',
               fontWeight: 600,
-              borderRadius: 'var(--radius-md)',
               cursor: 'pointer',
               color: showReimbursableOnly ? 'var(--primary)' : 'var(--text-muted)',
               backgroundColor: showReimbursableOnly ? 'var(--primary-glow)' : 'var(--bg-input)',
               border: `1px solid ${showReimbursableOnly ? 'rgb(from var(--primary) r g b / 0.35)' : 'var(--border-color)'}`,
             }}
           >
-            <Repeat size={13} /> Reimbursable
+            <Repeat size={14} /> Reimbursable
           </button>
+
+          {/* Date range */}
+          <div className="flex items-center" style={{ gap: '0.5rem' }}>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              aria-label="From date"
+              title="From date"
+              style={{ ...CONTROL_BASE, padding: '0 0.75rem', width: '150px' }}
+            />
+            <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>–</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              aria-label="To date"
+              title="To date"
+              style={{ ...CONTROL_BASE, padding: '0 0.75rem', width: '150px' }}
+            />
+          </div>
+
+          {anyFilterActive && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              title="Clear all filters"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                height: '2.75rem',
+                padding: '0 0.9rem',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: 'var(--danger)',
+                backgroundColor: 'var(--danger-bg)',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
+                marginLeft: 'auto',
+              }}
+            >
+              <X size={14} /> Clear
+            </button>
+          )}
         </div>
       </div>
 
