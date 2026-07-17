@@ -521,6 +521,9 @@ input[type="checkbox"]:checked::before {
   text-align: left;
   width: 100%;
   font: inherit;
+  /* A <button> won't inherit text color — without this, any snapshot number
+     that doesn't set its own color falls back to the UA default (black). */
+  color: var(--text-main);
 }
 .snapshot-arrow {
   transition: transform 0.2s ease, color 0.2s ease;
