@@ -28,7 +28,7 @@ const LedgerPage = React.lazy(() => import('./components/Ledger'));
 const Dashboard = () => (
   <>
     <Header />
-    <main className="container animate-fade-in" style={{ flex: 1 }}>
+    <main className="container dashboard-container animate-fade-in" style={{ flex: 1 }}>
       <div style={{ marginBottom: '2rem', textAlign: 'center' }} className="animate-fade-in stagger-1">
         <h2 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Dashboard</h2>
         <p>Track your daily, monthly, and yearly expenses. Build your savings.</p>

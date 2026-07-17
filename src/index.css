@@ -489,6 +489,21 @@ input[type="checkbox"]:checked::before {
   }
 }
 
+/* --- Dashboard only: widen the column on large screens so the snapshot row
+   and the form/budget grid use the space instead of leaving big side gutters.
+   Other pages keep the 1100px reading width. Stepped so it never crowds the
+   viewport edge. --- */
+@media (min-width: 1440px) {
+  .dashboard-container {
+    max-width: 1320px;
+  }
+}
+@media (min-width: 1680px) {
+  .dashboard-container {
+    max-width: 1440px;
+  }
+}
+
 /* --- Dashboard left column: stretch to match right column height --- */
 .dashboard-left-col {
   width: 100%;
