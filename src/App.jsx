@@ -17,6 +17,7 @@ import AppUpdatePrompt from './components/AppUpdatePrompt';
 import SplashScreen from './components/SplashScreen';
 import ErrorBoundary from './components/ErrorBoundary';
 import Onboarding from './components/Onboarding';
+import OfflineGate from './components/OfflineGate';
 
 const HistoryPage = React.lazy(() => import('./components/HistoryPage'));
 const AnalyticsPage = React.lazy(() => import('./components/AnalyticsPage'));
@@ -66,13 +67,19 @@ const Dashboard = () => (
 // Lazy-loaded pages loaded via react-router-dom below
 
 const ProtectedRoute = ({ children }) => {
-  const { session, loading, isOnboardingNeeded } = useAppContext();
-  
+  const { session, loading, isOnboardingNeeded, isOnline, wasSignedIn } = useAppContext();
+
   if (loading) {
     return <SplashScreen />;
   }
-  
+
   if (!session) {
+    // Offline with an unrefreshable token looks identical to "signed out" from
+    // Supabase's side. If we know someone was signed in here, say so honestly
+    // instead of showing a sign-in form that can't work without a connection.
+    if (wasSignedIn && !isOnline) {
+      return <OfflineGate />;
+    }
     return <Navigate to="/login" replace />;
   }
 

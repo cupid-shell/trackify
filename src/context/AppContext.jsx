@@ -19,6 +19,35 @@ const AppContext = createContext();
 // render/immutability analysis; there is only one AppProvider, so sharing is safe.
 const pendingTxDeletes = {};
 
+// Remembers who was last signed in on this device, so a boot can tell
+// "signed out" apart from "offline and the token could not be refreshed"
+// before auth resolves. Not user-scoped, by design — it is the pointer.
+const LAST_USER_ID_KEY = 'trackify_last_user_id';
+
+// Read once at module load, outside render, so it can seed state without
+// tripping the React Compiler's purity rule.
+const bootLastUserId = (() => {
+  try {
+    return localStorage.getItem(LAST_USER_ID_KEY);
+  } catch {
+    return null;
+  }
+})();
+
+// navigator.onLine only ever proves you're *disconnected*; a true value still
+// lies behind captive portals. Treated as a hint — a successful request is the
+// real liveness proof.
+const initialOnline = typeof navigator === 'undefined' ? true : navigator.onLine !== false;
+
+const writeLastUserId = (userId) => {
+  try {
+    if (userId) localStorage.setItem(LAST_USER_ID_KEY, userId);
+  } catch {
+    // Storage unavailable (private mode / quota). Non-fatal: the app still
+    // works online, it just can't recognise the user on an offline boot.
+  }
+};
+
 // Re-exported so the many components that import it from this context keep working.
 // eslint-disable-next-line react-refresh/only-export-components
 export { parseLocalDate };
@@ -89,6 +118,11 @@ export const AppProvider = ({ children }) => {
     lastError: null,
     txFailed: false,
   });
+  const [isOnline, setIsOnline] = useState(initialOnline);
+  // Whether someone was signed in on this device before this boot. Lets an
+  // offline boot with an unrefreshable token show an honest "you're offline"
+  // screen instead of a sign-in form that cannot possibly work.
+  const [wasSignedIn, setWasSignedIn] = useState(() => bootLastUserId !== null);
   const loading = !bootstrapped;
   // Tracks whether a user_settings row was positively found in the database.
   // null = unknown/not yet confirmed (e.g. fetch in flight or failed),
@@ -235,18 +269,29 @@ export const AppProvider = ({ children }) => {
     return [];
   });
 
-  const resetStateToDefaults = useCallback(() => {
+  // Resets React state only. Safe to call whenever the session goes away for ANY
+  // reason — including an expired token that could not be refreshed because the
+  // device is offline.
+  const resetInMemoryState = useCallback(() => {
     setUserSettings(defaultSettings);
     setPresets(defaultPresets);
     setRecurringBills(defaultRecurringBills);
     setNotifications([]);
     setSkippedBills([]);
     hasCheckedAutoLog.current = false;
+  }, []);
 
+  // Wipes this device's stored user data. ONLY call on a real sign-out.
+  // Never call it for a merely-absent session: getSession() returns null when an
+  // expired token cannot be refreshed, which is exactly what happens offline —
+  // clearing here would destroy the user's local data every time they opened the
+  // app without signal.
+  const clearStoredUserData = useCallback(() => {
     localStorage.removeItem('trackify_presets');
     localStorage.removeItem('trackify_recurring_bills');
     localStorage.removeItem('trackify_skipped_bills');
-    
+    localStorage.removeItem(LAST_USER_ID_KEY);
+
     const notificationKeys = [
       'daily_reminder', 'daily_reminder_time', 'weekly_digest', 'weekly_digest_day',
       'budget_alerts', 'budget_threshold', 'savings_milestones', 'bill_reminders',
@@ -257,14 +302,23 @@ export const AppProvider = ({ children }) => {
       localStorage.removeItem(`trackify_${key}`);
     });
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('trackify_notifications_')) {
+    // Sweep over a snapshot of the keys: removing entries while walking
+    // localStorage by index skips items (the old loop compensated with an `i--`
+    // hack). `trackify_notified_` was also missing from the sweep entirely, so
+    // the budget/spike dedupe flags — one per category per month — accumulated
+    // forever and were never cleared, even on sign-out.
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('trackify_notifications_') || key.startsWith('trackify_notified_')) {
         localStorage.removeItem(key);
-        i--;
       }
-    }
+    });
   }, []);
+
+  // Full sign-out reset: both halves.
+  const resetStateToDefaults = useCallback(() => {
+    resetInMemoryState();
+    clearStoredUserData();
+  }, [resetInMemoryState, clearStoredUserData]);
 
   async function fetchSettings(userId) {
     const { data, error } = await supabase
@@ -577,16 +631,35 @@ export const AppProvider = ({ children }) => {
     }
   }, [debts, session, notifications, addNotification, currency]);
 
+  // Track connectivity. Setting state from a listener registered by an effect is
+  // fine (unlike setting it in the effect body).
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
   // Auth state listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
         setSettingsRowExists(null);
+        writeLastUserId(session.user.id);
+        setWasSignedIn(true);
         refreshAll(session.user.id);
       } else {
+        // A null session here does NOT mean "signed out" — getSession() also
+        // returns null when a stored token has expired and cannot be refreshed,
+        // i.e. every offline boot after ~1h. Reset in-memory state only; the
+        // user's stored data stays put so the next online boot restores it.
         setSettingsRowExists(null);
-        resetStateToDefaults();
+        resetInMemoryState();
         setBootstrapped(true);
       }
     });
@@ -595,6 +668,8 @@ export const AppProvider = ({ children }) => {
       setSession(session);
       if (session) {
         setSettingsRowExists(null);
+        writeLastUserId(session.user.id);
+        setWasSignedIn(true);
         // No separate "background" mode needed any more: `bootstrapped` only
         // ever goes true, so a token-refresh re-fetch can't flash the splash.
         refreshAll(session.user.id);
@@ -602,13 +677,22 @@ export const AppProvider = ({ children }) => {
         setSettingsRowExists(null);
         setTransactions([]);
         setDebts([]);
-        resetStateToDefaults();
+        // Storage is wiped ONLY for a real sign-out. SIGNED_OUT is emitted
+        // solely by signOut(), so it's a reliable gate; every other falsy-session
+        // event (a failed token refresh while offline, INITIAL_SESSION with no
+        // network) leaves this device's stored data intact.
+        if (event === 'SIGNED_OUT') {
+          resetStateToDefaults();
+          setWasSignedIn(false);
+        } else {
+          resetInMemoryState();
+        }
         setBootstrapped(true);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [resetStateToDefaults, refreshAll]);
+  }, [resetStateToDefaults, resetInMemoryState, refreshAll]);
 
   // Realtime database subscription listener
   useEffect(() => {
@@ -2001,6 +2085,8 @@ export const AppProvider = ({ children }) => {
     syncState,
     dataUnavailable,
     refreshAll,
+    isOnline,
+    wasSignedIn,
     uploadReceiptFile,
     addReceiptAttachment,
     addTransaction,
