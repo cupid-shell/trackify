@@ -48,7 +48,11 @@ const RecentTransactions = ({
     paymentMethods,
     reimbursements,
     debts,
-    recordDebtRepayment
+    recordDebtRepayment,
+    dataUnavailable,
+    syncState,
+    refreshAll,
+    session
   } = useAppContext();
 
   const navigate = useNavigate();
@@ -611,21 +615,56 @@ const RecentTransactions = ({
       </div>
 
       {sortedTx.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">
-            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null || showReimbursableOnly ? '🔍' : '📭'}
+        // Three distinct empty states. The third used to be missing: when the
+        // fetch failed we still said "No transactions yet", which reads as
+        // "your data is gone" rather than "we couldn't reach the server".
+        dataUnavailable ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">📡</div>
+            <h3>Couldn&apos;t load your transactions</h3>
+            <p>
+              {syncState?.lastError
+                ? 'We couldn’t reach the server, so nothing is shown here. Your data is safe — this is a connection problem, not a missing-data one.'
+                : 'We couldn’t reach the server. Your data is safe.'}
+            </p>
+            <button
+              type="button"
+              disabled={syncState?.syncing}
+              onClick={() => session?.user?.id && refreshAll(session.user.id)}
+              style={{
+                marginTop: '1rem',
+                height: '2.5rem',
+                padding: '0 1.25rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--text-main)',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: syncState?.syncing ? 'default' : 'pointer',
+                opacity: syncState?.syncing ? 0.6 : 1,
+              }}
+            >
+              {syncState?.syncing ? 'Retrying…' : 'Try again'}
+            </button>
           </div>
-          <h3>
-            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null || showReimbursableOnly
-              ? 'No matching transactions'
-              : 'No transactions yet'}
-          </h3>
-          <p>
-            {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null || showReimbursableOnly
-              ? 'Try adjusting your filters or search term.'
-              : 'Add your first transaction above to start tracking your finances.'}
-          </p>
-        </div>
+        ) : (
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null || showReimbursableOnly ? '🔍' : '📭'}
+            </div>
+            <h3>
+              {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null || showReimbursableOnly
+                ? 'No matching transactions'
+                : 'No transactions yet'}
+            </h3>
+            <p>
+              {searchTerm || selectedCategory !== 'All' || startDate || endDate || selectedDay !== null || showReimbursableOnly
+                ? 'Try adjusting your filters or search term.'
+                : 'Add your first transaction above to start tracking your finances.'}
+            </p>
+          </div>
+        )
       ) : (
         <div className="flex-col gap-3">
           {sortedTx.map((tx) => {

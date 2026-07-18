@@ -77,7 +77,19 @@ export const AppProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [debts, setDebts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // `bootstrapped` = the first full load attempt has finished (succeeded OR
+  // failed). It replaces the old `loading` flag, which each fetch toggled
+  // independently — so whichever finished first cleared it while the others were
+  // still in flight. refreshAll is now the single writer.
+  const [bootstrapped, setBootstrapped] = useState(false);
+  // One object so a sync transition re-renders consumers once, not per-field.
+  const [syncState, setSyncState] = useState({
+    syncing: false,
+    lastSyncedAt: null,
+    lastError: null,
+    txFailed: false,
+  });
+  const loading = !bootstrapped;
   // Tracks whether a user_settings row was positively found in the database.
   // null = unknown/not yet confirmed (e.g. fetch in flight or failed),
   // true = an existing row was loaded, false = confirmed no row (genuinely new user).
@@ -313,17 +325,23 @@ export const AppProvider = ({ children }) => {
       document.documentElement.style.setProperty('--primary', selected.primary);
       document.documentElement.style.setProperty('--primary-hover', selected.hover);
       document.documentElement.style.setProperty('--primary-glow', selected.glow);
+      return { ok: true, row: data };
     } else if (error && error.code === 'PGRST116') {
       // PGRST116 = no row found via .single() → genuinely a brand-new user.
+      // A legitimate outcome, not a sync failure.
       setSettingsRowExists(false);
+      return { ok: true, row: null };
     }
     // Any other error (network/auth) leaves settingsRowExists unchanged (unknown),
     // so we never misclassify an existing user as new after a failed fetch.
+    return { ok: false, error };
   }
 
 
-  async function fetchTransactions(userId, background = false) {
-    if (!background) setLoading(true);
+  // The fetches no longer own the loading flag (they used to race each other)
+  // and no longer swallow errors — they report outcome to refreshAll, which is
+  // the single place that decides what the user is told.
+  async function fetchTransactions(userId) {
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
@@ -332,12 +350,12 @@ export const AppProvider = ({ children }) => {
 
     if (!error && data) {
       setTransactions(data);
+      return { ok: true, rows: data };
     }
-    if (!background) setLoading(false);
+    return { ok: false, error };
   }
 
-  async function fetchDebts(userId, background = false) {
-    if (!background) setLoading(true);
+  async function fetchDebts(userId) {
     const { data, error } = await supabase
       .from('debts')
       .select('*')
@@ -346,9 +364,38 @@ export const AppProvider = ({ children }) => {
 
     if (!error && data) {
       setDebts(data);
+      return { ok: true, rows: data };
     }
-    if (!background) setLoading(false);
+    return { ok: false, error };
   }
+
+  // Loads everything for a user and is the sole writer of `bootstrapped`.
+  // allSettled (not all) so one failing slice never hides the others, and a
+  // thrown error can't leave the app stuck on the splash screen forever.
+  const refreshAll = useCallback(async (userId) => {
+    if (!userId) return;
+    setSyncState(prev => ({ ...prev, syncing: true }));
+
+    const settled = await Promise.allSettled([
+      fetchTransactions(userId),
+      fetchDebts(userId),
+      fetchSettings(userId),
+    ]);
+    const [tx, dx, sx] = settled.map(s =>
+      s.status === 'fulfilled' ? s.value : { ok: false, error: s.reason }
+    );
+
+    const failures = [tx, dx, sx].filter(r => !r.ok);
+    setBootstrapped(true);
+    setSyncState(prev => ({
+      syncing: false,
+      // Only advance the timestamp on a clean pass, so "synced 5m ago" never
+      // claims more than we actually have.
+      lastSyncedAt: failures.length === 0 ? Date.now() : prev.lastSyncedAt,
+      lastError: failures.length ? (failures[0].error?.message || 'Sync failed') : null,
+      txFailed: !tx.ok,
+    }));
+  }, []);
 
   const hasCheckedAutoLog = useRef(false);
 
@@ -393,11 +440,15 @@ export const AppProvider = ({ children }) => {
   }, [session, addTransaction, showToast]);
 
   useEffect(() => {
-    if (session && !loading && !hasCheckedAutoLog.current && userSettings.recurring_bills && transactions) {
+    // Gated on `bootstrapped`, not `!loading`: once the offline cache lands,
+    // `loading` goes false as soon as cached data paints, but auto-logging must
+    // wait for the real fetch — otherwise an offline boot would re-log bills
+    // that already exist on the server.
+    if (session && bootstrapped && !hasCheckedAutoLog.current && userSettings.recurring_bills && transactions) {
       hasCheckedAutoLog.current = true;
       processAutoLogBills(userSettings.recurring_bills, transactions);
     }
-  }, [session, loading, userSettings.recurring_bills, transactions, processAutoLogBills]);
+  }, [session, bootstrapped, userSettings.recurring_bills, transactions, processAutoLogBills]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -532,13 +583,11 @@ export const AppProvider = ({ children }) => {
       setSession(session);
       if (session) {
         setSettingsRowExists(null);
-        fetchTransactions(session.user.id);
-        fetchSettings(session.user.id);
-        fetchDebts(session.user.id);
+        refreshAll(session.user.id);
       } else {
         setSettingsRowExists(null);
         resetStateToDefaults();
-        setLoading(false);
+        setBootstrapped(true);
       }
     });
 
@@ -546,20 +595,20 @@ export const AppProvider = ({ children }) => {
       setSession(session);
       if (session) {
         setSettingsRowExists(null);
-        fetchTransactions(session.user.id, true);
-        fetchSettings(session.user.id);
-        fetchDebts(session.user.id, true);
+        // No separate "background" mode needed any more: `bootstrapped` only
+        // ever goes true, so a token-refresh re-fetch can't flash the splash.
+        refreshAll(session.user.id);
       } else {
         setSettingsRowExists(null);
         setTransactions([]);
         setDebts([]);
         resetStateToDefaults();
-        setLoading(false);
+        setBootstrapped(true);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [resetStateToDefaults]);
+  }, [resetStateToDefaults, refreshAll]);
 
   // Realtime database subscription listener
   useEffect(() => {
@@ -1898,7 +1947,10 @@ export const AppProvider = ({ children }) => {
   }, [currency]);
 
   const isOnboardingNeeded = useMemo(() => {
-    if (loading || !session) return false;
+    // `bootstrapped`, not `!loading`: onboarding is a decision about what the
+    // SERVER holds, so it must wait for a real fetch even once cached data has
+    // already painted the UI.
+    if (!bootstrapped || !session) return false;
     const completed = userSettings.category_metadata?._onboarding_completed;
     if (completed === true) return false;
     if (completed === false) return true;
@@ -1922,7 +1974,11 @@ export const AppProvider = ({ children }) => {
     }
 
     return true; // Brand new user
-  }, [loading, session, userSettings, transactions, settingsRowExists]);
+  }, [bootstrapped, session, userSettings, transactions, settingsRowExists]);
+
+  // True when we tried to load and failed and have nothing to show. Lets the UI
+  // say "couldn't load" instead of the old lie, "no transactions yet".
+  const dataUnavailable = syncState.txFailed && transactions.length === 0;
 
   const value = {
     session,
@@ -1941,6 +1997,10 @@ export const AppProvider = ({ children }) => {
     baseIncome: Number(userSettings.base_income),
     savingsGoal: Number(userSettings.savings_goal),
     loading,
+    bootstrapped,
+    syncState,
+    dataUnavailable,
+    refreshAll,
     uploadReceiptFile,
     addReceiptAttachment,
     addTransaction,
