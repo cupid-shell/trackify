@@ -489,7 +489,12 @@ export const AppProvider = ({ children }) => {
     // Cache each slice that actually came back, so a partial success still
     // improves what an offline boot can show. Slices that failed keep whatever
     // was previously cached rather than being blanked.
-    const prevCache = readCache(userId);
+    //
+    // Only re-read the old cache when something actually failed: on the normal
+    // all-succeeded path every slice is replaced, so parsing the previous blob
+    // would be a pure waste — and it's a synchronous main-thread JSON.parse of
+    // the user's whole history, which is markedly slower in Firefox.
+    const prevCache = failures.length > 0 ? readCache(userId) : null;
     writeCache(userId, {
       transactions: tx.ok ? { rows: tx.rows, syncedAt: now } : prevCache?.transactions || null,
       debts: dx.ok ? { rows: dx.rows, syncedAt: now } : prevCache?.debts || null,
@@ -618,6 +623,18 @@ export const AppProvider = ({ children }) => {
     });
   }, [session]);
 
+  // flushQueue needs checkTransactionAlerts (a hoisted function declaration, so
+  // a new object every render) and addNotification (rebuilt whenever `session`
+  // changes). Naming them as dependencies would give flushQueue a new identity
+  // on every render — and flushQueue is itself in the auth effect's dependency
+  // array, so that effect would tear down and re-subscribe onAuthStateChange
+  // and re-run getSession() every render, each round triggering refreshAll and
+  // another render. Holding them behind a ref keeps flushQueue stable.
+  const flushHelpers = useRef({});
+  useEffect(() => {
+    flushHelpers.current = { checkTransactionAlerts, addNotification };
+  });
+
   // Sends queued inserts one at a time, oldest first.
   //
   // Serial rather than one bulk insert on purpose: a bulk insert fails
@@ -699,20 +716,20 @@ export const AppProvider = ({ children }) => {
       syncedRows.forEach((row) => {
         if (seen.has(row.category)) return;
         seen.add(row.category);
-        checkTransactionAlerts(row);
+        flushHelpers.current.checkTransactionAlerts?.(row);
       });
     }
 
     const after = readQueue(userId);
     if (after && failedCount(after) > 0) {
-      addNotification(
+      flushHelpers.current.addNotification?.(
         'Some entries could not sync',
         `${failedCount(after)} entry(s) could not be saved to the server. Open History to retry or discard them.`,
         'warning',
         'sync-failed'
       );
     }
-  }, [commitQueue, showToast, checkTransactionAlerts, addNotification]);
+  }, [commitQueue, showToast]);
 
   const retryPendingItem = useCallback((id) => {
     commitQueue(resetItem(readQueue(activeUserId), id, Date.now()));
