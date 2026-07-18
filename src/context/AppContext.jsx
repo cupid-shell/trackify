@@ -10,6 +10,7 @@ import { formatCurrency, getCurrencySymbol } from '../utils/currency';
 import { isVersionNewer } from '../utils/version';
 import { parseLocalDate } from '../utils/date';
 import { filterByMonth, computeMonthTotals, computeRollovers } from '../utils/finance';
+import { mapSettingsRow, readSkippedBills } from '../utils/settingsMapping';
 
 const AppContext = createContext();
 
@@ -265,35 +266,13 @@ export const AppProvider = ({ children }) => {
       setSettingsRowExists(true);
       const categoryMetadata = data.category_metadata || {};
 
-      const loadedPresets = data.presets !== undefined && data.presets !== null
-        ? data.presets
-        : (categoryMetadata._presets !== undefined ? categoryMetadata._presets : defaultPresets);
+      const mapped = mapSettingsRow(data, defaultSettings);
+      const loadedPresets = mapped.presets;
+      const loadedRecurringBills = mapped.recurring_bills;
+      const loadedNotificationPrefs = mapped.notification_preferences;
+      const loadedSkippedBills = readSkippedBills(data);
 
-      const loadedRecurringBills = data.recurring_bills !== undefined && data.recurring_bills !== null
-        ? data.recurring_bills
-        : (categoryMetadata._recurring_bills !== undefined ? categoryMetadata._recurring_bills : defaultRecurringBills);
-
-      const loadedNotificationPrefs = data.notification_preferences !== undefined && data.notification_preferences !== null
-        ? data.notification_preferences
-        : (categoryMetadata._notification_preferences !== undefined ? categoryMetadata._notification_preferences : defaultNotificationPrefs);
-
-      const loadedSkippedBills = categoryMetadata._skipped_bills || [];
-
-      const loadedCurrency = categoryMetadata._currency || 'BDT';
-
-      setUserSettings({
-        base_income: data.base_income || 15000,
-        savings_goal: data.savings_goal || 3000,
-        expense_categories: data.expense_categories || ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
-        income_categories: data.income_categories || ["Allowance", "Bonus", "Other"],
-        category_budgets: data.category_budgets || {},
-        savings_goals: data.savings_goals || [],
-        category_metadata: categoryMetadata,
-        presets: loadedPresets,
-        recurring_bills: loadedRecurringBills,
-        notification_preferences: loadedNotificationPrefs,
-        currency: loadedCurrency
-      });
+      setUserSettings(mapped);
 
       if (loadedPresets != null) {
         setPresets(loadedPresets);
@@ -650,34 +629,15 @@ export const AppProvider = ({ children }) => {
         { event: '*', schema: 'public', table: 'user_settings' },
         (payload) => {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            const categoryMetadata = payload.new.category_metadata || {};
-            
-            const loadedPresets = payload.new.presets !== undefined && payload.new.presets !== null
-              ? payload.new.presets
-              : (categoryMetadata._presets !== undefined ? categoryMetadata._presets : defaultPresets);
+            // Same mapping as fetchSettings — this copy had drifted and was
+            // dropping `currency`, so a settings save in another tab reset it.
+            const mapped = mapSettingsRow(payload.new, defaultSettings);
+            const loadedPresets = mapped.presets;
+            const loadedRecurringBills = mapped.recurring_bills;
+            const loadedNotificationPrefs = mapped.notification_preferences;
+            const loadedSkippedBills = readSkippedBills(payload.new);
 
-            const loadedRecurringBills = payload.new.recurring_bills !== undefined && payload.new.recurring_bills !== null
-              ? payload.new.recurring_bills
-              : (categoryMetadata._recurring_bills !== undefined ? categoryMetadata._recurring_bills : defaultRecurringBills);
-
-            const loadedNotificationPrefs = payload.new.notification_preferences !== undefined && payload.new.notification_preferences !== null
-              ? payload.new.notification_preferences
-              : (categoryMetadata._notification_preferences !== undefined ? categoryMetadata._notification_preferences : defaultNotificationPrefs);
-
-            const loadedSkippedBills = categoryMetadata._skipped_bills || [];
-
-            setUserSettings({
-              base_income: payload.new.base_income || 15000,
-              savings_goal: payload.new.savings_goal || 3000,
-              expense_categories: payload.new.expense_categories || ["Seat Rent", "Utility Bill", "Gas Bill (Cylinder)", "Personal Expenses", "Food & Dining", "Transport", "Other / Miscellaneous"],
-              income_categories: payload.new.income_categories || ["Allowance", "Bonus", "Other"],
-              category_budgets: payload.new.category_budgets || {},
-              savings_goals: payload.new.savings_goals || [],
-              category_metadata: categoryMetadata,
-              presets: loadedPresets,
-              recurring_bills: loadedRecurringBills,
-              notification_preferences: loadedNotificationPrefs
-            });
+            setUserSettings(mapped);
 
             if (loadedPresets != null) {
               setPresets(loadedPresets);
