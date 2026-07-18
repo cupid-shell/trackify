@@ -12,6 +12,13 @@ import { parseLocalDate } from '../utils/date';
 import { filterByMonth, computeMonthTotals, computeRollovers } from '../utils/finance';
 import { mapSettingsRow, readSkippedBills } from '../utils/settingsMapping';
 import { readCache, writeCache, clearCache, cacheSyncedAt } from '../utils/offlineCache';
+import { v4 as uuidv4 } from 'uuid';
+import { isNetworkError, isDuplicateKeyError, describeSyncError } from '../utils/network';
+import {
+  readQueue, writeQueue, clearQueue, emptyQueue,
+  createPendingItem, enqueueMany, dequeue, markAttempt, markFailed, resetItem,
+  dueItems, pendingCount, failedCount,
+} from '../utils/offlineQueue';
 
 const AppContext = createContext();
 
@@ -54,6 +61,16 @@ const bootCache = readCache(bootLastUserId);
 // so mutating it stays outside the compiler's render analysis. Needed because a
 // SIGNED_OUT event carries no session, so it can't tell us whose cache to clear.
 let activeUserId = bootLastUserId;
+
+// Guards against two flush passes running at once (e.g. the `online` event and
+// the interval firing together), which would double-send the same item.
+// Module scope, like pendingTxDeletes, to stay out of render analysis.
+let flushInFlight = false;
+
+// Set for the duration of a flush pass. Reconnecting with five queued expenses
+// must not fire five separate budget notifications; one aggregate check runs
+// after the pass instead.
+let suppressAlerts = false;
 
 const writeLastUserId = (userId) => {
   try {
@@ -492,6 +509,22 @@ export const AppProvider = ({ children }) => {
     }));
   }, []);
 
+  // ---- Offline write queue -------------------------------------------------
+  // Holds transaction inserts that haven't reached the server. Unlike the cache
+  // this is the ONLY copy of what the user typed, so nothing is ever dropped
+  // without asking.
+
+  const [pendingQueue, setPendingQueue] = useState(
+    () => readQueue(bootLastUserId) || emptyQueue(bootLastUserId)
+  );
+
+  // Persist first, then project into React state — localStorage is the source
+  // of truth (flushQueue re-reads it every iteration).
+  const commitQueue = useCallback((next) => {
+    writeQueue(next);
+    setPendingQueue(next);
+  }, []);
+
   const hasCheckedAutoLog = useRef(false);
 
   const processAutoLogBills = useCallback(async (bills, existingTransactions) => {
@@ -585,6 +618,113 @@ export const AppProvider = ({ children }) => {
     });
   }, [session]);
 
+  // Sends queued inserts one at a time, oldest first.
+  //
+  // Serial rather than one bulk insert on purpose: a bulk insert fails
+  // atomically, so a single poisoned row (a category renamed underneath it, an
+  // RLS edge) would block everything behind it forever. Serial gives per-item
+  // isolation for a negligible cost at these volumes.
+  const flushQueue = useCallback(async () => {
+    const userId = activeUserId;
+    if (!userId || flushInFlight) return;
+
+    const start = readQueue(userId);
+    if (!start || dueItems(start, Date.now()).length === 0) return;
+
+    flushInFlight = true;
+    suppressAlerts = true;
+    const syncedRows = [];
+
+    try {
+      for (;;) {
+        const q = readQueue(userId);
+        const due = q ? dueItems(q, Date.now()) : [];
+        if (due.length === 0) break;
+        const item = due[0];
+
+        // The client-supplied id IS the primary key, which is what makes a
+        // replay safe: if a previous attempt actually landed and we merely lost
+        // the response, this collides instead of inserting a duplicate.
+        const { data, error } = await supabase
+          .from('transactions')
+          .insert([{ id: item.id, ...item.payload }])
+          .select()
+          .single();
+
+        if (!error && data) {
+          commitQueue(dequeue(readQueue(userId), item.id));
+          setTransactions(prev => (
+            prev.some(t => t.id === data.id)
+              ? prev.map(t => (t.id === data.id ? data : t))
+              : [data, ...prev]
+          ));
+          syncedRows.push(data);
+          continue;
+        }
+
+        if (isDuplicateKeyError(error)) {
+          // Already on the server from an earlier attempt — success, not failure.
+          commitQueue(dequeue(readQueue(userId), item.id));
+          continue;
+        }
+
+        if (isNetworkError(error)) {
+          // Still offline. Stop the whole pass rather than burning an attempt on
+          // every remaining item for the same reason.
+          commitQueue(markAttempt(readQueue(userId), item.id, {
+            now: Date.now(),
+            error: describeSyncError(error),
+            rand: Math.random(),
+          }));
+          break;
+        }
+
+        // Permanent: this item can never succeed, but the rest still might.
+        commitQueue(markFailed(readQueue(userId), item.id, describeSyncError(error)));
+      }
+    } finally {
+      flushInFlight = false;
+      suppressAlerts = false;
+    }
+
+    if (syncedRows.length > 0) {
+      showToast(
+        syncedRows.length === 1
+          ? 'Synced 1 offline entry.'
+          : `Synced ${syncedRows.length} offline entries.`,
+        'success'
+      );
+      // One alert per affected category, not one per synced row.
+      const seen = new Set();
+      syncedRows.forEach((row) => {
+        if (seen.has(row.category)) return;
+        seen.add(row.category);
+        checkTransactionAlerts(row);
+      });
+    }
+
+    const after = readQueue(userId);
+    if (after && failedCount(after) > 0) {
+      addNotification(
+        'Some entries could not sync',
+        `${failedCount(after)} entry(s) could not be saved to the server. Open History to retry or discard them.`,
+        'warning',
+        'sync-failed'
+      );
+    }
+  }, [commitQueue, showToast, checkTransactionAlerts, addNotification]);
+
+  const retryPendingItem = useCallback((id) => {
+    commitQueue(resetItem(readQueue(activeUserId), id, Date.now()));
+    flushQueue();
+  }, [commitQueue, flushQueue]);
+
+  const discardPendingItem = useCallback((id) => {
+    commitQueue(dequeue(readQueue(activeUserId), id));
+    setTransactions(prev => prev.filter(t => t.id !== id));
+  }, [commitQueue]);
+
+
   const markAllNotificationsRead = () => {
     setNotifications(prev => {
       const updated = prev.map(n => ({ ...n, read: true }));
@@ -672,18 +812,46 @@ export const AppProvider = ({ children }) => {
     }
   }, [debts, session, notifications, addNotification, currency]);
 
-  // Track connectivity. Setting state from a listener registered by an effect is
-  // fine (unlike setting it in the effect body).
+  // Track connectivity and flush the queue whenever the network might be back.
+  // Setting state from a listener registered by an effect is fine (unlike
+  // setting it in the effect body).
+  //
+  // Several triggers because none is reliable alone: `online` doesn't fire in a
+  // backgrounded Android WebView, visibilitychange is the web equivalent, and
+  // navigator.onLine can claim a captive portal is a working connection — so a
+  // slow interval backstops them and a real request is the actual proof.
   useEffect(() => {
-    const goOnline = () => setIsOnline(true);
+    const goOnline = () => { setIsOnline(true); flushQueue(); };
     const goOffline = () => setIsOnline(false);
+    const onVisible = () => { if (document.visibilityState === 'visible') flushQueue(); };
+
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
+    document.addEventListener('visibilitychange', onVisible);
+
+    // Backstop while anything is waiting. Cheap: flushQueue returns immediately
+    // when nothing is due, and flushInFlight prevents overlap.
+    const interval = setInterval(() => {
+      if (navigator.onLine !== false) flushQueue();
+    }, 60_000);
+
+    // Android: the app is usually suspended rather than closed, so resuming is
+    // the moment connectivity realistically returns.
+    let appStateListener;
+    if (Capacitor.isNativePlatform()) {
+      App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) flushQueue();
+      }).then((l) => { appStateListener = l; });
+    }
+
     return () => {
       window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
+      document.removeEventListener('visibilitychange', onVisible);
+      clearInterval(interval);
+      if (appStateListener) appStateListener.remove();
     };
-  }, []);
+  }, [flushQueue]);
 
   // Auth state listener
   useEffect(() => {
@@ -702,7 +870,10 @@ export const AppProvider = ({ children }) => {
         activeUserId = session.user.id;
         writeLastUserId(session.user.id);
         setWasSignedIn(true);
-        refreshAll(session.user.id);
+        setPendingQueue(readQueue(session.user.id) || emptyQueue(session.user.id));
+        // Flush after the refresh: a successful fetch is real proof the network
+        // works, which navigator.onLine can only guess at.
+        refreshAll(session.user.id).then(() => flushQueue());
       } else {
         // A null session here does NOT mean "signed out" — getSession() also
         // returns null when a stored token has expired and cannot be refreshed,
@@ -733,6 +904,11 @@ export const AppProvider = ({ children }) => {
         // network) leaves this device's stored data intact.
         if (event === 'SIGNED_OUT') {
           clearCache(activeUserId);
+          // Signing out is an explicit, deliberate act, so dropping unsynced
+          // work with it is expected — unlike an offline token expiry, which
+          // never reaches this branch.
+          clearQueue(activeUserId);
+          setPendingQueue(emptyQueue(null));
           activeUserId = null;
           resetStateToDefaults();
           setWasSignedIn(false);
@@ -744,7 +920,7 @@ export const AppProvider = ({ children }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [resetStateToDefaults, resetInMemoryState, refreshAll]);
+  }, [resetStateToDefaults, resetInMemoryState, refreshAll, flushQueue]);
 
   // Realtime database subscription listener
   useEffect(() => {
@@ -757,19 +933,13 @@ export const AppProvider = ({ children }) => {
         { event: '*', schema: 'public', table: 'transactions' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setTransactions(prev => {
-              if (prev.some(t => t.id === payload.new.id)) return prev;
-              const tempIndex = prev.findIndex(t => 
-                t.id.toString().startsWith('temp-') && 
-                t.amount == payload.new.amount && 
-                t.category === payload.new.category &&
-                new Date(t.date).getTime() === new Date(payload.new.date).getTime()
-              );
-              if (tempIndex !== -1) {
-                return prev.map((t, idx) => idx === tempIndex ? payload.new : t);
-              }
-              return [payload.new, ...prev];
-            });
+            // Transaction ids are now generated client-side, so the local row
+            // and the echoed insert share an id — a plain id check is enough.
+            // The old fuzzy match (temp- prefix + same amount/category/date)
+            // existed only to reconcile server-assigned ids and is gone.
+            setTransactions(prev => (
+              prev.some(t => t.id === payload.new.id) ? prev : [payload.new, ...prev]
+            ));
           } else if (payload.eventType === 'UPDATE') {
             setTransactions(prev => prev.map(t => t.id === payload.new.id ? payload.new : t));
           } else if (payload.eventType === 'DELETE') {
@@ -1321,51 +1491,59 @@ export const AppProvider = ({ children }) => {
   async function addTransaction(transaction) {
     if (!session?.user) return null;
 
-    // Optimistic UI update
-    // eslint-disable-next-line react-hooks/purity
-    const tempId = `temp-${Date.now()}`;
-    const newTx = { ...transaction, id: tempId, user_id: session.user.id };
-    setTransactions(prev => [newTx, ...prev]);
+    // The id is generated here and sent to the server, rather than letting
+    // Postgres default it. That's what makes an offline retry safe (a replay
+    // collides on the primary key instead of duplicating) and it means a queued
+    // row never has to be re-keyed once it syncs.
+    const id = uuidv4();
+    const payload = {
+      user_id: session.user.id,
+      type: transaction.type,
+      amount: transaction.amount,
+      category: transaction.category,
+      date: transaction.date,
+      note: transaction.note,
+      payment_method: transaction.payment_method || 'Cash',
+      debt_id: transaction.debt_id || null
+    };
+
+    const optimistic = { ...transaction, ...payload, id };
+    setTransactions(prev => [optimistic, ...prev]);
 
     const { data, error } = await supabase
       .from('transactions')
-      .insert([
-        {
-          user_id: session.user.id,
-          type: transaction.type,
-          amount: transaction.amount,
-          category: transaction.category,
-          date: transaction.date,
-          note: transaction.note,
-          payment_method: transaction.payment_method || 'Cash',
-          debt_id: transaction.debt_id || null
-        }
-      ])
+      .insert([{ id, ...payload }])
       .select()
       .single();
 
     if (!error && data) {
-      setTransactions(prev => prev.map(tx => tx.id === tempId ? data : tx));
+      setTransactions(prev => prev.map(tx => tx.id === id ? data : tx));
       checkTransactionAlerts(data);
       return data;
-    } else {
-      setTransactions(prev => prev.filter(tx => tx.id !== tempId));
-      showToast('Error adding transaction: ' + error.message, 'error');
-      return null;
     }
+
+    if (isNetworkError(error) || !isOnline) {
+      // Keep the row on screen and park the write — losing what the user just
+      // typed because the signal dropped is the bug this whole thing exists for.
+      commitQueue(enqueueMany(readQueue(session.user.id), [
+        createPendingItem({ payload, now: Date.now(), id })
+      ]));
+      showToast('Saved on this device — will sync when you’re back online.', 'info');
+      return optimistic;
+    }
+
+    // A real rejection from the server: roll back, as before.
+    setTransactions(prev => prev.filter(tx => tx.id !== id));
+    showToast('Error adding transaction: ' + describeSyncError(error), 'error');
+    return null;
   }
 
   async function addTransactions(transactionList) {
     if (!session?.user || !transactionList || transactionList.length === 0) return null;
 
-    // Optimistic UI: generate temp IDs and push all rows at once
-    const tempRows = transactionList.map((tx, i) => ({
-      ...tx,
-      id: `temp-${Date.now()}-${i}`,
-      user_id: session.user.id
-    }));
-    setTransactions(prev => [...tempRows, ...prev]);
-
+    // Client-generated ids, same reasoning as addTransaction. They also let the
+    // caller keep its rows[i] <-> result[i] correspondence without guessing.
+    const ids = transactionList.map(() => uuidv4());
     const insertPayload = transactionList.map(tx => ({
       user_id: session.user.id,
       type: tx.type,
@@ -1377,25 +1555,46 @@ export const AppProvider = ({ children }) => {
       debt_id: tx.debt_id || null
     }));
 
+    const optimisticRows = transactionList.map((tx, i) => ({ ...tx, ...insertPayload[i], id: ids[i] }));
+    setTransactions(prev => [...optimisticRows, ...prev]);
+
     const { data, error } = await supabase
       .from('transactions')
-      .insert(insertPayload)
+      .insert(insertPayload.map((p, i) => ({ id: ids[i], ...p })))
       .select();
 
     if (!error && data) {
-      // Replace temp rows with real rows
       setTransactions(prev => {
-        const withoutTemps = prev.filter(tx => !tempRows.some(t => t.id === tx.id));
-        return [...data, ...withoutTemps];
+        const withoutOptimistic = prev.filter(tx => !ids.includes(tx.id));
+        return [...data, ...withoutOptimistic];
       });
       data.forEach(tx => checkTransactionAlerts(tx));
       return data;
-    } else {
-      // Rollback optimistic rows
-      setTransactions(prev => prev.filter(tx => !tempRows.some(t => t.id === tx.id)));
-      showToast('Error adding transactions: ' + (error?.message || 'Unknown error'), 'error');
-      return null;
     }
+
+    if (isNetworkError(error) || !isOnline) {
+      const now = Date.now();
+      const batchId = ids[0];
+      commitQueue(enqueueMany(
+        readQueue(session.user.id),
+        insertPayload.map((payload, i) => createPendingItem({
+          payload, now, id: ids[i], batchId, batchIndex: i,
+        }))
+      ));
+      showToast(
+        transactionList.length === 1
+          ? 'Saved on this device — will sync when you’re back online.'
+          : `${transactionList.length} entries saved on this device — they’ll sync when you’re back online.`,
+        'info'
+      );
+      // Same shape as the success path so callers can treat it uniformly; the
+      // ids are final, so reimbursable links made against them stay valid.
+      return optimisticRows;
+    }
+
+    setTransactions(prev => prev.filter(tx => !ids.includes(tx.id)));
+    showToast('Error adding transactions: ' + describeSyncError(error), 'error');
+    return null;
   };
 
   // --- Reimbursable expenses ------------------------------------------------
@@ -1480,6 +1679,17 @@ export const AppProvider = ({ children }) => {
   const deleteTransaction = (id, opts = {}) => {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
+
+    // A row still in the queue was never sent, so there is nothing on the
+    // server to delete — drop it locally and cancel the pending write. Going
+    // through commitDelete would issue a DELETE for a row that doesn't exist
+    // and, worse, leave the insert queued to resurrect it later.
+    if (pendingQueue.items.some(i => i.id === id)) {
+      commitQueue(dequeue(readQueue(activeUserId), id));
+      setTransactions(prev => prev.filter(t => t.id !== id));
+      showToast('Unsynced entry removed', 'info');
+      return;
+    }
     // If asked, also remove the linked Ledger receivable when the delete commits.
     const debtId = opts.alsoDeleteDebt ? (userSettings.category_metadata?._reimbursable?.[id] || null) : null;
 
@@ -1890,7 +2100,15 @@ export const AppProvider = ({ children }) => {
     }
   }, [transactions, recurringBills, currency]);
 
-  const checkTransactionAlerts = async (newTx) => {
+  // A hoisted function declaration, not a const arrow: flushQueue is defined
+  // far above and names this in its dependency array, which is evaluated during
+  // render. A `const` would be in the temporal dead zone at that point and throw.
+  // Same reason addTransaction/addTransactions are declarations.
+  async function checkTransactionAlerts(newTx) {
+    // Suppressed mid-flush: reconnecting with several queued expenses would
+    // otherwise fire one notification per row. flushQueue runs a single
+    // per-category check once the pass finishes.
+    if (suppressAlerts) return;
     if (!Capacitor.isNativePlatform() || newTx.type !== 'expense') return;
     
     // 1. Budget Alerts & Exhaustion Warnings
@@ -1998,7 +2216,7 @@ export const AppProvider = ({ children }) => {
         }
       }
     }
-  };
+  }
 
   const checkSavingsMilestone = async (goal, nextAmount) => {
     if (!Capacitor.isNativePlatform()) return;
@@ -2116,6 +2334,18 @@ export const AppProvider = ({ children }) => {
   // say "couldn't load" instead of the old lie, "no transactions yet".
   const dataUnavailable = syncState.txFailed && transactions.length === 0;
 
+  // "Is this row unsynced?" answered by an id lookup rather than a field on the
+  // transaction, so tx objects keep exactly the server-row shape and can't leak
+  // a marker into the cache or the CSV/PDF exports.
+  const pendingById = useMemo(() => {
+    const map = {};
+    pendingQueue.items.forEach((i) => { map[i.id] = i; });
+    return map;
+  }, [pendingQueue]);
+
+  const pendingSyncCount = pendingCount(pendingQueue);
+  const failedSyncCount = failedCount(pendingQueue);
+
   const value = {
     session,
     currency,
@@ -2139,6 +2369,12 @@ export const AppProvider = ({ children }) => {
     refreshAll,
     isOnline,
     wasSignedIn,
+    pendingById,
+    pendingSyncCount,
+    failedSyncCount,
+    retryPendingItem,
+    discardPendingItem,
+    flushQueue,
     uploadReceiptFile,
     addReceiptAttachment,
     addTransaction,

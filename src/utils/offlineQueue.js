@@ -164,6 +164,43 @@ const isValidItem = (i) =>
 // Unlike the cache, a queue holds data that exists nowhere else — so a single
 // corrupt entry drops THAT ENTRY, not the whole queue. Only a wholly unusable
 // blob (bad JSON, wrong version, wrong user) yields null.
+// ---------------------------------------------------------------------------
+// Impure localStorage shell. localStorage — not React state — is the source of
+// truth for the queue: flushQueue re-reads it on every iteration, which kills
+// stale-closure bugs and makes a second tab's progress visible mid-pass.
+// ---------------------------------------------------------------------------
+
+export const readQueue = (userId) => {
+  if (!userId) return null;
+  try {
+    return deserializeQueue(localStorage.getItem(queueKey(userId)), userId) || emptyQueue(userId);
+  } catch {
+    return emptyQueue(userId);
+  }
+};
+
+// The queue is always written BEFORE the cache: a quota failure must never be
+// able to lose unsynced user data in order to store a disposable copy of server
+// data. Returns false if it could not be persisted.
+export const writeQueue = (queue) => {
+  if (!queue?.userId) return false;
+  try {
+    localStorage.setItem(queueKey(queue.userId), serializeQueue(queue));
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const clearQueue = (userId) => {
+  if (!userId) return;
+  try {
+    localStorage.removeItem(queueKey(userId));
+  } catch {
+    // Nothing useful to do.
+  }
+};
+
 export const deserializeQueue = (raw, expectedUserId) => {
   if (typeof raw !== 'string' || raw.length === 0) return null;
 
