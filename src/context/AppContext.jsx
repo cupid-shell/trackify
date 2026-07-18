@@ -11,6 +11,7 @@ import { isVersionNewer } from '../utils/version';
 import { parseLocalDate } from '../utils/date';
 import { filterByMonth, computeMonthTotals, computeRollovers } from '../utils/finance';
 import { mapSettingsRow, readSkippedBills } from '../utils/settingsMapping';
+import { readCache, writeCache, clearCache, cacheSyncedAt } from '../utils/offlineCache';
 
 const AppContext = createContext();
 
@@ -38,6 +39,21 @@ const bootLastUserId = (() => {
 // lies behind captive portals. Treated as a hint — a successful request is the
 // real liveness proof.
 const initialOnline = typeof navigator === 'undefined' ? true : navigator.onLine !== false;
+
+// Last-synced snapshot, read ONCE at module load. Module scope (not a ref, not
+// an effect) for two reasons: it happens before first paint so there is no empty
+// frame, and it keeps a localStorage read out of render, which the React
+// Compiler's purity rule would otherwise flag.
+//
+// The cache is applied only in the lazy initializers below — never after the
+// first render. That is what makes "stale cache clobbers fresh server data"
+// impossible by construction: the server always overwrites wholesale.
+const bootCache = readCache(bootLastUserId);
+
+// Who the loaded data currently belongs to. Module scope (like pendingTxDeletes)
+// so mutating it stays outside the compiler's render analysis. Needed because a
+// SIGNED_OUT event carries no session, so it can't tell us whose cache to clear.
+let activeUserId = bootLastUserId;
 
 const writeLastUserId = (userId) => {
   try {
@@ -104,26 +120,31 @@ const defaultSettings = {
 
 export const AppProvider = ({ children }) => {
   const [session, setSession] = useState(null);
-  const [transactions, setTransactions] = useState([]);
-  const [debts, setDebts] = useState([]);
+  const [transactions, setTransactions] = useState(() => bootCache?.transactions?.rows || []);
+  const [debts, setDebts] = useState(() => bootCache?.debts?.rows || []);
   // `bootstrapped` = the first full load attempt has finished (succeeded OR
   // failed). It replaces the old `loading` flag, which each fetch toggled
   // independently — so whichever finished first cleared it while the others were
   // still in flight. refreshAll is now the single writer.
   const [bootstrapped, setBootstrapped] = useState(false);
   // One object so a sync transition re-renders consumers once, not per-field.
+  // lastSyncedAt is seeded from the cache so an offline boot can say how old
+  // what you're looking at actually is.
   const [syncState, setSyncState] = useState({
     syncing: false,
-    lastSyncedAt: null,
+    lastSyncedAt: cacheSyncedAt(bootCache),
     lastError: null,
     txFailed: false,
   });
+  // Whether this render started from cached data. Drives `loading` so a cached
+  // boot paints immediately instead of sitting on the splash screen.
+  const hydratedFromCache = bootCache !== null;
   const [isOnline, setIsOnline] = useState(initialOnline);
   // Whether someone was signed in on this device before this boot. Lets an
   // offline boot with an unrefreshable token show an honest "you're offline"
   // screen instead of a sign-in form that cannot possibly work.
   const [wasSignedIn, setWasSignedIn] = useState(() => bootLastUserId !== null);
-  const loading = !bootstrapped;
+  const loading = !bootstrapped && !hydratedFromCache;
   // Tracks whether a user_settings row was positively found in the database.
   // null = unknown/not yet confirmed (e.g. fetch in flight or failed),
   // true = an existing row was loaded, false = confirmed no row (genuinely new user).
@@ -214,7 +235,13 @@ export const AppProvider = ({ children }) => {
   }, []);
   
   // Settings state
-  const [userSettings, setUserSettings] = useState(defaultSettings);
+  // Hydrated from the cached RAW settings row through the same mapping the live
+  // fetch uses, so a cached boot is byte-identical to a fetched one.
+  const [userSettings, setUserSettings] = useState(() => (
+    bootCache?.settings?.row
+      ? mapSettingsRow(bootCache.settings.row, defaultSettings)
+      : defaultSettings
+  ));
   const currency = userSettings.currency || 'BDT';
 
   const [presets, setPresets] = useState(() => {
@@ -440,12 +467,26 @@ export const AppProvider = ({ children }) => {
     );
 
     const failures = [tx, dx, sx].filter(r => !r.ok);
+    const now = Date.now();
+
+    // Cache each slice that actually came back, so a partial success still
+    // improves what an offline boot can show. Slices that failed keep whatever
+    // was previously cached rather than being blanked.
+    const prevCache = readCache(userId);
+    writeCache(userId, {
+      transactions: tx.ok ? { rows: tx.rows, syncedAt: now } : prevCache?.transactions || null,
+      debts: dx.ok ? { rows: dx.rows, syncedAt: now } : prevCache?.debts || null,
+      // sx.row is null for a brand-new user with no settings row yet — nothing
+      // worth caching, and null would fail validation on read.
+      settings: sx.ok && sx.row ? { row: sx.row, syncedAt: now } : prevCache?.settings || null,
+    });
+
     setBootstrapped(true);
     setSyncState(prev => ({
       syncing: false,
       // Only advance the timestamp on a clean pass, so "synced 5m ago" never
       // claims more than we actually have.
-      lastSyncedAt: failures.length === 0 ? Date.now() : prev.lastSyncedAt,
+      lastSyncedAt: failures.length === 0 ? now : prev.lastSyncedAt,
       lastError: failures.length ? (failures[0].error?.message || 'Sync failed') : null,
       txFailed: !tx.ok,
     }));
@@ -650,6 +691,15 @@ export const AppProvider = ({ children }) => {
       setSession(session);
       if (session) {
         setSettingsRowExists(null);
+        // A different user than the cache we hydrated from: drop the hydrated
+        // state immediately so their numbers are never shown to this account.
+        // The other user's cache is left alone — it's theirs, not ours to bin.
+        if (activeUserId && activeUserId !== session.user.id) {
+          setTransactions([]);
+          setDebts([]);
+          resetInMemoryState();
+        }
+        activeUserId = session.user.id;
         writeLastUserId(session.user.id);
         setWasSignedIn(true);
         refreshAll(session.user.id);
@@ -682,6 +732,8 @@ export const AppProvider = ({ children }) => {
         // event (a failed token refresh while offline, INITIAL_SESSION with no
         // network) leaves this device's stored data intact.
         if (event === 'SIGNED_OUT') {
+          clearCache(activeUserId);
+          activeUserId = null;
           resetStateToDefaults();
           setWasSignedIn(false);
         } else {
