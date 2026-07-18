@@ -1,9 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { LogOut, LayoutDashboard, History, PieChart, Settings, Bell, Trash2, Coins, Sun, Moon, Menu, X } from 'lucide-react';
+import { LogOut, LayoutDashboard, History, PieChart, Settings, Bell, Trash2, Coins, Sun, Moon, Menu, X, CloudOff, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { formatRelativeTime } from '../utils/date';
 import { supabase } from '../supabaseClient';
 import { Link, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
+
+// Seeded at module load, outside render: Date.now() is impure and the React
+// Compiler rejects calling it during render. A ticking state value also makes
+// "synced 5m ago" actually count up instead of freezing at first paint.
+const bootNow = Date.now();
 
 const NavLink = ({ to, icon: Icon, label }) => {
   const location = useLocation();
@@ -58,7 +64,51 @@ const DrawerNavLink = ({ to, icon: Icon, label, onClick }) => {
 };
 
 const Header = () => {
-  const { session, notifications, markAllNotificationsRead, clearNotifications, themeMode, toggleThemeMode } = useAppContext();
+  const {
+    session, notifications, markAllNotificationsRead, clearNotifications, themeMode, toggleThemeMode,
+    isOnline, syncState, pendingSyncCount, failedSyncCount,
+  } = useAppContext();
+
+  const [nowTs, setNowTs] = useState(bootNow);
+  useEffect(() => {
+    const t = setInterval(() => setNowTs(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Worst-first: a failed entry needs attention more than a pending one, and
+  // being offline explains both. Null when there is nothing worth saying.
+  const syncChip = (() => {
+    if (failedSyncCount > 0) {
+      return {
+        color: 'var(--danger)',
+        bg: 'var(--danger-bg)',
+        icon: <AlertTriangle size={12} />,
+        label: `${failedSyncCount} didn’t sync`,
+        title: 'Some entries could not be saved. Open History to retry or discard them.',
+      };
+    }
+    if (!isOnline) {
+      return {
+        color: 'var(--warning)',
+        bg: 'var(--warning-bg)',
+        icon: <CloudOff size={12} />,
+        label: pendingSyncCount > 0 ? `Offline · ${pendingSyncCount} pending` : 'Offline',
+        title: syncState?.lastSyncedAt
+          ? `Showing data last synced ${formatRelativeTime(syncState.lastSyncedAt, nowTs)}.`
+          : 'You are offline. Changes are saved on this device.',
+      };
+    }
+    if (pendingSyncCount > 0) {
+      return {
+        color: 'var(--warning)',
+        bg: 'var(--warning-bg)',
+        icon: <RefreshCw size={12} />,
+        label: `Syncing ${pendingSyncCount}`,
+        title: 'Entries saved on this device are being sent to the server.',
+      };
+    }
+    return null;
+  })();
   const [isOpen, setIsOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -508,6 +558,30 @@ const Header = () => {
 
         {session && (
           <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
+            {/* Sync status. Deliberately renders nothing on the happy path —
+                a permanent "all good" badge is chrome, not information. */}
+            {syncChip && (
+              <span
+                className="sync-chip"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  padding: '0.25rem 0.55rem',
+                  borderRadius: 'var(--radius-full)',
+                  border: `1px solid ${syncChip.color}`,
+                  background: syncChip.bg,
+                  color: syncChip.color,
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}
+                title={syncChip.title}
+              >
+                {syncChip.icon}
+                <span className="sync-chip-label">{syncChip.label}</span>
+              </span>
+            )}
             {/* Notification Bell Dropdown */}
             <div className="relative-container" ref={dropdownRef}>
               <button 

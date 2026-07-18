@@ -1569,7 +1569,10 @@ export const AppProvider = ({ children }) => {
         return [...data, ...withoutOptimistic];
       });
       data.forEach(tx => checkTransactionAlerts(tx));
-      return data;
+      // { rows, queued } rather than a bare array so the caller can tell
+      // "saved on the server" from "parked on this device" and not claim the
+      // wrong thing in its own toast.
+      return { rows: data, queued: false };
     }
 
     if (isNetworkError(error) || !isOnline) {
@@ -1587,9 +1590,9 @@ export const AppProvider = ({ children }) => {
           : `${transactionList.length} entries saved on this device — they’ll sync when you’re back online.`,
         'info'
       );
-      // Same shape as the success path so callers can treat it uniformly; the
-      // ids are final, so reimbursable links made against them stay valid.
-      return optimisticRows;
+      // The ids are final, so any link made against them stays valid once
+      // these sync.
+      return { rows: optimisticRows, queued: true };
     }
 
     setTransactions(prev => prev.filter(tx => !ids.includes(tx.id)));

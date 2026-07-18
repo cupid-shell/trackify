@@ -404,10 +404,25 @@ const TransactionForm = () => {
         payment_method: r.paymentMethod
       }));
 
-      const createdTxs = await addTransactions(payload);
+      const result = await addTransactions(payload);
       hapticMedium();
 
+      // Bail before claiming success. This used to announce "N transactions
+      // added successfully!" unconditionally, so a failed save produced a
+      // success toast and an error toast together.
+      if (!result || !result.rows || result.rows.length === 0) return;
+
+      const createdTxs = result.rows;
       const count = payload.length;
+
+      if (result.queued) {
+        // Parked offline — addTransactions has already said so; don't also
+        // claim it was added. Receipts and reimbursables both need the network,
+        // so they're skipped here (their controls are disabled while offline).
+        setRows([createRow({ category: activeCategories[0] || '' })]);
+        return;
+      }
+
       showToast(
         count === 1
           ? `${type === 'expense' ? 'Expense' : 'Income'} of ${formatCurrency(payload[0].amount)} added!`

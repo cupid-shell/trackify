@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, parseLocalDate } from '../context/AppContext';
 import { format } from 'date-fns';
-import { Trash2, TrendingUp, Download, Edit2, X, Repeat, Search } from 'lucide-react';
+import { Trash2, TrendingUp, Download, Edit2, X, Repeat, Search, CloudOff, AlertTriangle, RefreshCw } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 import CustomSelect from './CustomSelect';
 import TimePicker from './TimePicker';
@@ -52,7 +52,10 @@ const RecentTransactions = ({
     dataUnavailable,
     syncState,
     refreshAll,
-    session
+    session,
+    pendingById,
+    retryPendingItem,
+    discardPendingItem
   } = useAppContext();
 
   const navigate = useNavigate();
@@ -804,6 +807,34 @@ const RecentTransactions = ({
                         {tx.payment_method || 'Cash'}
                       </span>
                       <span style={{ flexShrink: 0 }}>{format(new Date(tx.date), 'MMM dd, yyyy • hh:mm a')}</span>
+                      {pendingById?.[tx.id] && (() => {
+                        const item = pendingById[tx.id];
+                        const isFailed = item.state === 'failed';
+                        return (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              background: isFailed ? 'var(--danger-bg)' : 'var(--warning-bg)',
+                              border: `1px solid ${isFailed ? 'var(--danger)' : 'var(--warning)'}`,
+                              color: isFailed ? 'var(--danger)' : 'var(--warning)',
+                              borderRadius: '4px',
+                              padding: '1px 5px',
+                              fontSize: '0.7rem',
+                              flexShrink: 0,
+                            }}
+                            title={
+                              isFailed
+                                ? `Couldn't sync: ${item.lastError || 'unknown error'}`
+                                : 'Saved on this device — will sync when you’re back online'
+                            }
+                          >
+                            {isFailed ? <AlertTriangle size={11} /> : <CloudOff size={11} />}
+                            {isFailed ? "Didn't sync" : 'Pending sync'}
+                          </span>
+                        );
+                      })()}
                       {userSettings.category_metadata?._receipt_attachments?.[tx.id] && (
                         <button
                           onClick={() => setActiveReceiptUrl(userSettings.category_metadata._receipt_attachments[tx.id])}
@@ -887,17 +918,45 @@ const RecentTransactions = ({
                     {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                   </span>
                   <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
-                    <button 
-                      onClick={() => startEditing(tx)}
-                      style={{ color: 'var(--text-muted)' }}
-                      onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'}
-                      onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                      title="Edit Transaction"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button 
+                    {/* Editing an unsynced row would issue an UPDATE for a row
+                        the server has never seen. Offer Retry instead — and for
+                        a failed item, that's the whole point of keeping it. */}
+                    {pendingById?.[tx.id] ? (
+                      <button
+                        onClick={() => retryPendingItem(tx.id)}
+                        style={{ color: 'var(--text-muted)' }}
+                        onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                        onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                        title="Retry syncing this entry now"
+                      >
+                        <RefreshCw size={16} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => startEditing(tx)}
+                        style={{ color: 'var(--text-muted)' }}
+                        onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                        onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                        title="Edit Transaction"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                    )}
+                    <button
                       onClick={() => {
+                        // An unsynced row exists only on this device, so this
+                        // discards the pending write rather than deleting
+                        // anything on the server.
+                        if (pendingById?.[tx.id]) {
+                          showConfirm({
+                            title: 'Discard unsynced entry?',
+                            message: 'This entry has not reached the server yet. Discarding removes it from this device permanently — it cannot be recovered.',
+                            confirmLabel: 'Discard',
+                            variant: 'danger',
+                            onConfirm: () => discardPendingItem(tx.id)
+                          });
+                          return;
+                        }
                         const rDebt = reimburseDebtFor(tx.id);
                         const hasPayments = rDebt && (Number(rDebt.settled_amount) > 0 || (rDebt.payments && rDebt.payments.length > 0));
                         showConfirm({

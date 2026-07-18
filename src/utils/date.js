@@ -25,3 +25,23 @@ export const parseLocalDate = (dateStr) => {
   }
   return new Date();
 };
+
+// "5m ago" / "2h ago" — for telling the user how stale the data they're looking
+// at actually is. `now` is a parameter, not Date.now(), so this stays pure
+// (required by the React Compiler's purity rule) and is testable.
+export const formatRelativeTime = (then, now) => {
+  if (typeof then !== 'number' || typeof now !== 'number') return 'just now';
+  const diff = now - then;
+  // A future timestamp means a clock adjustment, not time travel — don't say
+  // "in -3 minutes".
+  if (diff < 60_000) return 'just now';
+
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 60) return `${mins}m ago`;
+
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+};
