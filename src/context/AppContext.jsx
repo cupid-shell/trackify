@@ -532,6 +532,17 @@ export const AppProvider = ({ children }) => {
 
   const hasCheckedAutoLog = useRef(false);
 
+  // Holds the always-latest copy of functions that are either hoisted
+  // declarations (a new object every render) or `const`s defined far below.
+  // Reading them through this ref lets the callbacks and effects that use them
+  // keep empty/stable dependency arrays — otherwise each of these would give its
+  // consumer a new identity every render, and any consumer sitting in an effect
+  // dep array would re-run that effect on every render. That is exactly the loop
+  // that re-subscribed onAuthStateChange and re-ran getSession() each render and
+  // made the app crawl in Firefox. Populated after every render (below), so it
+  // is current before any event handler or post-mount effect reads it.
+  const latestFns = useRef({});
+
   const processAutoLogBills = useCallback(async (bills, existingTransactions) => {
     if (!session?.user) return;
     const today = new Date();
@@ -555,7 +566,7 @@ export const AppProvider = ({ children }) => {
 
       if (!alreadyPaid) {
         const targetDate = new Date(currentYear, currentMonth, Number(bill.dueDate));
-        await addTransaction({
+        await latestFns.current.addTransaction?.({
           type: 'expense',
           amount: Number(bill.amount),
           category: bill.category,
@@ -570,7 +581,11 @@ export const AppProvider = ({ children }) => {
     if (autoLogged.length > 0) {
       showToast(`Auto-logged ${autoLogged.length} recurring bill(s): ${autoLogged.join(', ')}`, 'info');
     }
-  }, [session, addTransaction, showToast]);
+    // addTransaction is read through latestFns so it is NOT a dependency here:
+    // it is a hoisted declaration (new every render), and this callback feeds
+    // the auto-log effect's dependency array — depending on it would re-run that
+    // effect on every render.
+  }, [session, showToast]);
 
   useEffect(() => {
     // Gated on `bootstrapped`, not `!loading`: once the offline cache lands,
@@ -623,16 +638,12 @@ export const AppProvider = ({ children }) => {
     });
   }, [session]);
 
-  // flushQueue needs checkTransactionAlerts (a hoisted function declaration, so
-  // a new object every render) and addNotification (rebuilt whenever `session`
-  // changes). Naming them as dependencies would give flushQueue a new identity
-  // on every render — and flushQueue is itself in the auth effect's dependency
-  // array, so that effect would tear down and re-subscribe onAuthStateChange
-  // and re-run getSession() every render, each round triggering refreshAll and
-  // another render. Holding them behind a ref keeps flushQueue stable.
-  const flushHelpers = useRef({});
+  // Keep the ref current with the freshest closures every render. Placed here,
+  // after addNotification is defined; addTransaction/checkTransactionAlerts are
+  // hoisted declarations further down, but this body only runs post-render when
+  // all of them are initialised.
   useEffect(() => {
-    flushHelpers.current = { checkTransactionAlerts, addNotification };
+    latestFns.current = { checkTransactionAlerts, addNotification, addTransaction };
   });
 
   // Sends queued inserts one at a time, oldest first.
@@ -716,13 +727,13 @@ export const AppProvider = ({ children }) => {
       syncedRows.forEach((row) => {
         if (seen.has(row.category)) return;
         seen.add(row.category);
-        flushHelpers.current.checkTransactionAlerts?.(row);
+        latestFns.current.checkTransactionAlerts?.(row);
       });
     }
 
     const after = readQueue(userId);
     if (after && failedCount(after) > 0) {
-      flushHelpers.current.addNotification?.(
+      latestFns.current.addNotification?.(
         'Some entries could not sync',
         `${failedCount(after)} entry(s) could not be saved to the server. Open History to retry or discard them.`,
         'warning',
