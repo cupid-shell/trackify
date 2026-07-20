@@ -1119,215 +1119,257 @@ const SettingsPage = () => {
 
             {/* Tab 4: Notifications */}
             {activeTab === 4 && (
-              <div className="glass-card flex-col gap-4">
-                <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>🔔</span>
-                  Native Notification Preferences
-                </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                  Customize when and how the app notifies you on your Android device.
-                </p>
-                
-                {permissionStatus === 'denied' && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.75rem',
-                    padding: '0.75rem 1rem',
-                    backgroundColor: 'var(--danger-bg)',
-                    border: '1px solid rgb(from var(--danger) r g b / 0.3)',
-                    borderRadius: 'var(--radius-md)',
-                    color: 'var(--danger)',
-                    fontSize: '0.8rem',
-                    marginTop: '0.5rem',
-                    lineHeight: '1.4'
-                  }}>
-                    <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <div>
-                      <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Notification Permission Denied</strong>
-                      To receive alerts and reminders, please enable notifications for Trackify in your device's Android System Settings.
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex-col gap-4" style={{ marginTop: '0.5rem' }}>
-                  {/* Daily Activity Reminder */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Daily Log Reminder</span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Reminds you to log transactions if none were logged all day.</span>
-                      </div>
-                      <input 
-                        type="checkbox" 
-                        checked={dailyReminder} 
-                        onChange={(e) => setDailyReminder(e.target.checked)}
-                        style={{ width: 'auto', cursor: 'pointer' }}
-                      />
-                    </div>
-                    {dailyReminder && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid var(--border-color)', marginTop: '0.25rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Reminder Time:</span>
-                          <TimePicker value={dailyReminderTime} onChange={val => setDailyReminderTime(val)} compact style={{ width: '120px' }} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
-                          <div>
-                            <span style={{ fontWeight: 500, fontSize: '0.85rem', display: 'block' }}>Zero-Spend Day Celebration</span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Get a congratulatory alert if you log 0 expenses all day.</span>
-                          </div>
-                          <input 
-                            type="checkbox" 
-                            checked={zeroSpendStreak} 
-                            onChange={(e) => setZeroSpendStreak(e.target.checked)}
-                            style={{ width: 'auto', cursor: 'pointer' }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
+              <div className="flex-col gap-6">
 
-                  {/* Weekly Digest */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Weekly Spending Digest</span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Get a weekly summary of your expenses.</span>
-                      </div>
-                      <input 
-                        type="checkbox" 
-                        checked={weeklyDigest} 
-                        onChange={(e) => setWeeklyDigest(e.target.checked)}
-                        style={{ width: 'auto', cursor: 'pointer' }}
-                      />
-                    </div>
-                    {weeklyDigest && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Delivery Day:</span>
-                        <CustomSelect
-                          options={['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']}
-                          value={weeklyDigestDay}
-                          onChange={val => setWeeklyDigestDay(val)}
-                          label="Delivery Day"
-                          style={{ width: '140px' }}
-                          triggerStyle={{ padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
+                {/*
+                  Split in two because the two halves have genuinely different
+                  reach. Alerts are event-driven — the app is already running
+                  when they fire, so they work everywhere. Scheduled reminders
+                  need an OS scheduler to wake the app at a set time, which
+                  only the Android build has.
+                */}
+                <div className="glass-card flex-col gap-4">
+                  <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Bell size={18} />
+                    Alerts
+                  </h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                    Sent the moment something happens. These reach the notification bell inside the app on every device, and arrive as a system notification on Android too.
+                  </p>
+
+                  <div className="flex-col gap-4" style={{ marginTop: '0.5rem' }}>
+                    {/* Budget Alerts */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Budget Limit Warnings</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Get warned when you cross a budget threshold.</span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={budgetAlerts}
+                          onChange={(e) => setBudgetAlerts(e.target.checked)}
+                          style={{ width: 'auto', cursor: 'pointer' }}
                         />
                       </div>
-                    )}
-                  </div>
-
-                  {/* Weekly Savings Motivation */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-                    <div>
-                      <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Weekly Savings Motivation</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Receive a weekend prompt to keep you motivated on active savings goals.</span>
+                      {budgetAlerts && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid var(--border-color)', marginTop: '0.25rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Warn Threshold:</span>
+                            <input
+                              type="number"
+                              min="50"
+                              max="100"
+                              value={budgetThreshold}
+                              onChange={(e) => setBudgetThreshold(e.target.value)}
+                              style={{ width: '70px', padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
+                            />
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>% of monthly budget</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
+                            <div>
+                              <span style={{ fontWeight: 500, fontSize: '0.85rem', display: 'block' }}>Budget Exhaustion Warnings</span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Instant alert when category spending reaches/crosses 100%.</span>
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={budgetExhaustion}
+                              onChange={(e) => setBudgetExhaustion(e.target.checked)}
+                              style={{ width: 'auto', cursor: 'pointer' }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={weeklySavingsMotivation} 
-                      onChange={(e) => setWeeklySavingsMotivation(e.target.checked)}
-                      style={{ width: 'auto', cursor: 'pointer' }}
-                    />
-                  </div>
 
-                  {/* Monthly Financial Review */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-                    <div>
-                      <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Monthly Financial Review</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Get a summary reminder on the 1st of each month to review progress.</span>
-                    </div>
-                    <input 
-                      type="checkbox" 
-                      checked={monthlyReview} 
-                      onChange={(e) => setMonthlyReview(e.target.checked)}
-                      style={{ width: 'auto', cursor: 'pointer' }}
-                    />
-                  </div>
-
-                  {/* Budget Alerts */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {/* Unusual Spending Spike Alerts */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                       <div>
-                        <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Budget Limit Warnings</span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Get warned when you cross a budget threshold.</span>
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Unusual Spending Spike Alerts</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Notify if a single expense is 3x larger than typical for its category.</span>
                       </div>
-                      <input 
-                        type="checkbox" 
-                        checked={budgetAlerts} 
-                        onChange={(e) => setBudgetAlerts(e.target.checked)}
+                      <input
+                        type="checkbox"
+                        checked={spendSpikeAlerts}
+                        onChange={(e) => setSpendSpikeAlerts(e.target.checked)}
                         style={{ width: 'auto', cursor: 'pointer' }}
                       />
                     </div>
-                    {budgetAlerts && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid var(--border-color)', marginTop: '0.25rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Warn Threshold:</span>
-                          <input 
-                            type="number" 
-                            min="50"
-                            max="100"
-                            value={budgetThreshold} 
-                            onChange={(e) => setBudgetThreshold(e.target.value)}
-                            style={{ width: '70px', padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
-                          />
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>% of monthly budget</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
-                          <div>
-                            <span style={{ fontWeight: 500, fontSize: '0.85rem', display: 'block' }}>Budget Exhaustion Warnings</span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Instant alert when category spending reaches/crosses 100%.</span>
-                          </div>
-                          <input 
-                            type="checkbox" 
-                            checked={budgetExhaustion} 
-                            onChange={(e) => setBudgetExhaustion(e.target.checked)}
-                            style={{ width: 'auto', cursor: 'pointer' }}
-                          />
-                        </div>
+
+                    {/* Savings Milestones */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Savings Goal Milestones</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Celebrate crossing 50%, 75%, and 100% of your goals.</span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Unusual Spending Spike Alerts */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-                    <div>
-                      <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Unusual Spending Spike Alerts</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Notify if a single expense is 3x larger than typical for its category.</span>
+                      <input
+                        type="checkbox"
+                        checked={savingsMilestones}
+                        onChange={(e) => setSavingsMilestones(e.target.checked)}
+                        style={{ width: 'auto', cursor: 'pointer' }}
+                      />
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={spendSpikeAlerts} 
-                      onChange={(e) => setSpendSpikeAlerts(e.target.checked)}
-                      style={{ width: 'auto', cursor: 'pointer' }}
-                    />
                   </div>
+                </div>
 
-                  {/* Savings Milestones */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-                    <div>
-                      <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Savings Goal Milestones</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Celebrate crossing 50%, 75%, and 100% of your goals.</span>
-                    </div>
-                    <input 
-                      type="checkbox" 
-                      checked={savingsMilestones} 
-                      onChange={(e) => setSavingsMilestones(e.target.checked)}
-                      style={{ width: 'auto', cursor: 'pointer' }}
-                    />
-                  </div>
+                <div className="glass-card flex-col gap-4">
+                  <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Calendar size={18} />
+                    Scheduled Reminders
+                  </h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                    Delivered at a set time by your device, whether or not the app is open.
+                  </p>
 
-                  {/* Bill Reminders */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Recurring Bill Reminders</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Reminds you at 9:00 AM on the day recurring bills are due.</span>
+                  {!Capacitor.isNativePlatform() && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '0.75rem',
+                      padding: '0.75rem 1rem',
+                      backgroundColor: 'var(--warning-bg)',
+                      border: '1px solid rgb(from var(--warning) r g b / 0.3)',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'var(--warning)',
+                      fontSize: '0.8rem',
+                      lineHeight: '1.4'
+                    }}>
+                      <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <div>
+                        <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Only the Android app can deliver these</strong>
+                        A browser tab cannot wake itself up at a set time. Your choices here still save and sync, so they will apply on your phone — but nothing below will arrive in this browser.
+                      </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={billReminders} 
-                      onChange={(e) => setBillReminders(e.target.checked)}
-                      style={{ width: 'auto', cursor: 'pointer' }}
-                    />
+                  )}
+
+                  {permissionStatus === 'denied' && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '0.75rem',
+                      padding: '0.75rem 1rem',
+                      backgroundColor: 'var(--danger-bg)',
+                      border: '1px solid rgb(from var(--danger) r g b / 0.3)',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'var(--danger)',
+                      fontSize: '0.8rem',
+                      lineHeight: '1.4'
+                    }}>
+                      <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <div>
+                        <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Notification Permission Denied</strong>
+                        To receive alerts and reminders, please enable notifications for Trackify in your device's Android System Settings.
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex-col gap-4" style={{ marginTop: '0.5rem' }}>
+                    {/* Daily Activity Reminder */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Daily Log Reminder</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Reminds you to log transactions if none were logged all day.</span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={dailyReminder}
+                          onChange={(e) => setDailyReminder(e.target.checked)}
+                          style={{ width: 'auto', cursor: 'pointer' }}
+                        />
+                      </div>
+                      {dailyReminder && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '1rem', borderLeft: '2px solid var(--border-color)', marginTop: '0.25rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Reminder Time:</span>
+                            <TimePicker value={dailyReminderTime} onChange={val => setDailyReminderTime(val)} compact style={{ width: '120px' }} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
+                            <div>
+                              <span style={{ fontWeight: 500, fontSize: '0.85rem', display: 'block' }}>Zero-Spend Day Celebration</span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Get a congratulatory alert if you log 0 expenses all day.</span>
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={zeroSpendStreak}
+                              onChange={(e) => setZeroSpendStreak(e.target.checked)}
+                              style={{ width: 'auto', cursor: 'pointer' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Weekly Digest */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Weekly Spending Digest</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Get a weekly summary of your expenses.</span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={weeklyDigest}
+                          onChange={(e) => setWeeklyDigest(e.target.checked)}
+                          style={{ width: 'auto', cursor: 'pointer' }}
+                        />
+                      </div>
+                      {weeklyDigest && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Delivery Day:</span>
+                          <CustomSelect
+                            options={['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']}
+                            value={weeklyDigestDay}
+                            onChange={val => setWeeklyDigestDay(val)}
+                            label="Delivery Day"
+                            style={{ width: '140px' }}
+                            triggerStyle={{ padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Weekly Savings Motivation */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                      <div>
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Weekly Savings Motivation</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Receive a weekend prompt to keep you motivated on active savings goals.</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={weeklySavingsMotivation}
+                        onChange={(e) => setWeeklySavingsMotivation(e.target.checked)}
+                        style={{ width: 'auto', cursor: 'pointer' }}
+                      />
+                    </div>
+
+                    {/* Monthly Financial Review */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                      <div>
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Monthly Financial Review</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Get a summary reminder on the 1st of each month to review progress.</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={monthlyReview}
+                        onChange={(e) => setMonthlyReview(e.target.checked)}
+                        style={{ width: 'auto', cursor: 'pointer' }}
+                      />
+                    </div>
+
+                    {/* Bill Reminders */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>Recurring Bill Reminders</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Reminds you at 9:00 AM on the day recurring bills are due.</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={billReminders}
+                        onChange={(e) => setBillReminders(e.target.checked)}
+                        style={{ width: 'auto', cursor: 'pointer' }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
