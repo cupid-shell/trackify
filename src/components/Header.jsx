@@ -478,6 +478,9 @@ const Header = () => {
         .notif-dot.success { background-color: var(--success); }
         .notif-dot.warning { background-color: var(--warning); }
         .notif-dot.info { background-color: var(--primary); }
+        /* Budget exhaustion is the only 'danger' alert; without this its dot
+           renders with no background at all. */
+        .notif-dot.danger { background-color: var(--danger); }
 
         .notif-content {
           display: flex;

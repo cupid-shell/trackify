@@ -14,6 +14,7 @@ import { mapSettingsRow, readSkippedBills } from '../utils/settingsMapping';
 import { readCache, writeCache, clearCache, cacheSyncedAt } from '../utils/offlineCache';
 import { v4 as uuidv4 } from 'uuid';
 import { isNetworkError, isDuplicateKeyError, describeSyncError } from '../utils/network';
+import { evaluateBudgetAlert, evaluateSpendSpike, evaluateSavingsMilestone } from '../utils/alerts';
 import {
   readQueue, writeQueue, clearQueue, emptyQueue,
   createPendingItem, enqueueMany, dequeue, markAttempt, markFailed, resetItem,
@@ -2131,174 +2132,92 @@ export const AppProvider = ({ children }) => {
     }
   }, [transactions, recurringBills, currency]);
 
-  // A hoisted function declaration, not a const arrow: flushQueue is defined
-  // far above and names this in its dependency array, which is evaluated during
-  // render. A `const` would be in the temporal dead zone at that point and throw.
-  // Same reason addTransaction/addTransactions are declarations.
+  // Decides, then delivers.
+  //
+  // The rules live in utils/alerts.js so they are testable; this half only
+  // routes the result. Every alert goes to the in-app notification centre on
+  // every platform — that centre is the only channel the web PWA has — and
+  // Android additionally posts a real OS notification.
+  //
+  // A hoisted function declaration, not a const arrow: checkTransactionAlerts
+  // below is itself hoisted (flushQueue reads it through latestFns) and calls
+  // this. Same reason addTransaction/addTransactions are declarations.
+  async function deliverAlert(alert) {
+    if (!alert) return;
+
+    // One dedupe key covers both channels, so Android never gets the alert
+    // twice and the bell never repeats one the OS already showed.
+    if (alert.dedupeKey && localStorage.getItem(alert.dedupeKey) === 'true') return;
+
+    // In-app first and unconditionally: it cannot fail, so the user is told
+    // even if the native scheduler below throws. Keying the entry by dedupeKey
+    // also stops a duplicate surviving a cleared localStorage flag.
+    addNotification(alert.title, alert.body, alert.tone, alert.dedupeKey || undefined);
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: alert.title,
+              body: alert.body,
+              id: alert.nativeId,
+              channelId: 'reminders',
+            },
+          ],
+        });
+      } catch (e) {
+        // Already surfaced in the bell, so don't retry — that would only
+        // re-post the in-app copy on the next expense.
+        console.error(`Error scheduling ${alert.kind} notification:`, e);
+      }
+    }
+
+    if (alert.dedupeKey) localStorage.setItem(alert.dedupeKey, 'true');
+  }
+
   async function checkTransactionAlerts(newTx) {
     // Suppressed mid-flush: reconnecting with several queued expenses would
     // otherwise fire one notification per row. flushQueue runs a single
     // per-category check once the pass finishes.
     if (suppressAlerts) return;
-    if (!Capacitor.isNativePlatform() || newTx.type !== 'expense') return;
-    
-    // 1. Budget Alerts & Exhaustion Warnings
-    const budgetAlertsEnabled = localStorage.getItem('trackify_budget_alerts') !== 'false';
-    const budgetExhaustionEnabled = localStorage.getItem('trackify_budget_exhaustion') !== 'false';
+    if (newTx.type !== 'expense') return;
 
-    if (budgetAlertsEnabled || budgetExhaustionEnabled) {
-      const thresholdPercent = Number(localStorage.getItem('trackify_budget_threshold') || '85');
-      const budgets = userSettings.category_budgets || {};
-      const cat = newTx.category;
-      const limit = budgets[cat];
+    const now = new Date();
 
-      if (limit && limit > 0) {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
+    await deliverAlert(
+      evaluateBudgetAlert({
+        transactions,
+        newTx,
+        budgets: userSettings.category_budgets || {},
+        thresholdPercent: Number(localStorage.getItem('trackify_budget_threshold') || '85'),
+        warningEnabled: localStorage.getItem('trackify_budget_alerts') !== 'false',
+        exhaustionEnabled: localStorage.getItem('trackify_budget_exhaustion') !== 'false',
+        currency,
+        now,
+      })
+    );
 
-        const currentMonthTxs = transactions.filter(tx => {
-          const txDate = parseLocalDate(tx.date);
-          return tx.type === 'expense' && 
-                 tx.category === cat && 
-                 txDate.getMonth() === currentMonth && 
-                 txDate.getFullYear() === currentYear;
-        });
-
-        const totalSpent = currentMonthTxs.reduce((sum, tx) => sum + Number(tx.amount), 0) + Number(newTx.amount);
-        const currentMonthStr = `${currentYear}-${currentMonth + 1}`;
-
-        if (budgetExhaustionEnabled && totalSpent >= limit) {
-          const notifyKey = `trackify_notified_budget_exhaust_${cat}_${currentMonthStr}`;
-          
-          if (localStorage.getItem(notifyKey) !== 'true') {
-            try {
-              await LocalNotifications.schedule({
-                notifications: [
-                  {
-                    title: `Budget Exhausted! 🛑`,
-                    body: `You have spent ${formatCurrency(totalSpent, currency)} out of your ${formatCurrency(limit, currency)} budget limit for ${cat}.`,
-                    // Deterministic ID: 3500 + hash of category name (no random, so Android deduplicates)
-                    id: 3500 + (Math.abs(cat.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)) % 400),
-                    channelId: 'reminders',
-                  }
-                ]
-              });
-              localStorage.setItem(notifyKey, 'true');
-            } catch (e) {
-              console.error('Error scheduling budget exhaustion alert:', e);
-            }
-          }
-        } else if (budgetAlertsEnabled && totalSpent >= (limit * thresholdPercent) / 100) {
-          const notifyKey = `trackify_notified_budget_${cat}_${currentMonthStr}`;
-          
-          if (localStorage.getItem(notifyKey) !== 'true') {
-            try {
-              await LocalNotifications.schedule({
-                notifications: [
-                  {
-                    title: `Budget Warning: ${cat} ⚠️`,
-                    body: `You have spent ${formatCurrency(totalSpent, currency)} out of your ${formatCurrency(limit, currency)} budget limit for ${cat} (${Math.round((totalSpent / limit) * 100)}%).`,
-                    // Deterministic ID: 3000 + hash of category name
-                    id: 3000 + (Math.abs(cat.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)) % 400),
-                    channelId: 'reminders',
-                  }
-                ]
-              });
-              localStorage.setItem(notifyKey, 'true');
-            } catch (e) {
-              console.error('Error scheduling budget warning:', e);
-            }
-          }
-        }
-      }
-    }
-
-    // 2. Spend Spike Alerts
-    const spendSpikeEnabled = localStorage.getItem('trackify_spend_spike_alerts') !== 'false';
-    if (spendSpikeEnabled) {
-      const cat = newTx.category;
-      const categoryTxs = transactions.filter(tx => tx.type === 'expense' && tx.category === cat);
-      if (categoryTxs.length >= 3) {
-        const total = categoryTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
-        const average = total / categoryTxs.length;
-        if (Number(newTx.amount) > 3 * average) {
-          // Throttle: only one spike alert per category per day
-          const today = new Date().toISOString().split('T')[0];
-          const spikeKey = `trackify_notified_spike_${cat}_${today}`;
-          if (localStorage.getItem(spikeKey) !== 'true') {
-            try {
-              await LocalNotifications.schedule({
-                notifications: [
-                  {
-                    title: 'Unusual Spending Spike 🚨',
-                    body: `You just logged a ${formatCurrency(newTx.amount, currency)} expense for ${cat}, which is significantly higher than your typical average (${formatCurrency(Math.round(average), currency)}).`,
-                    // Deterministic ID: 5000 + hash of category name
-                    id: 5000 + (Math.abs(cat.split('').reduce((h, c) => (h << 5) - h + c.charCodeAt(0), 0)) % 400),
-                    channelId: 'reminders',
-                  }
-                ]
-              });
-              localStorage.setItem(spikeKey, 'true');
-            } catch (e) {
-              console.error('Error scheduling spend spike notification:', e);
-            }
-          }
-        }
-      }
-    }
+    await deliverAlert(
+      evaluateSpendSpike({
+        transactions,
+        newTx,
+        enabled: localStorage.getItem('trackify_spend_spike_alerts') !== 'false',
+        currency,
+        now,
+      })
+    );
   }
 
   const checkSavingsMilestone = async (goal, nextAmount) => {
-    if (!Capacitor.isNativePlatform()) return;
-
-    const milestonesEnabled = localStorage.getItem('trackify_savings_milestones') !== 'false';
-    if (!milestonesEnabled) return;
-
-    const target = Number(goal.target_amount);
-    if (!target || target <= 0) return;
-
-    const currentPercent = Math.round(((goal.current_amount || 0) / target) * 100);
-    const nextPercent = Math.round((nextAmount / target) * 100);
-
-    let milestoneCrossed = null;
-
-    if (currentPercent < 50 && nextPercent >= 50) {
-      milestoneCrossed = 50;
-    } else if (currentPercent < 75 && nextPercent >= 75) {
-      milestoneCrossed = 75;
-    } else if (currentPercent < 100 && nextPercent >= 100) {
-      milestoneCrossed = 100;
-    }
-
-    if (milestoneCrossed) {
-      const titleMap = {
-        50: 'Halfway there! 🎯',
-        75: 'Almost completed! 🚀',
-        100: 'Goal Achieved! 🎉'
-      };
-      
-      const bodyMap = {
-        50: `Your savings goal "${goal.name}" is now 50% complete (${formatCurrency(nextAmount, currency)}/${formatCurrency(target, currency)}).`,
-        75: `Your savings goal "${goal.name}" is now 75% complete (${formatCurrency(nextAmount, currency)}/${formatCurrency(target, currency)}).`,
-        100: `Congratulations! You have fully achieved your "${goal.name}" savings goal!`
-      };
-
-      try {
-        await LocalNotifications.schedule({
-          notifications: [
-            {
-              title: titleMap[milestoneCrossed],
-              body: bodyMap[milestoneCrossed],
-              id: 4000 + milestoneCrossed + (Number(goal.id.slice(-4)) || 0),
-              channelId: 'reminders',
-            }
-          ]
-        });
-      } catch (e) {
-        console.error('Error scheduling milestone notification:', e);
-      }
-    }
+    await deliverAlert(
+      evaluateSavingsMilestone({
+        goal,
+        nextAmount,
+        enabled: localStorage.getItem('trackify_savings_milestones') !== 'false',
+        currency,
+      })
+    );
   };
 
   useEffect(() => {
