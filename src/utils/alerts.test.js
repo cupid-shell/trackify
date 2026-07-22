@@ -50,10 +50,15 @@ describe('budgetMonthKey', () => {
 });
 
 describe('spikeDayKey', () => {
-  it('is the UTC date, not the local one', () => {
-    // 02:00 local in UTC+6 is still the previous day in UTC. Documented quirk.
-    const d = new Date(Date.UTC(2026, 6, 14, 20, 0, 0));
-    expect(spikeDayKey(d)).toBe('2026-07-14');
+  // Built from local components and read back as local, so the assertion holds
+  // in any timezone the test runner happens to be in.
+  it('is the local date', () => {
+    expect(spikeDayKey(new Date(2026, 6, 15, 2, 0, 0))).toBe('2026-07-15');
+    expect(spikeDayKey(new Date(2026, 6, 15, 23, 30, 0))).toBe('2026-07-15');
+  });
+
+  it('zero-pads month and day', () => {
+    expect(spikeDayKey(new Date(2026, 0, 5, 12, 0, 0))).toBe('2026-01-05');
   });
 });
 
@@ -254,13 +259,19 @@ describe('evaluateSavingsMilestone', () => {
     expect(evaluateSavingsMilestone({ goal, nextAmount: 1000 }).milestone).toBe(50);
   });
 
-  // Percentages are compared after Math.round, so a balance already within half
-  // a percent of the target reads as 100% and the final crossing never fires.
-  // Pre-existing behavior; pinned here so a future change to it is deliberate.
-  it('misses the 100% crossing when rounding already put it at 100', () => {
+  // Regression guard for the rounding fix: a balance sitting within half a
+  // percent below the target used to round to 100 and swallow the crossing.
+  it('still fires the 100% crossing when the balance was already ~100%', () => {
     expect(
-      evaluateSavingsMilestone({ goal: { ...goal, current_amount: 999 }, nextAmount: 1000 })
-    ).toBeNull();
+      evaluateSavingsMilestone({ goal: { ...goal, current_amount: 999 }, nextAmount: 1000 }).milestone
+    ).toBe(100);
+  });
+
+  it('still fires a lower crossing when the balance was just below it', () => {
+    // 49.7% -> 50% used to be eaten by rounding 49.7 up to 50.
+    expect(
+      evaluateSavingsMilestone({ goal: { ...goal, current_amount: 497 }, nextAmount: 500 }).milestone
+    ).toBe(50);
   });
 
   it('uses the celebratory copy at 100% and a progress line below it', () => {

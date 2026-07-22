@@ -21,13 +21,18 @@ export const categoryNotificationId = (base, category) =>
 // ("2026-7", not "2026-07") — matching the keys already written to localStorage.
 export const budgetMonthKey = (date) => `${date.getFullYear()}-${date.getMonth() + 1}`;
 
-// Day key used in the spend-spike dedupe key.
+// Day key (YYYY-MM-DD) used in the spend-spike dedupe key.
 //
-// NOTE: this is the UTC date, not the local one — a carry-over from the original
-// `new Date().toISOString()`. In UTC+6 that means the throttle window rolls over
-// at 6am local rather than midnight. Preserved deliberately: changing it would
-// let one already-throttled spike fire a second time on the changeover day.
-export const spikeDayKey = (date) => new Date(date).toISOString().split('T')[0];
+// The LOCAL date, so the once-a-day throttle rolls over at local midnight. The
+// original used `new Date().toISOString()`, i.e. the UTC date, which in UTC+6
+// reset the window at 6am local. On the one changeover day this switch may let a
+// single already-throttled spike fire once more — harmless for a throttle key.
+export const spikeDayKey = (date) => {
+  const d = new Date(date);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+};
 
 // Budget warning / exhaustion for the category a new expense just landed in.
 //
@@ -160,13 +165,21 @@ export const evaluateSavingsMilestone = ({
   const target = Number(goal.target_amount);
   if (!target || target <= 0) return null;
 
-  const currentPercent = Math.round(((goal.current_amount || 0) / target) * 100);
-  const nextPercent = Math.round((nextAmount / target) * 100);
+  // Compare raw ratios, not rounded percentages. Rounding the "before" value
+  // UP — 99.6% became 100 — used to make `before < 100` false and swallow the
+  // very crossing we most want to celebrate. The same bug ate the 50% and 75%
+  // milestones whenever the balance sat within half a percent below them.
+  const before = (Number(goal.current_amount) || 0) / target;
+  const after = Number(nextAmount) / target;
 
+  // First (lowest) crossing wins, so jumping 0 -> 100% reports 50, as before.
   let milestone = null;
-  if (currentPercent < 50 && nextPercent >= 50) milestone = 50;
-  else if (currentPercent < 75 && nextPercent >= 75) milestone = 75;
-  else if (currentPercent < 100 && nextPercent >= 100) milestone = 100;
+  for (const t of [50, 75, 100]) {
+    if (before < t / 100 && after >= t / 100) {
+      milestone = t;
+      break;
+    }
+  }
 
   if (!milestone) return null;
 
