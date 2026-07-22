@@ -186,6 +186,33 @@ describe('detectDuplicates', () => {
     expect(duplicates).toHaveLength(1);
   });
 
+  // The bug a real 328-row round trip caught: 326 rows matched and 2 did not.
+  // Stored dates are UTC ISO timestamps (the forms call toISOString) while the
+  // exporter writes the LOCAL calendar date, so a transaction logged at 01:30
+  // local is stored as the previous day in UTC. Slicing the raw string made it
+  // fail to recognise itself. Built from local parts so it holds in any zone.
+  it('matches a stored UTC timestamp against the local date the exporter writes', () => {
+    const instant = new Date(2026, 6, 22, 1, 30);
+    const pad = (n) => String(n).padStart(2, '0');
+    const exportedDate = `${instant.getFullYear()}-${pad(instant.getMonth() + 1)}-${pad(instant.getDate())}`;
+
+    const stored = { ...row(), date: instant.toISOString() };
+    const fromCsv = { ...row(), date: exportedDate };
+
+    expect(rowFingerprint(stored)).toBe(rowFingerprint(fromCsv));
+    const { fresh, duplicates } = detectDuplicates([fromCsv], [stored]);
+    expect(fresh).toEqual([]);
+    expect(duplicates).toHaveLength(1);
+  });
+
+  it('still separates two rows that are genuinely on different days', () => {
+    const { fresh } = detectDuplicates(
+      [{ ...row(), date: '2026-07-22' }],
+      [{ ...row(), date: '2026-07-21' }]
+    );
+    expect(fresh).toHaveLength(1);
+  });
+
   it('reports nothing for an empty import', () => {
     expect(detectDuplicates([], [row()])).toEqual({ fresh: [], duplicates: [] });
   });
