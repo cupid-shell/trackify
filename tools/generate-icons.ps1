@@ -1,3 +1,15 @@
+# Regenerates the four app icons in public/ from the Trackify mark: four bars
+# in --success emerald (#10b981) stepping up in both height and opacity.
+# These are shipped assets referenced by index.html and vite.config.js, so run
+# this only when the logo itself changes.
+#
+#   pwsh tools/generate-icons.ps1
+#
+# Windows only - it draws via System.Drawing (GDI+).
+#
+# Keep this file pure ASCII. Windows PowerShell 5.1 reads a BOM-less .ps1 as
+# ANSI, so a UTF-8 em dash decodes into bytes that close a string early.
+
 $source = @"
 using System;
 using System.Drawing;
@@ -76,16 +88,27 @@ public class LogoGenerator {
 
 Add-Type -TypeDefinition $source -ReferencedAssemblies System.Drawing
 
-Write-Host "Generating favicon.png (32x32)..."
-[LogoGenerator]::Generate("E:/AntiGravity/trackify/public/favicon.png", 32)
+# Resolved from this script's own location, so the generator survives the
+# project being moved. It previously hardcoded an absolute path from an
+# earlier checkout and would have written outside the repo, or failed.
+$publicDir = Join-Path $PSScriptRoot '..\public'
+if (-not (Test-Path $publicDir)) {
+    Write-Error "public/ not found at $publicDir - run this from the repo tools/ folder."
+    exit 1
+}
+$publicDir = (Resolve-Path $publicDir).Path
 
-Write-Host "Generating apple-touch-icon.png (180x180)..."
-[LogoGenerator]::Generate("E:/AntiGravity/trackify/public/apple-touch-icon.png", 180)
+$icons = @(
+    @{ Name = 'favicon.png';          Size = 32  },
+    @{ Name = 'apple-touch-icon.png'; Size = 180 },
+    @{ Name = 'pwa-192x192.png';      Size = 192 },
+    @{ Name = 'pwa-512x512.png';      Size = 512 }
+)
 
-Write-Host "Generating pwa-192x192.png (192x192)..."
-[LogoGenerator]::Generate("E:/AntiGravity/trackify/public/pwa-192x192.png", 192)
+foreach ($icon in $icons) {
+    $target = Join-Path $publicDir $icon.Name
+    Write-Host "Generating $($icon.Name) ($($icon.Size)x$($icon.Size))..."
+    [LogoGenerator]::Generate($target, $icon.Size)
+}
 
-Write-Host "Generating pwa-512x512.png (512x512)..."
-[LogoGenerator]::Generate("E:/AntiGravity/trackify/public/pwa-512x512.png", 512)
-
-Write-Host "Done!"
+Write-Host "Done - wrote $($icons.Count) icons to $publicDir"
