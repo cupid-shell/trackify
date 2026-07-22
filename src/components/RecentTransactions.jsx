@@ -6,6 +6,7 @@ import { Trash2, TrendingUp, Download, Edit2, X, Repeat, Search, CloudOff, Alert
 import CategoryIcon from './CategoryIcon';
 import CustomSelect from './CustomSelect';
 import TimePicker from './TimePicker';
+import { sumByType } from '../utils/finance';
 
 // Shared base so every filter control (search, category, dates, reimbursable)
 // lines up at the same height and shares one visual language.
@@ -195,6 +196,13 @@ const RecentTransactions = ({
   const sortedTx = [...filteredTx].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const anyFilterActive = !!(searchTerm || (selectedCategory && selectedCategory !== 'All') || startDate || endDate || showReimbursableOnly || selectedDay !== null);
+
+  // Totals for whatever is actually on screen. Derived from sortedTx rather than
+  // from any one filter, so it follows every route into the list — search,
+  // category, date range, a heatmap day click, reimbursable-only, or no filter
+  // at all (in which case it is simply the month's total).
+  const shownExpenses = sumByType(sortedTx, 'expense');
+  const shownIncome = sumByType(sortedTx, 'income');
   const clearAllFilters = () => {
     // On the History page the setters write to the URL and can't be batched
     // (see HistoryPage.clearFilters); use the single-call prop when provided.
@@ -616,6 +624,55 @@ const RecentTransactions = ({
           )}
         </div>
       </div>
+
+      {/*
+        Running total for the visible set. Hidden when nothing is listed — the
+        empty state already says why, and "0 of 12 · ৳0" would just repeat it.
+      */}
+      {sortedTx.length > 0 && (
+        <div
+          className="flex items-center justify-between"
+          style={{
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--bg-input)',
+            border: '1px solid var(--border-color)',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+            {anyFilterActive
+              ? `${sortedTx.length} of ${currentMonthTransactions.length} transactions`
+              : `${sortedTx.length} ${sortedTx.length === 1 ? 'transaction' : 'transactions'} this month`}
+          </span>
+
+          <div className="flex items-center" style={{ gap: '1.25rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Spent
+              </span>
+              <span style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                {formatCurrency(shownExpenses)}
+              </span>
+            </div>
+
+            {/* Only when the visible set actually contains income — otherwise a
+                permanent "Received ৳0" next to the figure that matters. */}
+            {shownIncome > 0 && (
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Received
+                </span>
+                <span style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--success)' }}>
+                  {formatCurrency(shownIncome)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {sortedTx.length === 0 ? (
         // Three distinct empty states. The third used to be missing: when the
