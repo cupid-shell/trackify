@@ -12,13 +12,23 @@ import { filterTransactions } from '../utils/transactionFilter';
 // Shared base so every filter control (search, category, dates, reimbursable)
 // lines up at the same height and shares one visual language.
 const CONTROL_BASE = {
-  height: '2.75rem',
+  height: '2.5rem',
   borderRadius: 'var(--radius-md)',
   border: '1px solid var(--border-color)',
   backgroundColor: 'var(--bg-input)',
   color: 'var(--text-main)',
   fontSize: '0.875rem',
 };
+
+// The facet row has five controls plus a date pair competing for ~840px, which
+// is the width of the History column. At the search bar's type size they total
+// ~930px and wrap to a second row, which reads as a mistake rather than a
+// layout. One step down fits them on one line with ~45px to spare — measured,
+// not guessed. The date inputs stay near their intrinsic width (a native date
+// field squeezes its own mm/dd/yyyy sub-fields if starved, and Firefox — which
+// is what Avishek runs — sizes them differently from this Chromium preview).
+const FACET_CONTROL = { ...CONTROL_BASE, fontSize: '0.75rem' };
+const FACET_PAD = '0 0.65rem';
 
 const RecentTransactions = ({ 
   selectedDay = null, 
@@ -535,17 +545,17 @@ const RecentTransactions = ({
         </div>
 
         {/* Facets — one height-aligned row: scope · category · reimbursable · date range · clear */}
-        <div className="flex items-center" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div className="flex items-center" style={{ flexWrap: 'wrap', gap: '0.55rem' }}>
           {/* Scope comes first: it sets the pool everything to its right narrows. */}
           <div
             role="group"
             aria-label="Time scope"
             style={{
-              ...CONTROL_BASE,
+              ...FACET_CONTROL,
               display: 'inline-flex',
               alignItems: 'center',
-              padding: '0.25rem',
-              gap: '0.25rem',
+              padding: '0.2rem',
+              gap: '0.2rem',
             }}
           >
             {[
@@ -561,10 +571,10 @@ const RecentTransactions = ({
                   aria-pressed={active}
                   style={{
                     height: '100%',
-                    padding: '0 0.85rem',
+                    padding: FACET_PAD,
                     borderRadius: 'calc(var(--radius-md) - 3px)',
                     border: 'none',
-                    fontSize: '0.8rem',
+                    fontSize: '0.75rem',
                     fontWeight: 600,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
@@ -584,8 +594,8 @@ const RecentTransactions = ({
             onChange={val => setSelectedCategory(val)}
             getCategoryStyle={getCategoryStyle}
             label="Category"
-            style={{ flex: '0 0 auto', width: 'auto', minWidth: '180px' }}
-            triggerStyle={{ height: '2.75rem', padding: '0 1rem', fontSize: '0.875rem' }}
+            style={{ flex: '0 0 auto', width: 'auto', minWidth: '155px' }}
+            triggerStyle={{ height: '2.5rem', padding: FACET_PAD, fontSize: '0.75rem' }}
           />
 
           <button
@@ -594,39 +604,42 @@ const RecentTransactions = ({
             aria-pressed={showReimbursableOnly}
             title="Show only expenses someone owes you back"
             style={{
-              ...CONTROL_BASE,
+              ...FACET_CONTROL,
               display: 'flex',
               alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0 1rem',
+              gap: '0.35rem',
+              padding: FACET_PAD,
               fontWeight: 600,
               cursor: 'pointer',
+              whiteSpace: 'nowrap',
               color: showReimbursableOnly ? 'var(--primary)' : 'var(--text-muted)',
               backgroundColor: showReimbursableOnly ? 'var(--primary-glow)' : 'var(--bg-input)',
               border: `1px solid ${showReimbursableOnly ? 'rgb(from var(--primary) r g b / 0.35)' : 'var(--border-color)'}`,
             }}
           >
-            <Repeat size={14} /> Reimbursable
+            <Repeat size={13} /> Reimbursable
           </button>
 
-          {/* Date range */}
-          <div className="flex items-center" style={{ gap: '0.5rem' }}>
+          {/* Date range. 136px is just above the intrinsic width of a native
+              date field at this type size — below that the browser starts
+              squeezing the mm/dd/yyyy sub-fields. */}
+          <div className="flex items-center" style={{ gap: '0.35rem' }}>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               aria-label="From date"
               title="From date"
-              style={{ ...CONTROL_BASE, padding: '0 0.75rem', width: '150px' }}
+              style={{ ...FACET_CONTROL, padding: '0 0.5rem', width: '136px', boxSizing: 'border-box' }}
             />
-            <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>–</span>
+            <span style={{ color: 'var(--text-muted)', flexShrink: 0, fontSize: '0.75rem' }}>–</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               aria-label="To date"
               title="To date"
-              style={{ ...CONTROL_BASE, padding: '0 0.75rem', width: '150px' }}
+              style={{ ...FACET_CONTROL, padding: '0 0.5rem', width: '136px', boxSizing: 'border-box' }}
             />
           </div>
 
@@ -638,11 +651,12 @@ const RecentTransactions = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.35rem',
-                height: '2.75rem',
-                padding: '0 0.9rem',
-                fontSize: '0.8rem',
+                gap: '0.3rem',
+                height: '2.5rem',
+                padding: FACET_PAD,
+                fontSize: '0.75rem',
                 fontWeight: 600,
+                whiteSpace: 'nowrap',
                 color: 'var(--danger)',
                 backgroundColor: 'var(--danger-bg)',
                 border: 'none',
