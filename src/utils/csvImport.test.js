@@ -5,6 +5,7 @@ import {
   parseTransactionCsv,
   rowFingerprint,
   detectDuplicates,
+  escapeCsvField,
 } from './csvImport';
 
 const HEADER = 'Date,Type,Category,Payment Method,Amount (BDT),Note';
@@ -187,6 +188,54 @@ describe('detectDuplicates', () => {
 
   it('reports nothing for an empty import', () => {
     expect(detectDuplicates([], [row()])).toEqual({ fresh: [], duplicates: [] });
+  });
+});
+
+describe('escapeCsvField', () => {
+  it('leaves an ordinary value alone', () => {
+    expect(escapeCsvField('Food')).toBe('Food');
+    expect(escapeCsvField(250)).toBe('250');
+  });
+
+  it('renders null and undefined as empty', () => {
+    expect(escapeCsvField(null)).toBe('');
+    expect(escapeCsvField(undefined)).toBe('');
+  });
+
+  it('quotes a value containing a comma', () => {
+    expect(escapeCsvField('Food, Dining')).toBe('"Food, Dining"');
+  });
+
+  it('doubles inner quotes', () => {
+    expect(escapeCsvField('He said "hi"')).toBe('"He said ""hi"""');
+  });
+
+  it('quotes a value containing a newline', () => {
+    expect(escapeCsvField('line one\nline two')).toBe('"line one\nline two"');
+  });
+
+  it('defuses a formula', () => {
+    expect(escapeCsvField('=SUM(A1)')).toBe("'=SUM(A1)");
+    expect(escapeCsvField('@import')).toBe("'@import");
+  });
+
+  // The reason this is shared rather than duplicated per exporter.
+  it('survives a round trip through parseCsv', () => {
+    const values = ['Food, Dining', 'He said "hi"', '=SUM(A1)', 'plain', ''];
+    const line = values.map(escapeCsvField).join(',');
+    const [parsed] = parseCsv(`${line}`);
+    // The formula guard is undone by parseTransactionCsv, not parseCsv.
+    expect(parsed).toEqual(['Food, Dining', 'He said "hi"', "'=SUM(A1)", 'plain', '']);
+  });
+
+  it('keeps a comma-bearing category in its own column', () => {
+    const header = 'Date,Type,Category,Payment Method,Amount (BDT),Note';
+    const row = ['2026-07-21', 'expense', 'Food, Dining', 'Cash', 250, 'lunch']
+      .map(escapeCsvField).join(',');
+    const { valid, errors } = parseTransactionCsv(`${header}\n${row}`);
+    expect(errors).toEqual([]);
+    expect(valid[0].category).toBe('Food, Dining');
+    expect(valid[0].amount).toBe(250);
   });
 });
 

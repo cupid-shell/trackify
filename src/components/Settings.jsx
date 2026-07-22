@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette, Download, AlertTriangle, DollarSign, Zap, Calendar, List, Bell, Sliders } from 'lucide-react';
 import { format } from 'date-fns';
 import { CURRENCIES } from '../utils/currency';
+import { escapeCsvField } from '../utils/csvImport';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import CategoryIcon from './CategoryIcon';
@@ -207,11 +208,18 @@ const SettingsPage = () => {
     const headers = ['Date', 'Type', 'Category', 'Payment Method', `Amount (${userSettings.currency || 'BDT'})`, 'Note'];
     const sortedAllTime = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
     
-    const csvRows = sortedAllTime.map(tx => {
-      const formattedDate = format(new Date(tx.date), 'yyyy-MM-dd');
-      const escapedNote = tx.note ? `"${tx.note.replace(/"/g, '""')}"` : '';
-      return [formattedDate, tx.type, tx.category, tx.payment_method || 'Cash', tx.amount, escapedNote].join(',');
-    });
+    // Every field goes through the escaper, not just the note. A category or
+    // payment method containing a comma — both are user-editable — used to be
+    // written raw, which shifted every column after it and made the backup
+    // unreadable for exactly the rows it mattered on.
+    const csvRows = sortedAllTime.map(tx => [
+      format(new Date(tx.date), 'yyyy-MM-dd'),
+      tx.type,
+      tx.category,
+      tx.payment_method || 'Cash',
+      tx.amount,
+      tx.note,
+    ].map(escapeCsvField).join(','));
 
     const csvContent = [headers.join(','), ...csvRows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

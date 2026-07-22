@@ -8,6 +8,7 @@ import CustomSelect from './CustomSelect';
 import TimePicker from './TimePicker';
 import { sumByType } from '../utils/finance';
 import { filterTransactions } from '../utils/transactionFilter';
+import { escapeCsvField } from '../utils/csvImport';
 
 // Shared base so every filter control (search, category, dates, reimbursable)
 // lines up at the same height and shares one visual language.
@@ -219,21 +220,6 @@ const RecentTransactions = ({
     // Create CSV headers
     const headers = ['Date', 'Type', 'Category', 'Payment Method', `Amount (${currency})`, 'Note'];
     
-    // CSV Field Sanitizer (Mitigates CSV Injection and escapes delimiters/quotes)
-    const escapeCSVField = (val) => {
-      if (val === undefined || val === null) return '';
-      let str = String(val);
-      // Mitigate CSV Formula Injection: prepend a single quote if starting with =, +, -, @
-      if (/^[=+\-@]/.test(str)) {
-        str = `'${str}`;
-      }
-      // Escape double quotes and enclose in quotes if it contains commas, double quotes, or newlines
-      if (/[",\n\r]/.test(str)) {
-        str = `"${str.replace(/"/g, '""')}"`;
-      }
-      return str;
-    };
-
     // Map transactions to CSV rows
     const csvRows = sortedTx.map(tx => {
       let formattedDate;
@@ -243,12 +229,12 @@ const RecentTransactions = ({
         formattedDate = tx.date;
       }
       return [
-        escapeCSVField(formattedDate),
-        escapeCSVField(tx.type),
-        escapeCSVField(tx.category),
-        escapeCSVField(tx.payment_method || 'Cash'),
-        escapeCSVField(tx.amount),
-        escapeCSVField(tx.note)
+        escapeCsvField(formattedDate),
+        escapeCsvField(tx.type),
+        escapeCsvField(tx.category),
+        escapeCsvField(tx.payment_method || 'Cash'),
+        escapeCsvField(tx.amount),
+        escapeCsvField(tx.note)
       ].join(',');
     });
 
