@@ -225,6 +225,49 @@ describe('evaluateSpendSpike', () => {
     });
     expect(result.average).toBe(100);
   });
+
+  it('averages only over the rolling window, not all-time', () => {
+    const result = evaluateSpendSpike({
+      ...base,
+      transactions: [
+        expense(5000, 'Food', '2026-01-01'), // ~6 months ago — outside 90 days
+        expense(5000, 'Food', '2026-02-01'), // outside
+        ...history, // three recent 100s
+      ],
+      newTx: expense(301, 'Food', '2026-07-15'),
+    });
+    // The two old 5000s are excluded, so the average is 100 and 301 is a spike.
+    expect(result.kind).toBe('spend_spike');
+    expect(result.average).toBe(100);
+  });
+
+  it('stays quiet when there are fewer than three entries inside the window', () => {
+    const result = evaluateSpendSpike({
+      ...base,
+      transactions: [
+        expense(100, 'Food', '2026-01-01'), // outside the window
+        expense(100, 'Food', '2026-02-01'), // outside
+        expense(100, 'Food', '2026-07-01'), // only one inside
+      ],
+      newTx: expense(9999, 'Food', '2026-07-15'),
+    });
+    expect(result).toBeNull();
+  });
+
+  it('honours a custom window length', () => {
+    const args = {
+      ...base,
+      transactions: [
+        expense(100, 'Food', '2026-06-01'), // 44 days before NOW
+        expense(100, 'Food', '2026-06-15'),
+        expense(100, 'Food', '2026-07-01'),
+      ],
+      newTx: expense(500, 'Food', '2026-07-15'),
+    };
+    // 30-day window drops everything before mid-June, leaving <3 in window.
+    expect(evaluateSpendSpike({ ...args, windowDays: 30 })).toBeNull();
+    expect(evaluateSpendSpike({ ...args, windowDays: 90 }).kind).toBe('spend_spike');
+  });
 });
 
 describe('evaluateSavingsMilestone', () => {

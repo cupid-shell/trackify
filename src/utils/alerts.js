@@ -109,25 +109,35 @@ export const evaluateBudgetAlert = ({
   return null;
 };
 
-// An expense far above what this category normally costs.
+// An expense far above what this category normally costs LATELY.
 //
-// NOTE: the average is over the category's ENTIRE history, not the current
-// month, and needs at least 3 prior entries. Preserved as-is.
+// The baseline is a rolling window (default 90 days) rather than the category's
+// entire history. All-time averaging never forgot: one freak expense raised the
+// bar forever, and as history grew the average stopped tracking recent habits.
+// A category still needs at least 3 prior expenses INSIDE the window to have a
+// baseline — one you haven't touched in months has no "typical lately" to spike
+// against. `transactions` must not include `newTx` (see the note on the budget
+// evaluator); the new amount is compared against the window, not part of it.
 export const evaluateSpendSpike = ({
   transactions,
   newTx,
   enabled = true,
+  windowDays = 90,
   currency = 'BDT',
   now,
 }) => {
   if (!enabled) return null;
 
   const cat = newTx.category;
-  const categoryTxs = transactions.filter((tx) => tx.type === 'expense' && tx.category === cat);
-  if (categoryTxs.length < 3) return null;
+  const cutoff = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000);
+  const recentCategoryTxs = transactions.filter((tx) => {
+    if (tx.type !== 'expense' || tx.category !== cat) return false;
+    return parseLocalDate(tx.date) >= cutoff;
+  });
+  if (recentCategoryTxs.length < 3) return null;
 
-  const total = categoryTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
-  const average = total / categoryTxs.length;
+  const total = recentCategoryTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
+  const average = total / recentCategoryTxs.length;
   if (Number(newTx.amount) <= 3 * average) return null;
 
   return {
