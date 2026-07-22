@@ -8,11 +8,14 @@ A personal expense tracker for daily, monthly, and yearly spending, built around
 - Monthly budget tracking with per-category budgets and rollover
 - Recurring bills with reminders and optional auto-logging
 - Savings goals with progress tracking
-- Debts ledger (money owed and lent, with repayments)
+- Debts ledger (money owed and lent, with repayments), including reimbursable expenses
 - Analytics: trends, category breakdowns, month-over-month comparison, a spending health score, and a prediction view
+- History with search, category, date-range and calendar-day filters, scoped to a month or to all time, with a running total for whatever is on screen
 - Receipt attachments with an image lightbox
-- CSV export and PDF statements
-- Local notifications: daily reminders, weekly digest, budget and spend alerts, savings milestones
+- CSV export (current month or all time), PDF statements, and CSV import with a preview that reports duplicates and unreadable rows before anything is written
+- Works offline: cached data on load, and entries written while disconnected are queued and synced when the connection returns
+- Alerts for budget thresholds, budget exhaustion, unusual spending spikes and savings milestones — in the app on every platform, and as system notifications on Android
+- Scheduled reminders (daily log, weekly digest, monthly review) on the Android build
 - Installable PWA and Android build via Capacitor
 
 ## Tech stack
@@ -51,13 +54,21 @@ The committed fallback is the Supabase *publishable* (anon) key, which is public
 src/
   App.jsx                routes and app shell
   context/AppContext.jsx central state: transactions, debts, settings,
-                          budgets, savings goals, notifications, currency
+                          budgets, savings goals, notifications, currency,
+                          offline cache and write queue
   components/             UI (dashboard, history, analytics, settings, ledger)
-  utils/                  pure helpers (currency, ...)
+  utils/                  pure, unit-tested helpers — money math, dates,
+                          settings mapping, offline cache/queue, alert rules,
+                          the History filter, CSV import/export
   supabaseClient.js       Supabase client setup
 *.sql                     database setup and migrations (run against Supabase)
+tools/                    build-time scripts (app icon generation)
 android/                  Capacitor Android project
 ```
+
+Logic worth trusting lives in `src/utils/` rather than inside components, so it can
+be unit-tested directly — the test setup is deliberately plugin-free and runs in
+Node, with no DOM. Each helper has a colocated `*.test.js`.
 
 ## Database
 
