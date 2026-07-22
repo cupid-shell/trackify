@@ -6,6 +6,7 @@ import {
   rowFingerprint,
   detectDuplicates,
   escapeCsvField,
+  toStoredTimestamp,
 } from './csvImport';
 
 const HEADER = 'Date,Type,Category,Payment Method,Amount (BDT),Note';
@@ -263,6 +264,35 @@ describe('escapeCsvField', () => {
     expect(errors).toEqual([]);
     expect(valid[0].category).toBe('Food, Dining');
     expect(valid[0].amount).toBe(250);
+  });
+});
+
+describe('toStoredTimestamp', () => {
+  it('produces a timestamp that reads back as the same local day', () => {
+    const stored = toStoredTimestamp('2026-07-22');
+    const back = new Date(stored);
+    expect(back.getFullYear()).toBe(2026);
+    expect(back.getMonth()).toBe(6);
+    expect(back.getDate()).toBe(22);
+  });
+
+  it('lands at local noon, far enough from either boundary to survive any offset', () => {
+    expect(new Date(toStoredTimestamp('2026-07-22')).getHours()).toBe(12);
+  });
+
+  it('round-trips through the fingerprint, so an imported row still matches its file', () => {
+    const csvRow = { date: '2026-07-22', type: 'expense', category: 'Food', amount: 50, note: 'x' };
+    const asStored = { ...csvRow, date: toStoredTimestamp(csvRow.date) };
+    expect(rowFingerprint(asStored)).toBe(rowFingerprint(csvRow));
+  });
+
+  it('tolerates a value that already carries a time', () => {
+    expect(new Date(toStoredTimestamp('2026-07-22T09:15:00')).getDate()).toBe(22);
+  });
+
+  it('handles the first and last day of a month', () => {
+    expect(new Date(toStoredTimestamp('2026-01-01')).getDate()).toBe(1);
+    expect(new Date(toStoredTimestamp('2026-12-31')).getDate()).toBe(31);
   });
 });
 

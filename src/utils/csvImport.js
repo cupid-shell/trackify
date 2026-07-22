@@ -179,6 +179,18 @@ export const rowFingerprint = (tx) =>
     (tx.note || '').trim(),
   ].join('\u0000');
 
+// The export carries a calendar date but no time, so an imported row has to be
+// given one. Local noon, not midnight: the value is stored as a UTC timestamp,
+// and midnight sits close enough to the boundary that a UTC offset in either
+// direction can land it on the neighbouring day. Noon survives every offset, so
+// the row keeps the date the file said.
+//
+// The original time of day is not recoverable — the export never had it.
+export const toStoredTimestamp = (ymd) => {
+  const [year, month, day] = String(ymd).slice(0, 10).split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0).toISOString();
+};
+
 // Splits parsed rows against what is already stored.
 //
 // Deliberately conservative: anything matching an existing row on date, type,

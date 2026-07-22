@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette, Download, Upload, AlertTriangle, DollarSign, Zap, Calendar, List, Bell, Sliders } from 'lucide-react';
 import { format } from 'date-fns';
 import { CURRENCIES } from '../utils/currency';
-import { escapeCsvField, parseTransactionCsv, detectDuplicates } from '../utils/csvImport';
+import { escapeCsvField, parseTransactionCsv, detectDuplicates, toStoredTimestamp } from '../utils/csvImport';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import CategoryIcon from './CategoryIcon';
@@ -27,7 +27,9 @@ const SettingsPage = () => {
     showToast,
     showConfirm,
     formatCurrency,
-    getCurrencySymbol
+    getCurrencySymbol,
+    addTransactions,
+    isOnline
   } = useAppContext();
 
   const [activeTab, setActiveTab] = useState(0);
@@ -124,6 +126,7 @@ const SettingsPage = () => {
 
   const [importReport, setImportReport] = useState(null);
   const [importReading, setImportReading] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const [localPresets, setLocalPresets] = useState(presets);
   const [newPresetLabel, setNewPresetLabel] = useState('');
@@ -252,12 +255,67 @@ const SettingsPage = () => {
       }
 
       const { fresh, duplicates } = detectDuplicates(valid, transactions);
-      setImportReport({ fileName: file.name, missingColumns: [], fresh, duplicates, errors });
+      // `valid` is kept so the report can be recomputed against the updated
+      // history after an import, without re-reading the file.
+      setImportReport({ fileName: file.name, missingColumns: [], valid, fresh, duplicates, errors });
     } catch (e) {
       showToast(`Could not read that file: ${e.message}`, 'error');
     } finally {
       setImportReading(false);
     }
+  };
+
+  // Writes the rows the preview marked ready. Duplicates and unreadable rows
+  // are never sent.
+  //
+  // Chunked rather than one bulk insert: a single insert fails atomically, so a
+  // few hundred rows would be all-or-nothing. Chunking also makes a partial
+  // failure recoverable — whatever landed is skipped as a duplicate next time,
+  // so re-running the same file finishes the job rather than doubling it.
+  const handleImport = async () => {
+    if (!importReport || importReport.fresh.length === 0 || importing) return;
+
+    setImporting(true);
+    const rows = importReport.fresh;
+    const written = [];
+    let failed = false;
+
+    try {
+      const CHUNK = 100;
+      for (let i = 0; i < rows.length; i += CHUNK) {
+        const chunk = rows.slice(i, i + CHUNK).map(r => ({
+          type: r.type,
+          amount: r.amount,
+          category: r.category,
+          note: r.note || '',
+          payment_method: r.payment_method,
+          date: toStoredTimestamp(r.date),
+        }));
+        // silent: these are historical rows; the budget and spike rules would
+        // otherwise fire a burst of alerts about months already closed.
+        const result = await addTransactions(chunk, { silent: true });
+        if (!result) { failed = true; break; }
+        written.push(...result.rows);
+      }
+    } finally {
+      setImporting(false);
+    }
+
+    if (written.length > 0) {
+      showToast(
+        failed
+          ? `Imported ${written.length} of ${rows.length} — run the file again to finish the rest.`
+          : `Imported ${written.length} transaction${written.length === 1 ? '' : 's'}.`,
+        failed ? 'warning' : 'success'
+      );
+    }
+
+    // Re-verify against the updated history rather than just asserting success:
+    // the panel should now read 0 ready / everything already present, which is
+    // the same check that proved the file matched in the first place.
+    const nextHistory = [...transactions, ...written];
+    const { fresh, duplicates } = detectDuplicates(importReport.valid, nextHistory);
+    setImportReport(prev => (prev ? { ...prev, fresh, duplicates } : prev));
   };
 
   const handleExportAllTimeCSV = () => {
@@ -1601,8 +1659,51 @@ const SettingsPage = () => {
                             </div>
                           )}
 
+                          {!isOnline && importReport.fresh.length > 0 && (
+                            <div style={{
+                              display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                              padding: '0.75rem 1rem', backgroundColor: 'var(--warning-bg)',
+                              border: '1px solid rgb(from var(--warning) r g b / 0.3)',
+                              borderRadius: 'var(--radius-md)', color: 'var(--warning)',
+                              fontSize: '0.8rem', lineHeight: 1.4,
+                            }}>
+                              <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                              <div>
+                                <strong style={{ display: 'block', marginBottom: '0.15rem' }}>You&apos;re offline</strong>
+                                Importing needs a connection. A single expense can wait in the sync queue, but a few hundred shouldn&apos;t — reconnect and try again.
+                              </div>
+                            </div>
+                          )}
+
+                          <button
+                            onClick={handleImport}
+                            disabled={importReport.fresh.length === 0 || importing || !isOnline}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.5rem',
+                              padding: '0.75rem 1rem',
+                              backgroundColor: importReport.fresh.length > 0 && isOnline ? 'var(--primary)' : 'var(--bg-input)',
+                              color: importReport.fresh.length > 0 && isOnline ? 'white' : 'var(--text-muted)',
+                              borderRadius: 'var(--radius-md)',
+                              fontSize: '0.875rem',
+                              fontWeight: 600,
+                              border: '1px solid var(--border-color)',
+                              cursor: importReport.fresh.length === 0 || importing || !isOnline ? 'not-allowed' : 'pointer',
+                              opacity: importReport.fresh.length === 0 || importing || !isOnline ? 0.6 : 1,
+                            }}
+                          >
+                            <Upload size={16} />
+                            {importing
+                              ? 'Importing…'
+                              : importReport.fresh.length === 0
+                                ? 'Nothing new to import'
+                                : `Import ${importReport.fresh.length} transaction${importReport.fresh.length === 1 ? '' : 's'}`}
+                          </button>
+
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                            Importing isn&apos;t wired up yet — this is a dry run. Rows already in your history are matched on date, category, amount and note, and would be skipped.
+                            Only the rows counted as ready are written. Rows already in your history are matched on date, category, amount and note and are skipped, so running the same file twice is safe. Imported rows keep their date but not their original time of day — the export never carried it.
                           </div>
                         </>
                       )}

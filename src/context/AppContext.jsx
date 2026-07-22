@@ -1567,7 +1567,10 @@ export const AppProvider = ({ children }) => {
     return null;
   }
 
-  async function addTransactions(transactionList) {
+  // `silent` skips the per-row alert check. A CSV import writes hundreds of
+  // historical rows at once; running the budget and spike rules over each would
+  // fire a burst of notifications about months that are already over.
+  async function addTransactions(transactionList, { silent = false } = {}) {
     if (!session?.user || !transactionList || transactionList.length === 0) return null;
 
     // Client-generated ids, same reasoning as addTransaction. They also let the
@@ -1597,7 +1600,7 @@ export const AppProvider = ({ children }) => {
         const withoutOptimistic = prev.filter(tx => !ids.includes(tx.id));
         return [...data, ...withoutOptimistic];
       });
-      data.forEach(tx => checkTransactionAlerts(tx));
+      if (!silent) data.forEach(tx => checkTransactionAlerts(tx));
       // { rows, queued } rather than a bare array so the caller can tell
       // "saved on the server" from "parked on this device" and not claim the
       // wrong thing in its own toast.
