@@ -162,7 +162,24 @@ const SettingsPage = () => {
     }, 0);
   }, [recurringBills]);
 
-  const addPreset = () => {
+  // Add/remove persist on the spot rather than staging into local state and
+  // waiting for "Save All Settings" at the bottom of the page.
+  //
+  // A button labelled "Add Preset" that only stages is a trap: the preset
+  // appears in the list immediately, looks saved, and is silently lost on
+  // refresh if you never scroll past the list to the global save. Staging also
+  // opened a race — any refetch (a token refresh, a realtime settings echo)
+  // resyncs localPresets from context and would drop an unsaved addition.
+  //
+  // updateSettings takes a partial: it merges into the existing
+  // category_metadata and upserts only the keys passed, which is the same thing
+  // the budget pin/drag/hide controls already do.
+  const persistPresets = async (next) => {
+    setLocalPresets(next);
+    await updateSettings({ presets: next });
+  };
+
+  const addPreset = async () => {
     if (!newPresetLabel.trim() || !newPresetAmount || isNaN(newPresetAmount)) return;
     const newPreset = {
       label: newPresetLabel.trim(),
@@ -171,17 +188,24 @@ const SettingsPage = () => {
       note: newPresetNote.trim() || '',
       payment: newPresetPayment
     };
-    setLocalPresets(prev => [...prev, newPreset]);
     setNewPresetLabel('');
     setNewPresetAmount('');
     setNewPresetNote('');
+    await persistPresets([...localPresets, newPreset]);
+    showToast('Preset saved', 'success');
   };
 
-  const removePreset = (idx) => {
-    setLocalPresets(prev => prev.filter((_, i) => i !== idx));
+  const removePreset = async (idx) => {
+    await persistPresets(localPresets.filter((_, i) => i !== idx));
+    showToast('Preset removed', 'success');
   };
 
-  const addRecurringBill = () => {
+  const persistRecurringBills = async (next) => {
+    setLocalRecurringBills(next);
+    await updateSettings({ recurring_bills: next });
+  };
+
+  const addRecurringBill = async () => {
     if (!newBillName.trim() || !newBillAmount || isNaN(newBillAmount) || !newBillDueDate || isNaN(newBillDueDate)) return;
     const newBill = {
       name: newBillName.trim(),
@@ -191,15 +215,17 @@ const SettingsPage = () => {
       payment: newBillPayment,
       autoLog: newBillAutoLog
     };
-    setLocalRecurringBills(prev => [...prev, newBill]);
     setNewBillName('');
     setNewBillAmount('');
     setNewBillDueDate('');
     setNewBillAutoLog(false);
+    await persistRecurringBills([...localRecurringBills, newBill]);
+    showToast('Recurring bill saved', 'success');
   };
 
-  const removeRecurringBill = (idx) => {
-    setLocalRecurringBills(prev => prev.filter((_, i) => i !== idx));
+  const removeRecurringBill = async (idx) => {
+    await persistRecurringBills(localRecurringBills.filter((_, i) => i !== idx));
+    showToast('Recurring bill removed', 'success');
   };
 
   const handleExportAllTimeCSV = () => {
