@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext, parseLocalDate } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';
 import { format } from 'date-fns';
 import { Trash2, TrendingUp, Download, Edit2, X, Repeat, Search, CloudOff, AlertTriangle, RefreshCw } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 import CustomSelect from './CustomSelect';
 import TimePicker from './TimePicker';
 import { sumByType } from '../utils/finance';
+import { filterTransactions } from '../utils/transactionFilter';
 
 // Shared base so every filter control (search, category, dates, reimbursable)
 // lines up at the same height and shares one visual language.
@@ -32,10 +33,13 @@ const RecentTransactions = ({
   setEndDate: propSetEndDate,
   reimbursableOnly: propReimbursableOnly,
   setReimbursableOnly: propSetReimbursableOnly,
+  scope: propScope,
+  setScope: propSetScope,
   clearFilters: propClearFilters
 }) => {
-  const { 
-    currentMonthTransactions, 
+  const {
+    currentMonthTransactions,
+    transactions,
     deleteTransaction, 
     updateTransaction, 
     userSettings,
@@ -66,6 +70,7 @@ const RecentTransactions = ({
   const [localStartDate, localSetStartDate] = useState('');
   const [localEndDate, localSetEndDate] = useState('');
   const [localReimbursableOnly, localSetReimbursableOnly] = useState(false);
+  const [localScope, localSetScope] = useState('month');
   const [activeReceiptUrl, setActiveReceiptUrl] = useState(null);
 
   const searchTerm = propSearchTerm !== undefined ? propSearchTerm : localSearchTerm;
@@ -82,6 +87,15 @@ const RecentTransactions = ({
 
   const showReimbursableOnly = propReimbursableOnly !== undefined ? propReimbursableOnly : localReimbursableOnly;
   const setShowReimbursableOnly = propSetReimbursableOnly !== undefined ? propSetReimbursableOnly : localSetReimbursableOnly;
+
+  const scope = propScope !== undefined ? propScope : localScope;
+  const setScope = propSetScope !== undefined ? propSetScope : localSetScope;
+
+  // Scope is a viewing mode, not a filter: it decides which pool everything
+  // else narrows down. Deliberately NOT part of anyFilterActive/clearAllFilters —
+  // clearing your search shouldn't also throw you back to a single month.
+  const allTime = scope === 'all';
+  const sourceTx = allTime ? transactions : currentMonthTransactions;
 
   // Edit mode states
   const [editingId, setEditingId] = useState(null);
@@ -145,7 +159,7 @@ const RecentTransactions = ({
   };
 
   // Get unique categories for the current month to populate the dropdown
-  const uniqueCategories = ['All', ...new Set(currentMonthTransactions.map(tx => tx.category))].sort();
+  const uniqueCategories = ['All', ...new Set(sourceTx.map(tx => tx.category))].sort();
 
   // Resolve the linked Ledger receivable (a 'lent' debt) for a reimbursable tx.
   const reimburseDebtFor = (txId) => {
@@ -154,42 +168,16 @@ const RecentTransactions = ({
   };
 
   // Filter by search term AND selected category AND calendar day click
-  const filteredTx = currentMonthTransactions.filter(tx => {
-    const txDate = parseLocalDate(tx.date);
-
-    // Day filter
-    if (selectedDay !== null) {
-      if (txDate.getDate() !== selectedDay) {
-        return false;
-      }
-    }
-
-    if (showReimbursableOnly && !reimbursements[tx.id]) return false;
-
-    const matchesSearch = 
-      tx.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (tx.note && tx.note.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      tx.amount.toString().includes(searchTerm);
-      
-    const matchesCategory = selectedCategory === 'All' || tx.category === selectedCategory;
-    
-    txDate.setHours(0, 0, 0, 0);
-
-    let matchesStartDate = true;
-    if (startDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      matchesStartDate = txDate >= start;
-    }
-
-    let matchesEndDate = true;
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(0, 0, 0, 0);
-      matchesEndDate = txDate <= end;
-    }
-    
-    return matchesSearch && matchesCategory && matchesStartDate && matchesEndDate;
+  const filteredTx = filterTransactions(sourceTx, {
+    searchTerm,
+    selectedCategory,
+    startDate,
+    endDate,
+    selectedDay,
+    selectedMonth,
+    selectedYear,
+    reimbursableOnly: showReimbursableOnly,
+    reimbursements,
   });
 
   // Sort by newest first
@@ -216,7 +204,7 @@ const RecentTransactions = ({
   };
 
   const handleExportCSV = () => {
-    if (currentMonthTransactions.length === 0) return;
+    if (sourceTx.length === 0) return;
 
     // Create CSV headers
     const headers = ['Date', 'Type', 'Category', 'Payment Method', `Amount (${currency})`, 'Note'];
@@ -290,7 +278,9 @@ const RecentTransactions = ({
 
     const dateRangeStr = startDate || endDate
       ? `${startDate ? 'From ' + startDate : ''} ${endDate ? 'To ' + endDate : ''}`
-      : `Month: ${format(new Date(selectedYear, selectedMonth, 1), 'MMMM yyyy')}`;
+      : allTime
+        ? 'All time'
+        : `Month: ${format(new Date(selectedYear, selectedMonth, 1), 'MMMM yyyy')}`;
 
     const rowsHtml = sortedTx.map((tx, idx) => {
       const formattedDate = format(new Date(tx.date), 'yyyy-MM-dd HH:mm');
@@ -442,8 +432,8 @@ const RecentTransactions = ({
   return (
     <div className="glass-card flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h2 style={{ fontSize: '1.25rem' }}>Monthly Transactions</h2>
-        {currentMonthTransactions.length > 0 && (
+        <h2 style={{ fontSize: '1.25rem' }}>{allTime ? 'All Transactions' : 'Monthly Transactions'}</h2>
+        {sourceTx.length > 0 && (
           <div className="flex gap-2" style={{ flexShrink: 0 }}>
             <button 
               onClick={handleExportCSV}
@@ -544,8 +534,50 @@ const RecentTransactions = ({
           />
         </div>
 
-        {/* Facets — one height-aligned row: category · reimbursable · date range · clear */}
+        {/* Facets — one height-aligned row: scope · category · reimbursable · date range · clear */}
         <div className="flex items-center" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
+          {/* Scope comes first: it sets the pool everything to its right narrows. */}
+          <div
+            role="group"
+            aria-label="Time scope"
+            style={{
+              ...CONTROL_BASE,
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '0.25rem',
+              gap: '0.25rem',
+            }}
+          >
+            {[
+              { key: 'month', label: 'This month' },
+              { key: 'all', label: 'All time' },
+            ].map(({ key, label }) => {
+              const active = scope === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setScope(key)}
+                  aria-pressed={active}
+                  style={{
+                    height: '100%',
+                    padding: '0 0.85rem',
+                    borderRadius: 'calc(var(--radius-md) - 3px)',
+                    border: 'none',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    color: active ? 'var(--primary)' : 'var(--text-muted)',
+                    backgroundColor: active ? 'var(--primary-glow)' : 'transparent',
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
           <CustomSelect
             options={uniqueCategories}
             value={selectedCategory}
@@ -644,8 +676,8 @@ const RecentTransactions = ({
         >
           <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
             {anyFilterActive
-              ? `${sortedTx.length} of ${currentMonthTransactions.length} transactions`
-              : `${sortedTx.length} ${sortedTx.length === 1 ? 'transaction' : 'transactions'} this month`}
+              ? `${sortedTx.length} of ${sourceTx.length} transactions${allTime ? ' (all time)' : ''}`
+              : `${sortedTx.length} ${sortedTx.length === 1 ? 'transaction' : 'transactions'} ${allTime ? 'in all history' : 'this month'}`}
           </span>
 
           <div className="flex items-center" style={{ gap: '1.25rem', flexWrap: 'wrap' }}>

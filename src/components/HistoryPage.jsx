@@ -86,9 +86,25 @@ const HistoryPage = () => {
     }, { replace: true });
   };
 
+  const scope = searchParams.get('scope') === 'all' ? 'all' : 'month';
+  const setScope = (val) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (val === 'all') {
+        next.set('scope', 'all');
+      } else {
+        next.delete('scope');
+      }
+      return next;
+    }, { replace: true });
+  };
+
   // Clear every filter in ONE setSearchParams call. Calling the individual
   // setters in sequence doesn't work: React Router's functional updater reads
   // the same base params for each synchronous call, so only the last wins.
+  //
+  // `scope` is intentionally absent: it is a viewing mode, not a filter, so
+  // clearing your search should not also drag you back to a single month.
   const clearFilters = () => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
@@ -125,6 +141,8 @@ const HistoryPage = () => {
             setEndDate={setEndDate}
             reimbursableOnly={reimbursableOnly}
             setReimbursableOnly={setReimbursableOnly}
+            scope={scope}
+            setScope={setScope}
             clearFilters={clearFilters}
           />
         </div>
