@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette, Download, AlertTriangle, DollarSign, Zap, Calendar, List, Bell, Sliders } from 'lucide-react';
+import { Save, Plus, Trash2, Edit2, X, Check, RotateCcw, Palette, Download, Upload, AlertTriangle, DollarSign, Zap, Calendar, List, Bell, Sliders } from 'lucide-react';
 import { format } from 'date-fns';
 import { CURRENCIES } from '../utils/currency';
-import { escapeCsvField } from '../utils/csvImport';
+import { escapeCsvField, parseTransactionCsv, detectDuplicates } from '../utils/csvImport';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import CategoryIcon from './CategoryIcon';
@@ -122,6 +122,9 @@ const SettingsPage = () => {
   const [activeCustomizeCat, setActiveCustomizeCat] = useState(null);
   const [customEmojiInput, setCustomEmojiInput] = useState('');
 
+  const [importReport, setImportReport] = useState(null);
+  const [importReading, setImportReading] = useState(false);
+
   const [localPresets, setLocalPresets] = useState(presets);
   const [newPresetLabel, setNewPresetLabel] = useState('');
   const [newPresetAmount, setNewPresetAmount] = useState('');
@@ -226,6 +229,35 @@ const SettingsPage = () => {
   const removeRecurringBill = async (idx) => {
     await persistRecurringBills(localRecurringBills.filter((_, i) => i !== idx));
     showToast('Recurring bill removed', 'success');
+  };
+
+  // Import preview. Reads a file and reports what is in it — nothing is
+  // written here. Re-runnable as often as you like, which is the point: you
+  // should be able to see exactly what an import would do before it does it.
+  const handleImportFilePicked = async (event) => {
+    const file = event.target.files?.[0];
+    // Reset the input so picking the same file twice still fires a change.
+    event.target.value = '';
+    if (!file) return;
+
+    setImportReport(null);
+    setImportReading(true);
+    try {
+      const text = await file.text();
+      const { valid, errors, missingColumns } = parseTransactionCsv(text);
+
+      if (missingColumns.length > 0) {
+        setImportReport({ fileName: file.name, missingColumns, fresh: [], duplicates: [], errors: [] });
+        return;
+      }
+
+      const { fresh, duplicates } = detectDuplicates(valid, transactions);
+      setImportReport({ fileName: file.name, missingColumns: [], fresh, duplicates, errors });
+    } catch (e) {
+      showToast(`Could not read that file: ${e.message}`, 'error');
+    } finally {
+      setImportReading(false);
+    }
   };
 
   const handleExportAllTimeCSV = () => {
@@ -1472,6 +1504,110 @@ const SettingsPage = () => {
                     <Download size={16} />
                     Export All-Time Data ({transactions.length} records)
                   </button>
+                </div>
+
+                {/* CSV Import — preview only for now; nothing is written. */}
+                <div className="glass-card flex-col gap-4">
+                  <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Upload size={18} />
+                    Restore from CSV
+                  </h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                    Check a CSV before importing it. Nothing is added to your account yet — this only reports what the file contains.
+                  </p>
+
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      padding: '0.75rem 1rem',
+                      backgroundColor: 'var(--bg-input)',
+                      color: 'var(--text-main)',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      border: '1px dashed var(--border-color)',
+                      cursor: importReading ? 'default' : 'pointer',
+                      opacity: importReading ? 0.6 : 1,
+                    }}
+                  >
+                    <Upload size={16} />
+                    {importReading ? 'Reading…' : 'Choose a CSV file'}
+                    <input
+                      type="file"
+                      accept=".csv,text/csv"
+                      onChange={handleImportFilePicked}
+                      disabled={importReading}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+
+                  {importReport && (
+                    <div className="flex-col gap-3">
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
+                        {importReport.fileName}
+                      </div>
+
+                      {importReport.missingColumns.length > 0 ? (
+                        <div style={{
+                          display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                          padding: '0.75rem 1rem', backgroundColor: 'var(--danger-bg)',
+                          border: '1px solid rgb(from var(--danger) r g b / 0.3)',
+                          borderRadius: 'var(--radius-md)', color: 'var(--danger)',
+                          fontSize: '0.8rem', lineHeight: 1.4,
+                        }}>
+                          <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <div>
+                            <strong style={{ display: 'block', marginBottom: '0.15rem' }}>This doesn&apos;t look like a Trackify export</strong>
+                            Missing required {importReport.missingColumns.length === 1 ? 'column' : 'columns'}: {importReport.missingColumns.join(', ')}. Export your data first to see the expected format.
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontVariantNumeric: 'tabular-nums' }}>
+                            {[
+                              { n: importReport.fresh.length, label: 'ready to import', color: 'var(--success)', bg: 'var(--success-bg)' },
+                              { n: importReport.duplicates.length, label: 'already in your history', color: 'var(--text-muted)', bg: 'var(--bg-input)' },
+                              { n: importReport.errors.length, label: 'unreadable', color: 'var(--danger)', bg: 'var(--danger-bg)' },
+                            ].map(({ n, label, color, bg }) => (
+                              <div key={label} style={{
+                                display: 'flex', alignItems: 'baseline', gap: '0.4rem',
+                                padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)',
+                                backgroundColor: bg, color,
+                              }}>
+                                <span style={{ fontSize: '1.05rem', fontWeight: 700 }}>{n}</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{label}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {importReport.errors.length > 0 && (
+                            <div style={{
+                              padding: '0.75rem 1rem', backgroundColor: 'var(--bg-input)',
+                              border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)',
+                              fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.6,
+                              maxHeight: '160px', overflowY: 'auto',
+                            }}>
+                              {importReport.errors.slice(0, 20).map((e) => (
+                                <div key={e.line}>
+                                  <strong style={{ color: 'var(--text-main)' }}>Line {e.line}:</strong> {e.problems.join('; ')}
+                                </div>
+                              ))}
+                              {importReport.errors.length > 20 && (
+                                <div style={{ marginTop: '0.35rem' }}>…and {importReport.errors.length - 20} more.</div>
+                              )}
+                            </div>
+                          )}
+
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                            Importing isn&apos;t wired up yet — this is a dry run. Rows already in your history are matched on date, category, amount and note, and would be skipped.
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
 
               </div>
